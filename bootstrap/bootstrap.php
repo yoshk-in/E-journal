@@ -1,15 +1,11 @@
 <?php
 
- use Doctrine\ORM\Tools\Setup;
- use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Setup;
+use \cfg\Settings;
 
- $config = Setup::createAnnotationMetadataConfiguration(array("app"), true);
+$config = Setup::createAnnotationMetadataConfiguration(Settings::$ormDomainObjectpath, Settings::$isDev = true);
 
- $conn = array(
-	 'driver' => 'pdo_mysql',
-	 'user' => 'anon',
-	 'password' => '',
-	 'dbname' => 'mmz'
- );
+$conn = Settings::$dataBaseData;
 
- $entityManager = EntityManager::create($conn, $config);
+$entityManager = EntityManager::create($conn, $config);
