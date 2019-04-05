@@ -5,6 +5,7 @@ namespace App\base;
 class AppHelper
 {
     private static $request;
+    private static $journalPath = 'mmz/journal/';
 
     public static function getRequest(): Request
     {
@@ -20,5 +21,12 @@ class AppHelper
             return new \App\console\G9Parser();
         }
 
+    }
+
+    public static function getRootDir()
+    {
+        $dir       = __DIR__;
+        $parentDir = strstr($dir, self::$journalPath, true);
+        return $parentDir . self::$journalPath;
     }
 }
