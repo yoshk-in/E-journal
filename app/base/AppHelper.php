@@ -13,4 +13,12 @@ class AppHelper
         }
         return self::$request;
     }
+
+    public function getConsoleSyntaxParser()
+    {
+        if (($_SERVER['argv'][1] === 'г9') or ($_SERVER['argv'][1] === 'Г9')) {
+            return new \App\console\G9Parser();
+        }
+
+    }
 }

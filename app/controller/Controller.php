@@ -22,6 +22,8 @@ class Controller
     {
         $request = \App\base\AppHelper::getRequest();
         $cmd     = \App\command\CommandResolver::getCommand($request);
+        $cmd->execute($request);
+        $request->getFeedbackString();
     }
 
     public static function run()

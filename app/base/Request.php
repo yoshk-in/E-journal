@@ -4,19 +4,13 @@ namespace App\base;
 
 class Request
 {
-    private $data = [];
+    private $data     = [];
+    private $feedback = [];
 
     public function __construct()
     {
-        if (isset($_SERVER['argv'][1])) {
-            foreach ($_SERVER['argv'] as $arg) {
-                if (strpos('=', $arg)) {
-                    list($key, $value) = explode('=', $arg);
-                    $this->setProperty($key, $value);
-                }
-                $this->setProperty('cmd', $arg);
-            }
-        }
+        $syntaxParser = AppHelper::getConsoleSyntaxParser();
+        $syntaxParser::parse($this);
     }
 
     public function setProperty($key, $value)
@@ -31,5 +25,24 @@ class Request
         }
 
         return null;
+    }
+
+    public function setFeedback($value)
+    {
+        $this->feedback[] = $value;
+    }
+
+    public function getFeedback()
+    {
+        return $this->feedback;
+    }
+
+    public function getFeedbackString()
+    {
+        $string = "";
+        foreach ($this->feedback as $message) {
+            $string .= $message;
+        }
+        return $string;
     }
 }
