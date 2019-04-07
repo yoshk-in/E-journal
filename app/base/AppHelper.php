@@ -2,10 +2,11 @@
 
 namespace App\base;
 
+
+
 class AppHelper
 {
     private static $request;
-    private static $journalPath = 'mmz/journal/';
 
     public static function getRequest(): Request
     {
@@ -17,16 +18,16 @@ class AppHelper
 
     public function getConsoleSyntaxParser()
     {
-        if (($_SERVER['argv'][1] === 'г9') or ($_SERVER['argv'][1] === 'Г9')) {
-            return new \App\console\G9Parser();
+        if (isset($_SERVER['argv'][1])) {
+            if (mb_stripos($_SERVER['argv'][1], 'г9') === 0) {
+                return new \App\console\G9Parser();
+            }
         }
 
     }
 
-    public static function getRootDir()
+    public static function getCacheObject()
     {
-        $dir       = __DIR__;
-        $parentDir = strstr($dir, self::$journalPath, true);
-        return $parentDir . self::$journalPath;
+        return \App\cache\Cache::init();
     }
 }

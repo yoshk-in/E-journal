@@ -15,6 +15,7 @@ abstract class ConsoleSyntaxParser
             $request->setProperty($i++, $arg);
         }
         static::doParse($request);
+
     }
 
     abstract protected static function doParse(Request $request);

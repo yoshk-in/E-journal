@@ -1,6 +1,7 @@
 <?php
 
 namespace domain;
+use App\base\AppHelper;
 
 abstract class DomainObject
 {
@@ -34,9 +35,10 @@ abstract class DomainObject
         'electrikaPZ'    => 9,
     ];
 
-    public function __construct()
+    public function __construct($number, $partNumber = null)
     {
-        $this->partNumber = $partNumber;
+        if (is_null($partNumber))  $this->partNumber = (AppHelper::getCacheObject())->getPartNumber();
+        if (!is_null($partNumber)) $this->partNumber = $partNumber;
         $this->number     = $number;
         $this->fullNumber = (int) ((string) $this->partNumber . (string) $this->number);
     }

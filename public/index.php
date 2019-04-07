@@ -2,8 +2,6 @@
  
  namespace pub;
 
- require_once 'appHelper/PublicHelper.php';
-
- require_once \pub\appHelper\PublicHelper::getRootDir() . 'vendor/autoload.php';
+ require_once 'vendor/autoload.php';
 
  \App\controller\Controller::run(); 
