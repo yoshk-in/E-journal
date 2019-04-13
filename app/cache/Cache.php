@@ -4,6 +4,8 @@
 namespace App\cache;
 
 
+use App\base\AppException;
+
 class Cache
 {
     private $cacheData = [];
@@ -38,7 +40,7 @@ class Cache
     public function get($name)
     {
         $file = $this->path . "/" . $name;
-        if (file_exists($name)) {
+        if (file_exists($file)) {
             clearstatcache();
             $mtime = filemtime($file);
             if (!isset($this->mtimes[$name])) {
@@ -54,7 +56,7 @@ class Cache
 
     public function getPartNumber()
     {
-        return $this->get('partNumber');
+        return (int) $this->get('partNumber');
     }
 
     public function setPartNumber($number)

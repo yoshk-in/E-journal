@@ -2,12 +2,16 @@
 
 namespace App\controller;
 
+use App\base\AppHelper;
+
 class Controller
 {
     private static $inst;
+    private $helper;
 
     private function __construct()
     {
+        $this->helper = AppHelper::class;
     }
 
     public static function init()
@@ -20,9 +24,15 @@ class Controller
 
     public function handleRequest()
     {
-        $request = \App\base\AppHelper::getRequest();
-        $cmd     = \App\command\CommandResolver::getCommand($request);
-        $cmd->execute($request);
+        $request = $this->helper::getRequest();
+        $consoleParser = $this->helper::getConsoleSyntaxParser();
+        if ($consoleParser) {
+            $consoleParser::parse($request);
+        }
+        $cmds = \App\command\CommandResolver::getCommand($request);
+        foreach ($cmds as $cmd) {
+            $cmd->execute($request);
+        }
         echo $request->getFeedbackString();
     }
 

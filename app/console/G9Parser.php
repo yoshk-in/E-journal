@@ -18,63 +18,79 @@ class G9Parser extends ConsoleSyntaxParser
     protected static function setCommand(Request $request)
     {
         $arg2 = $_SERVER['argv'][2];
-        $arg3 = $_SERVER['argv'][3];
+
         if ($arg2 === '+') {
-            self::parseBlocksNumber($request, $arg3);
-            $request->setCommand('addObject');
+            self::ensure(isset($_SERVER['argv'][3]), 'введите параметры запроса');
+            self::parseBlocksNumbers($request, $_SERVER['argv'][3]);
+            $request->addCommand('addObject');
         };
         if (mb_stripos($arg2, 'партия=') !== false) {
             list($key, $value) = explode('=', $arg2);
-            $request->setCommand('setPartNumber');
+            $request->addCommand('setPartNumber');
             $request->setPartNumber($value);
         }
 
     }
 
-    protected static function parseBlocksNumber(Request $request, string $arg)
+    protected static function parseBlocksNumbers(Request $request, string $arg)
     {
-        $raw = explode(',', $arg);
         $arrayOfNumbers = [];
-        $fullNumbers = [];
-        var_dump($raw);
+        $raw = self::explodeByComma($arg);
         foreach ($raw as $line) {
             if (strpos($line, '-')) {
-                var_dump(substr_count($line, '-'));
-                self::ensure(substr_count($line, '-') === 1, 'неверно заданы параметры запроса');
-                list($first, $last) = explode('-', $line);
-                if ($first > $last) {
-                    $proxy = $first;
-                    $first = $last;
-                    $last = $proxy;
-                }
-                throw new \App\base\AppException('todo here');
+
+                self::ensure(substr_count($line, '-') === 1);
+                $range = self::explodeByHyphen($line);
+
+                list($first, $last) = self::getFullNumbers($range);
+                self::ensure($first < $last);
+
                 for ($i = $first; $i <= $last; $i++) {
                     $arrayOfNumbers[] = (int)$i;
                 }
-            } else { $arrayOfNumbers = $raw; }
+            } else {
+                $fullNumbers = self::getFullNumbers(array($line));
+                $arrayOfNumbers = array_merge($arrayOfNumbers, $fullNumbers);
+            }
         }
-        var_dump($arrayOfNumbers);
-        foreach ($arrayOfNumbers as $block) {
-            if (! is_int((int) $block)) self::ensure( false, 'заданы неправильные параметры запроса');
-            $block = (string) $block;
-
-            if (strlen($block) === 6) {
-                $partNumber = substr($block, 0, 3);
-                (AppHelper::getCacheObject())->setPartNumber($partNumber);
-                $fullNumbers[] = $block;
-            } else if (strlen($block) === 3) {
-                $cache = AppHelper::getCacheObject();
-                $partNumber = $cache->getPartNumber();
-                $fullNumbers[] = ((string) $partNumber) . $block;
-            } else { self::ensure(false, 'заданы неправильные параметры запроса'); }
-        }
-        $request->setBlockNumbers($fullNumbers);
+        $request->setBlockNumbers($arrayOfNumbers);
     }
 
-    protected static function ensure(bool $condition, $msg)
+    protected static function ensure(bool $condition, $msg = 'неверно заданы параметры запроса')
     {
         if (!$condition) {
             throw new \App\base\AppException($msg);
         }
+    }
+
+    protected static function getFullNumbers($numbers)
+    {
+        $fullNumbers = [];
+        foreach ($numbers as $number) {
+            self::ensure(is_int((int)$number));
+            $number = (string)$number;
+            if (strlen($number) === 6) {
+                $partNumber = substr($number, 0, 3);
+                (AppHelper::getCacheObject())->setPartNumber($partNumber);
+                $fullNumbers[] = (int) $number;
+            } else if (strlen($number) === 3) {
+                $partNumber = (AppHelper::getCacheObject())->getPartNumber();
+                $fullNumbers[] = (int) (((string) $partNumber) . $number);
+
+            } else {
+                self::ensure(false);
+            }
+        }
+        return $fullNumbers;
+    }
+
+    protected static function explodeByComma(string $string): array
+    {
+        return explode(',', $string);
+    }
+
+    protected static function explodeByHyphen(string $string): array
+    {
+        return explode('-', $string);
     }
 }

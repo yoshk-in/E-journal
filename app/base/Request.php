@@ -9,10 +9,7 @@ class Request
 
     public function __construct()
     {
-        $syntaxParser = AppHelper::getConsoleSyntaxParser();
-        if (!is_null($syntaxParser)) {
-            $syntaxParser::parse($this);
-        }
+        $this->data['cmds'] = [];
     }
 
     public function setProperty($key, $value)
@@ -48,14 +45,14 @@ class Request
         return $string;
     }
 
-    public function setCommand($name)
+    public function addCommand($name)
     {
-        $this->setProperty('cmd', $name);
+        $this->data['cmds'][] = $name;
     }
 
-    public function getCommand()
+    public function getCommands()
     {
-        return $this->getProperty('cmd');
+        return $this->getProperty('cmds');
     }
 
     public function setPartNumber($name)

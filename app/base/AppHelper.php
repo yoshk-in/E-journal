@@ -30,4 +30,9 @@ class AppHelper
     {
         return \App\cache\Cache::init();
     }
+
+    public static function getCommandResolver()
+    {
+        return \App\command\CommandResolver::class;
+    }
 }
