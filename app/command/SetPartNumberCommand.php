@@ -12,7 +12,7 @@ class SetPartNumberCommand extends Command
     {
         $partNumber = $request->getPartNumber();
         $cache = AppHelper::getCacheObject();
-        $cache->set('partNumber', $partNumber);
+        $cache->setPartNumber($partNumber);
         $request->setFeedback("Г9");
         $request->setFeedback('установлен номер партии ' . $partNumber);
     }

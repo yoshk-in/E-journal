@@ -67,4 +67,16 @@ class Request
     {
         return $this->getProperty('partNumber');
     }
+
+    public function setBlockNumbers($name)
+    {
+        $this->setProperty('blockNumbers', $name);
+    }
+
+    public function getBlockNumbers()
+    {
+        return $this->getProperty('blockNumbers');
+    }
+
+
 }

@@ -56,4 +56,9 @@ class Cache
     {
         return $this->get('partNumber');
     }
+
+    public function setPartNumber($number)
+    {
+        $this->set('partNumber', $number);
+    }
 }

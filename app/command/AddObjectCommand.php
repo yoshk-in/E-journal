@@ -9,6 +9,7 @@ class AddObjectCommand extends Command
     protected function doExecute(Request $request)
     {
         echo __CLASS__;
+        var_dump($request);
 
     }
 }
