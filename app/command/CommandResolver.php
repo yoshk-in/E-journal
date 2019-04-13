@@ -9,7 +9,7 @@ class CommandResolver
     private static $base_cmd    = 'Command';
     private static $default_cmd = 'App\command\DefaultCommand';
     private static $inst;
-    private $cmdCounter = 0;
+
 
 
     private function __construct()
@@ -27,7 +27,6 @@ class CommandResolver
 
     public static function getCommand(Request $request)
     {
-        $inst = self::init();
         $cmdArray = [];
         if ($cmds = $request->getCommands()) {
             foreach ($cmds as $cmd) {
@@ -49,8 +48,7 @@ class CommandResolver
             }
             return $cmdArray;
         } else {
-            if ($inst->cmdCounter > 0) return null;
-            $inst->cmdCounter++;
+
             return new self::$default_cmd;
         }
     }
