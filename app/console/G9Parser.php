@@ -52,7 +52,7 @@ class G9Parser extends ConsoleSyntaxParser
             $this->request->setPartNumber($value);
         }
 
-        if (mb_stripos($arg2, 'стат')) {
+        if (mb_stripos($arg2, 'стат')!== false) {
             if ($this->arg3) {
                 $this->request->addCommand('printRangeStat');
             } else {

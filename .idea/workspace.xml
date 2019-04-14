@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="48308c50-0016-4d2d-80d0-153e216f0912" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/base/AppHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/base/AppHelper.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/console/ConsoleSyntaxParser.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/console/ConsoleSyntaxParser.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/console/G9Parser.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/console/G9Parser.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/controller/Controller.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/controller/Controller.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -52,8 +48,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/console/G9Parser.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="527">
-              <caret line="58" column="53" selection-start-line="58" selection-start-column="53" selection-end-line="58" selection-end-column="53" />
+            <state relative-caret-position="408">
+              <caret line="51" column="50" lean-forward="true" selection-start-line="51" selection-start-column="50" selection-end-line="51" selection-end-column="50" />
             </state>
           </provider>
         </entry>
@@ -90,15 +86,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state>
               <caret column="5" selection-start-column="5" selection-end-column="5" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/domain/DomainObject.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="85">
-              <caret line="5" column="15" selection-start-line="5" selection-start-column="15" selection-end-line="5" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -262,7 +249,7 @@
       <workItem from="1554630855802" duration="13650000" />
       <workItem from="1554912568776" duration="6828000" />
       <workItem from="1555155766976" duration="11186000" />
-      <workItem from="1555236921664" duration="9015000" />
+      <workItem from="1555236921664" duration="9257000" />
     </task>
     <task id="LOCAL-00001" summary="setPartNumber command and cache object are completed">
       <created>1554645172073</created>
@@ -275,7 +262,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="40679000" />
+    <option name="totallyTimeSpent" value="40921000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -288,6 +275,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="-1" width="1920" height="1080" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.14781217" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -363,9 +351,6 @@
           <caret line="10" column="5" selection-start-line="10" selection-start-column="5" selection-end-line="10" selection-end-column="5" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/partNumber">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/app/command/CommandResolver.php">
       <provider selected="true" editor-type-id="text-editor">
@@ -447,10 +432,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/data/partNumber">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/console/G9Parser.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="58" column="53" selection-start-line="58" selection-start-column="53" selection-end-line="58" selection-end-column="53" />
+        <state relative-caret-position="408">
+          <caret line="51" column="50" lean-forward="true" selection-start-line="51" selection-start-column="50" selection-end-line="51" selection-end-column="50" />
         </state>
       </provider>
     </entry>
