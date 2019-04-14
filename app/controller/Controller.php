@@ -27,7 +27,7 @@ class Controller
         $request = $this->helper::getRequest();
         $consoleParser = $this->helper::getConsoleSyntaxParser();
         if ($consoleParser) {
-            $consoleParser::parse($request);
+            $consoleParser->parse($request);
         }
         $cmds = \App\command\CommandResolver::getCommand($request);
         foreach ($cmds as $cmd) {

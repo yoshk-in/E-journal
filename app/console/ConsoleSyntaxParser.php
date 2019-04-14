@@ -2,20 +2,28 @@
 
 namespace App\console;
 
-use App\base\Request;
+use \App\base\AppHelper;
 
 abstract class ConsoleSyntaxParser
 {
+    protected $request;
 
-    public static function parse(Request $request)
+    public function __construct()
+    {
+        $this->request = AppHelper::getRequest();
+
+    }
+
+
+    public function parse()
     {
         $params = $_SERVER['argv'];
         $i      = 0;
         foreach ($params as $arg) {
-            $request->setProperty($i++, $arg);
+            $this->request->setProperty($i++, $arg);
         }
-        static::doParse($request);
+        $this->doParse();
     }
 
-    abstract protected static function doParse(Request $request);
+    abstract protected function doParse();
 }

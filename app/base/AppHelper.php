@@ -8,6 +8,7 @@ class AppHelper
 {
     private static $request;
 
+
     public static function getRequest(): Request
     {
         if (is_null(self::$request)) {

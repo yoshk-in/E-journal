@@ -2,72 +2,102 @@
 
 namespace App\console;
 
-use App\base\Request;
 use App\base\AppHelper;
 
 class G9Parser extends ConsoleSyntaxParser
 {
-    protected static function doParse(Request $request)
+    private $arg1;
+    private $arg2;
+    private $arg3;
+    private $cache;
+
+    public function __construct()
     {
-        if (isset($_SERVER['argv'][2])) {
-            self::setCommand($request);
+        parent::__construct();
+        $i = 0;
+        foreach ($_SERVER['argv'] as $arg) {
+            $prop = "arg" . $i;
+            $this->$prop = $arg;
+            ++$i;
+        }
+        $this->cache = AppHelper::getCacheObject();
+    }
+
+    protected  function doParse()
+    {
+        if ($this->arg2) {
+            $this->setCommand();
+        }
+
+        if (!is_null($this->arg3)) {
+            $numbers = $this->parseBlocksNumbers($this->arg3);
+            $this->request->setBlockNumbers($numbers);
         }
 
     }
 
-    protected static function setCommand(Request $request)
+    protected function setCommand()
     {
         $arg2 = $_SERVER['argv'][2];
 
         if ($arg2 === '+') {
-            self::ensure(isset($_SERVER['argv'][3]), 'введите параметры запроса');
-            self::parseBlocksNumbers($request, $_SERVER['argv'][3]);
-            $request->addCommand('addObject');
+            $this->ensure(!is_null($this->arg3), 'введите номера блоков');
+            $this->request->addCommand('addObject');
+            $this->request->addCommand('nextWorkStageG9');
         };
         if (mb_stripos($arg2, 'партия=') !== false) {
             list($key, $value) = explode('=', $arg2);
-            $request->addCommand('setPartNumber');
-            $request->setPartNumber($value);
+            $this->ensure(strlen($value) === 3);
+            $this->request->addCommand('setPartNumber');
+            $this->request->setPartNumber($value);
+        }
+
+        if (mb_stripos($arg2, 'стат')) {
+            if ($this->arg3) {
+                $this->request->addCommand('printRangeStat');
+            } else {
+                $this->request->addCommand('printFullStat');
+            }
         }
 
     }
 
-    protected static function parseBlocksNumbers(Request $request, string $arg)
+    protected function parseBlocksNumbers(string $arg)
     {
         $arrayOfNumbers = [];
-        $raw = self::explodeByComma($arg);
+        $raw = $this->explodeByComma($arg);
         foreach ($raw as $line) {
             if (strpos($line, '-')) {
 
-                self::ensure(substr_count($line, '-') === 1);
+                $this->ensure(substr_count($line, '-') === 1);
                 $range = self::explodeByHyphen($line);
 
-                list($first, $last) = self::getFullNumbers($range);
-                self::ensure($first < $last);
+                list($first, $last) = $this->getFullNumbers($range);
+                $this->ensure($first < $last);
 
                 for ($i = $first; $i <= $last; $i++) {
                     $arrayOfNumbers[] = (int)$i;
                 }
             } else {
-                $fullNumbers = self::getFullNumbers(array($line));
+                $fullNumbers = $this->getFullNumbers(array($line));
                 $arrayOfNumbers = array_merge($arrayOfNumbers, $fullNumbers);
             }
         }
-        $request->setBlockNumbers($arrayOfNumbers);
+        return $arrayOfNumbers;
     }
 
-    protected static function ensure(bool $condition, $msg = 'неверно заданы параметры запроса')
+    protected function ensure(bool $condition, $msg = 'неверно заданы параметры запроса')
     {
         if (!$condition) {
             throw new \App\base\AppException($msg);
         }
     }
 
-    protected static function getFullNumbers($numbers)
+    protected function getFullNumbers($numbers)
     {
         $fullNumbers = [];
         foreach ($numbers as $number) {
-            self::ensure(is_int((int)$number));
+            $this->ensure(is_int((int)$number));
             $number = (string)$number;
             if (strlen($number) === 6) {
                 $partNumber = substr($number, 0, 3);
@@ -78,7 +108,7 @@ class G9Parser extends ConsoleSyntaxParser
                 $fullNumbers[] = (int) (((string) $partNumber) . $number);
 
             } else {
-                self::ensure(false);
+                $this->ensure(false);
             }
         }
         return $fullNumbers;
