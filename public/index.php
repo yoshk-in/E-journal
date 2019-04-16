@@ -2,6 +2,6 @@
  
  namespace pub;
 
- require_once 'vendor/autoload.php';
+ require_once 'bootstrap/bootstrap.php';
 
  \App\controller\Controller::run(); 

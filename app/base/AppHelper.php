@@ -36,4 +36,11 @@ class AppHelper
     {
         return \App\command\CommandResolver::class;
     }
+
+    public static function getEntityManager(bool $devMode = true)
+    {
+        $conf = \data\DatabaseConf::getConf();
+        $doctrineConf = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(array('app/domain'), $devMode);
+        return \Doctrine\ORM\EntityManager::create($conf, $doctrineConf);
+    }
 }

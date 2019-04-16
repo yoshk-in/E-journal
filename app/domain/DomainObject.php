@@ -1,7 +1,8 @@
 <?php
 
 namespace domain;
-use App\base\AppHelper;
+
+//use App\base\AppHelper;
 
 abstract class DomainObject
 {
@@ -13,8 +14,7 @@ abstract class DomainObject
     /**
      *  @Id
      *  @Column(type="integer")
-     *  @GeneratedValue(strategy="CUSTOM")
-     *  @CustomIdGenerator(class="\cfg\G9IdGenerator")
+     *  @GeneratedValue
      **/
 
     protected $number;
@@ -35,16 +35,16 @@ abstract class DomainObject
         'electrikaPZ'    => 9,
     ];
 
-    public function __construct($number, $partNumber = null)
+    public function __construct(int $number)
     {
-        if (is_null($partNumber))  $this->partNumber = (AppHelper::getCacheObject())->getPartNumber();
-        if (!is_null($partNumber)) $this->partNumber = $partNumber;
+//        if (is_null($partNumber))  $this->partNumber = (AppHelper::getCacheObject())->getPartNumber();
+//        if (!is_null($partNumber)) $this->partNumber = $partNumber;
         $this->number     = $number;
-        $this->fullNumber = (int) ((string) $this->partNumber . (string) $this->number);
+//        $this->fullNumber = (int) ((string) $this->partNumber . (string) $this->number);
     }
 
     public function getNumber()
     {
-        return $this->$fullNumber;
+        return $this->fullNumber;
     }
 }

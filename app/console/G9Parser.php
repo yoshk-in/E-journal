@@ -44,12 +44,14 @@ class G9Parser extends ConsoleSyntaxParser
             $this->ensure(!is_null($this->arg3), 'введите номера блоков');
             $this->request->addCommand('addObject');
             $this->request->addCommand('nextWorkStageG9');
+            return;
         };
         if (mb_stripos($arg2, 'партия=') !== false) {
             list($key, $value) = explode('=', $arg2);
             $this->ensure(strlen($value) === 3);
             $this->request->addCommand('setPartNumber');
             $this->request->setPartNumber($value);
+            return;
         }
 
         if (mb_stripos($arg2, 'стат')!== false) {
@@ -58,7 +60,9 @@ class G9Parser extends ConsoleSyntaxParser
             } else {
                 $this->request->addCommand('printFullStat');
             }
+            return;
         }
+        $this->ensure(false);
 
     }
 

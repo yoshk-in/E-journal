@@ -14,7 +14,8 @@
 	     "psr-4": {
 		     "App\\": "app/",
 		     "pub\\": "public/",
-		     "cfg\\": "config/"
+		     "cfg\\": "config/",
+             "data\\": "data/"
 		    }
 	     }
 }
