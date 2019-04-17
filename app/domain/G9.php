@@ -1,6 +1,6 @@
 <?php
 
- namespace domain;
+ namespace App\domain;
 
  /** @Entity @Table(name="G9") **/
  class G9 extends DomainObject

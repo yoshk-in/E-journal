@@ -31,6 +31,9 @@ class G9Parser extends ConsoleSyntaxParser
 
         if (!is_null($this->arg3)) {
             $numbers = $this->parseBlocksNumbers($this->arg3);
+            $uniqueNumbers = array_unique($numbers);
+            $this->ensure($uniqueNumbers == $numbers, 'переданы повторяющиеся номера');
+            sort($numbers, SORT_NUMERIC);
             $this->request->setBlockNumbers($numbers);
         }
 
@@ -79,9 +82,7 @@ class G9Parser extends ConsoleSyntaxParser
                 list($first, $last) = $this->getFullNumbers($range);
                 $this->ensure($first < $last);
 
-                for ($i = $first; $i <= $last; $i++) {
-                    $arrayOfNumbers[] = (int)$i;
-                }
+                $arrayOfNumbers = range($first, $last);
             } else {
                 $fullNumbers = $this->getFullNumbers(array($line));
                 $arrayOfNumbers = array_merge($arrayOfNumbers, $fullNumbers);

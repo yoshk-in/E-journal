@@ -1,15 +1,15 @@
 <?php
 
-namespace domain;
+namespace App\domain;
 
 //use App\base\AppHelper;
 
 abstract class DomainObject
 {
-    /**
-     * @Column(type="integer")
-     **/
-    protected $partNumber;
+//    /**
+//     * @Column(type="integer")
+//     **/
+//    protected $partNumber;
 
     /**
      *  @Id
@@ -18,33 +18,46 @@ abstract class DomainObject
      **/
 
     protected $number;
-    protected $fullNumber;
+//    protected $fullNumber;
 
     /** @Column(type="integer") **/
     protected $statement;
     protected $statesArray = [
-        'prozvonka'      => 0,
-        'nastroyka'      => 1,
-        'vibroprochnost' => 2,
-        'progon'         => 3,
-        'moroz'          => 4,
-        'jara'           => 5,
-        'mechanikaOTK'   => 6,
-        'electrikaOTK'   => 7,
-        'mechanikaPZ'    => 8,
-        'electrikaPZ'    => 9,
+        'writeInBD'      => 0,
+        'prozvon'        => 1,
+        'nastroy'        => 2,
+        'vibro'          => 3,
+        'progon'         => 4,
+        'moroz'          => 5,
+        'jara'           => 6,
+        'mechanikaOTK'   => 7,
+        'electrikaOTK'   => 8,
+        'mechanikaPZ'    => 9,
+        'electrikaPZ'    => 10,
+        'sklad'          => 11
     ];
 
     public function __construct(int $number)
     {
 //        if (is_null($partNumber))  $this->partNumber = (AppHelper::getCacheObject())->getPartNumber();
 //        if (!is_null($partNumber)) $this->partNumber = $partNumber;
-        $this->number     = $number;
+        $this->number = $number;
 //        $this->fullNumber = (int) ((string) $this->partNumber . (string) $this->number);
+
     }
 
     public function getNumber()
     {
-        return $this->fullNumber;
+        return $this->number;
+    }
+
+    public function setStatement(string $statement)
+    {
+        $this->statement = $this->statesArray[$statement];
+    }
+
+    public function getStatement()
+    {
+        return $this->statement;
     }
 }
