@@ -15,20 +15,37 @@ class AddObjectCommand extends Command
         $min = min($blocks);
         $range = range($min, $max);
         $objects = [];
+        $dberrors = [];
+        $offset = 0;
         $entityManager = AppHelper::getEntityManager();
         foreach ($range as $unit) {
             $object = new G9($unit);
             $objects[] = $object;
             $object->setStatement('writeInBD');
+            try {
             $entityManager->persist($object);
             $entityManager->flush();
+            } catch (\Exception $e) {
+                $dberrors[] = $e->getMessage();
+                array_splice($blocks, $offset);
+            }
+            ++$offset;
         }
-        $request->setFeedback(
-            "в журнал занесены следующие блоки:"
+        if (!empty($blocks)) {
+            $request->setFeedback(
+                "в журнал занесены следующие блоки:"
             );
+        }
         foreach ($blocks as $block) {
             $request->setFeedback($block);
         }
-
+        if (!empty($dberrors)) {
+            $request->setFeedback(
+                "номера следующих блоков не записаны в журнал со следующей ошиюкой:"
+            );
+            foreach ($dberrors as $error) {
+                $request->setFeedback($error);
+            }
+        }
     }
 }

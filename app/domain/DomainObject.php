@@ -14,7 +14,6 @@ abstract class DomainObject
     /**
      *  @Id
      *  @Column(type="integer")
-     *  @GeneratedValue
      **/
 
     protected $number;
