@@ -12,7 +12,7 @@
      ],
      "autoload": {
 	     "psr-4": {
-             "doctrine\\cli-config" : "cli-config.php",
+             "doctrine\\cli_config\\" : "cli-config.php",
 		     "App\\": "app/",
 		     "pub\\": "public/",
              "data\\": "data/"
