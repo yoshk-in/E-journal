@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="48308c50-0016-4d2d-80d0-153e216f0912" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-    </list>
+    <list default="true" id="48308c50-0016-4d2d-80d0-153e216f0912" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,7 +57,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/cli-config.php">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="119">
@@ -68,7 +66,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/composer.json">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="255">
@@ -191,7 +189,7 @@
       <workItem from="1555236921664" duration="9374000" />
       <workItem from="1555405776763" duration="7440000" />
       <workItem from="1555492276496" duration="6441000" />
-      <workItem from="1555581135831" duration="4270000" />
+      <workItem from="1555581135831" duration="4516000" />
     </task>
     <task id="LOCAL-00001" summary="setPartNumber command and cache object are completed">
       <created>1554645172073</created>
@@ -204,7 +202,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="59189000" />
+    <option name="totallyTimeSpent" value="59435000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -216,7 +214,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="-1" width="1920" height="1080" extended-state="6" />
+    <frame x="0" y="-1" width="1920" height="1080" extended-state="7" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.23212379" />
@@ -404,17 +402,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cli-config.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" selection-start-line="7" selection-end-line="7" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/composer.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
           <caret line="15" column="29" lean-forward="true" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cli-config.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="119">
+          <caret line="7" selection-start-line="7" selection-end-line="7" />
         </state>
       </provider>
     </entry>
