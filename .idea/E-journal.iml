@@ -2,10 +2,9 @@
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/config" isTestSource="false" packagePrefix="cfg\" />
-      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" packagePrefix="root\app\" />
       <sourceFolder url="file://$MODULE_DIR$/app" isTestSource="false" packagePrefix="App\" />
       <sourceFolder url="file://$MODULE_DIR$/data" isTestSource="false" packagePrefix="data\" />
+      <sourceFolder url="file://$MODULE_DIR$/cli-config.php" isTestSource="false" packagePrefix="doctrine\cli-config" />
       <sourceFolder url="file://$MODULE_DIR$/public" isTestSource="false" packagePrefix="pub\" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/composer" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/doctrine/annotations" />
