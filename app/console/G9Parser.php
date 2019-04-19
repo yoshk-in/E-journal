@@ -7,49 +7,63 @@ use App\base\AppHelper;
 class G9Parser extends ConsoleSyntaxParser
 {
     private $arg1;
+
     private $arg2;
+
     private $arg3;
+
     private $cache;
 
     public function __construct()
     {
         parent::__construct();
+
         $i = 0;
+
         foreach ($_SERVER['argv'] as $arg) {
-            $prop = "arg" . $i;
+            $prop = "arg".$i;
+
             $this->$prop = $arg;
+
             ++$i;
+
         }
         $this->cache = AppHelper::getCacheObject();
+
     }
 
-    protected  function doParse()
+    protected function doParse()
     {
         if ($this->arg2) {
             $this->setCommand();
+
         }
 
         if (!is_null($this->arg3)) {
             $numbers = $this->parseBlocksNumbers($this->arg3);
+
             $uniqueNumbers = array_unique($numbers);
+
             $this->ensure($uniqueNumbers == $numbers, 'переданы повторяющиеся номера');
+
             sort($numbers, SORT_NUMERIC);
+
             $this->request->setBlockNumbers($numbers);
+
         }
 
     }
 
     protected function setCommand()
     {
-        $arg2 = $_SERVER['argv'][2];
-
-        if ($arg2 === '+') {
+        if ($this->arg2 === '+') {
             $this->ensure(!is_null($this->arg3), 'введите номера блоков');
+
             $this->request->addCommand('addObject');
             $this->request->addCommand('nextWorkStageG9');
             return;
         };
-        if (mb_stripos($arg2, 'партия=') !== false) {
+        if (mb_stripos($this->arg2, 'партия=') !== false) {
             list($key, $value) = explode('=', $arg2);
             $this->ensure(strlen($value) === 3);
             $this->request->addCommand('setPartNumber');
@@ -57,7 +71,7 @@ class G9Parser extends ConsoleSyntaxParser
             return;
         }
 
-        if (mb_stripos($arg2, 'стат')!== false) {
+        if (mb_stripos($this->arg2, 'стат') !== false) {
             if ($this->arg3) {
                 $this->request->addCommand('printRangeStat');
             } else {
@@ -65,6 +79,10 @@ class G9Parser extends ConsoleSyntaxParser
             }
             return;
         }
+
+        if ($this->arg2 === 'очистка') {$this->request->addCommand('clearJournal');
+        }
+
         $this->ensure(false);
 
     }
@@ -72,7 +90,7 @@ class G9Parser extends ConsoleSyntaxParser
     protected function parseBlocksNumbers(string $arg)
     {
         $arrayOfNumbers = [];
-        $raw = $this->explodeByComma($arg);
+        $raw            = $this->explodeByComma($arg);
         foreach ($raw as $line) {
             if (strpos($line, '-')) {
 
@@ -82,12 +100,13 @@ class G9Parser extends ConsoleSyntaxParser
                 list($first, $last) = $this->getFullNumbers($range);
                 $this->ensure($first < $last);
 
-                $arrayOfNumbers = range($first, $last);
+                $arrayOfNumbers = array_merge($arrayOfNumbers, range($first, $last));
             } else {
-                $fullNumbers = $this->getFullNumbers(array($line));
+                $fullNumbers    = $this->getFullNumbers(array($line));
                 $arrayOfNumbers = array_merge($arrayOfNumbers, $fullNumbers);
             }
         }
+
         return $arrayOfNumbers;
     }
 
@@ -102,15 +121,15 @@ class G9Parser extends ConsoleSyntaxParser
     {
         $fullNumbers = [];
         foreach ($numbers as $number) {
-            $this->ensure(is_int((int)$number));
-            $number = (string)$number;
+            $this->ensure(is_int((int) $number));
+            $number = (string) $number;
             if (strlen($number) === 6) {
                 $partNumber = substr($number, 0, 3);
                 (AppHelper::getCacheObject())->setPartNumber($partNumber);
                 $fullNumbers[] = (int) $number;
             } else if (strlen($number) === 3) {
-                $partNumber = (AppHelper::getCacheObject())->getPartNumber();
-                $fullNumbers[] = (int) (((string) $partNumber) . $number);
+                $partNumber    = (AppHelper::getCacheObject())->getPartNumber();
+                $fullNumbers[] = (int) (((string) $partNumber).$number);
 
             } else {
                 $this->ensure(false);
@@ -119,13 +138,18 @@ class G9Parser extends ConsoleSyntaxParser
         return $fullNumbers;
     }
 
-    protected static function explodeByComma(string $string): array
+    protected static function explodeByComma(string $string):array
+
+
     {
         return explode(',', $string);
     }
 
-    protected static function explodeByHyphen(string $string): array
+    protected static function explodeByHyphen(string $string):array
+
+
     {
         return explode('-', $string);
     }
 }
+

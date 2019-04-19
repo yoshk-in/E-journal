@@ -2,45 +2,40 @@
 
 namespace App\base;
 
+class AppHelper {
+	private static $request;
 
+	public static function getRequest():Request {
+		if (is_null(self::$request)) {
+			self::$request = new Request();
+		}
+		return self::$request;
+	}
 
-class AppHelper
-{
-    private static $request;
+	public function getConsoleSyntaxParser() {
+		if (isset($_SERVER['argv'][1])) {
+			if (mb_stripos($_SERVER['argv'][1], 'г9') === 0) {
+				return new \App\console\G9Parser();
+			}
+		}
+	}
 
+	public static function getCacheObject() {
+		return \App\cache\Cache::init();
+	}
 
-    public static function getRequest(): Request
-    {
-        if (is_null(self::$request)) {
-            self::$request = new Request();
-        }
-        return self::$request;
-    }
+	public static function getCommandResolver() {
+		return \App\command\CommandResolver::class ;
+	}
 
-    public function getConsoleSyntaxParser()
-    {
-        if (isset($_SERVER['argv'][1])) {
-            if (mb_stripos($_SERVER['argv'][1], 'г9') === 0) {
-                return new \App\console\G9Parser();
-            }
-        }
-
-    }
-
-    public static function getCacheObject()
-    {
-        return \App\cache\Cache::init();
-    }
-
-    public static function getCommandResolver()
-    {
-        return \App\command\CommandResolver::class;
-    }
-
-    public static function getEntityManager(bool $devMode = true)
-    {
-        $conf = \data\DatabaseConf::getConf();
-        $doctrineConf = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(array('app/domain'), $devMode);
-        return \Doctrine\ORM\EntityManager::create($conf, $doctrineConf);
-    }
+	public static function getEntityManager(bool $devMode = true) {
+		if (file_exists('data/DatabaseConf.php')) {
+			$conf = \data\DatabaseConf::class ;
+		} else {
+			throw new AppException('configuration class does not exists');
+		}
+		$conf         = \data\DatabaseConf::getConf();
+		$doctrineConf = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(array('app/domain'), $devMode);
+		return \Doctrine\ORM\EntityManager::create($conf, $doctrineConf);
+	}
 }

@@ -3,28 +3,29 @@
 namespace App\command;
 
 use App\base\Request;
-use App\base\AppHelper;
+
 use App\domain\G9;
 
 class AddObjectCommand extends Command
 {
     protected function doExecute(Request $request)
     {
-        $blocks = $request->getBlockNumbers();
-        $max = max($blocks);
-        $min = min($blocks);
-        $range = range($min, $max);
-        $objects = [];
+        $blocks   = $request->getBlockNumbers();
+
+        $max      = max($blocks);
+        $min      = min($blocks);
+        $range    = range($min, $max);
+        $objects  = [];
         $dberrors = [];
-        $offset = 0;
-        $entityManager = AppHelper::getEntityManager();
+        $offset   = 0;
+
         foreach ($range as $unit) {
-            $object = new G9($unit);
+            $object    = new G9($unit);
             $objects[] = $object;
             $object->setStatement('writeInBD');
             try {
-            $entityManager->persist($object);
-            $entityManager->flush();
+                $this->entityManager->persist($object);
+                $this->entityManager->flush();
             } catch (\Exception $e) {
                 $dberrors[] = $e->getMessage();
                 array_splice($blocks, $offset);
@@ -49,3 +50,4 @@ class AddObjectCommand extends Command
         }
     }
 }
+

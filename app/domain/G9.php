@@ -1,12 +1,10 @@
 <?php
 
- namespace App\domain;
+namespace App\domain;
 
- /** @Entity @Table(name="G9") **/
- class G9 extends DomainObject
- {
-    public function __construct(int $number)
-    {
-        parent::__construct($number);
-    }
- }
+/** @Entity @Table(name="g9s") **/
+class G9 extends DomainObject
+{
+
+}
+

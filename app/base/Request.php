@@ -4,12 +4,14 @@ namespace App\base;
 
 class Request
 {
-    private $data     = [];
+    private $data = [];
+
     private $feedback = [];
 
     public function __construct()
     {
         $this->data['cmds'] = [];
+
     }
 
     public function setProperty($key, $value)
@@ -40,7 +42,7 @@ class Request
     {
         $string = "";
         foreach ($this->feedback as $message) {
-            $string .= $message . "\n" ;
+            $string .= $message."\n";
         }
         return $string;
     }
@@ -75,5 +77,5 @@ class Request
         return $this->getProperty('blockNumbers');
     }
 
-
 }
+
