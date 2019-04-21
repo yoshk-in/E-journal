@@ -31,9 +31,7 @@ class AppHelper
 
     public static function getEntityManager($devMode = true)
     {
-        if (file_exists('data/DatabaseConf.php')) {
-            $conf = \data\DatabaseConf::class;
-        } else {
+        if (!(file_exists('data/DatabaseConf.php') && (class_exists('\data\DatabaseConf')))) {
             throw new AppException('configuration class does not exists');
         }
         $conf = \data\DatabaseConf::getConf();

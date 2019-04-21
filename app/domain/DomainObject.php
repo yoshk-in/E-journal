@@ -6,43 +6,36 @@ namespace App\domain;
 
 abstract class DomainObject
 {
-//    /**
-//     * @Column(type="integer")
-//     **/
-//    protected $partNumber;
-
     /**
      *  @Id
      *  @Column(type="integer")
      **/
-
     protected $number;
-//    protected $fullNumber;
 
-    /** @Column(type="integer") **/
-    protected $statement;
+    protected $finished_statements = array();
+
+    /** @Column(type="integer") */
+    protected $current_statement;
+
     protected $statesArray = [
-        'writeInBD'      => 0,
-        'prozvon'        => 1,
-        'nastroy'        => 2,
-        'vibro'          => 3,
-        'progon'         => 4,
-        'moroz'          => 5,
-        'jara'           => 6,
-        'mechanikaOTK'   => 7,
-        'electrikaOTK'   => 8,
-        'mechanikaPZ'    => 9,
-        'electrikaPZ'    => 10,
-        'sklad'          => 11
+        'writeInBD',
+        'prozvon',
+        'nastroy',
+        'vibro',
+        'progon',
+        'moroz',
+        'jara',
+        'mechanikaOTK',
+        'electrikaOTK',
+        'mechanikaPZ',
+        'electrikaPZ',
+        'sklad'
     ];
+
 
     public function __construct(int $number)
     {
-//        if (is_null($partNumber))  $this->partNumber = (AppHelper::getCacheObject())->getPartNumber();
-//        if (!is_null($partNumber)) $this->partNumber = $partNumber;
         $this->number = $number;
-//        $this->fullNumber = (int) ((string) $this->partNumber . (string) $this->number);
-
     }
 
     public function getNumber()
@@ -50,13 +43,33 @@ abstract class DomainObject
         return $this->number;
     }
 
-    public function setStatement(string $statement)
+    public function setStatement($statement)
     {
-        $this->statement = $this->statesArray[$statement];
+        $this->isValidState($statement);
+        $this->current_statement[$statement] = new ProductStatement($statement);
     }
 
-    public function getStatement()
+    protected function assignStatement()
     {
-        return $this->statement;
+        return;
     }
+
+    public function getStatement($statement)
+    {
+        return $this->current_statement;
+    }
+
+    public function prozvon()
+    {
+        $operation = $this->statesArray[1];
+        $this->setStatement($operation);
+    }
+
+    protected function isValidState($statement)
+    {
+        if (array_search($statement, $this->statesArray)) return true;
+        throw new \App\base\AppException('неправильный тип испытаний');
+    }
+
+
 }
