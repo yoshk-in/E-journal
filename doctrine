@@ -1,0 +1,3 @@
+#!/bin/bash
+
+vendor/bin/doctrine orm:schema-tool:$1 $2 $3

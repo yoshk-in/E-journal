@@ -6,9 +6,7 @@ use \App\base\AppHelper;
 
 use \App\base\Request;
 
-abstract
-
-class Command
+abstract class Command
 {
     protected $entityManager;
 
