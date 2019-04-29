@@ -12,30 +12,16 @@ abstract class DomainObject
      **/
     protected $number;
 
-    protected $finished_statements = array();
+    protected $statesList;
 
     /** @Column(type="integer") */
-    protected $current_statement;
-
-    protected $statesArray = [
-        'writeInBD',
-        'prozvon',
-        'nastroy',
-        'vibro',
-        'progon',
-        'moroz',
-        'jara',
-        'mechanikaOTK',
-        'electrikaOTK',
-        'mechanikaPZ',
-        'electrikaPZ',
-        'sklad'
-    ];
+    protected $currentState;
 
 
     public function __construct(int $number)
     {
         $this->number = $number;
+
     }
 
     public function getNumber()
@@ -43,33 +29,14 @@ abstract class DomainObject
         return $this->number;
     }
 
-    public function setStatement($statement)
+    public function getStatesList()
     {
-        $this->isValidState($statement);
-        $this->current_statement[$statement] = new ProductStatement($statement);
+        return $this->statesList;
     }
 
-    protected function assignStatement()
+    public function setStatesList(StatesList $statesList): void
     {
-        return;
+        $this->statesList = $statesList;
     }
-
-    public function getStatement($statement)
-    {
-        return $this->current_statement;
-    }
-
-    public function prozvon()
-    {
-        $operation = $this->statesArray[1];
-        $this->setStatement($operation);
-    }
-
-    protected function isValidState($statement)
-    {
-        if (array_search($statement, $this->statesArray)) return true;
-        throw new \App\base\AppException('неправильный тип испытаний');
-    }
-
 
 }
