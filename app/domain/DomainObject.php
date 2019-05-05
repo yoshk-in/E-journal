@@ -2,7 +2,7 @@
 
 namespace App\domain;
 
-//use App\base\AppHelper;
+use App\base\AppException;
 
 abstract class DomainObject
 {
@@ -12,16 +12,9 @@ abstract class DomainObject
      **/
     protected $number;
 
-    protected $statesList;
-
-    /** @Column(type="integer") */
-    protected $currentState;
-
-
     public function __construct(int $number)
     {
         $this->number = $number;
-
     }
 
     public function getNumber()
@@ -29,14 +22,11 @@ abstract class DomainObject
         return $this->number;
     }
 
-    public function getStatesList()
+    public function ensure(bool $condition, string $msg = null)
     {
-        return $this->statesList;
+        if (!$condition) throw new AppException('ошибка: операция не выполнена ' . $msg);
     }
 
-    public function setStatesList(StatesList $statesList): void
-    {
-        $this->statesList = $statesList;
-    }
+
 
 }

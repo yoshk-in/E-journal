@@ -16,7 +16,7 @@
       "App\\": "app/",
       "pub\\": "public/",
       "data\\": "data/",
-      "tests\\": "tests"
+      "tests\\": "tests/"
     }
   },
   "require-dev": {

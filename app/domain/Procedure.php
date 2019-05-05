@@ -1,70 +1,100 @@
 <?php
 
+
 namespace App\domain;
 
+use App\base\AppException;
+use App\domain\ProcedureRequirements;
 
+/**
+ * @Entity @Table(name="states")
+ *
+ **/
 
-class Procedure extends State
+class Procedure
 {
-    private $processTime;
-    private $startProcess;
-    private $endProcess;
+    protected $start;
+    protected $end;
+    protected $name;
+    protected $product;
+    protected $idStage;
+    protected $minPeriod;
 
-    public function __construct($name, DomainObject $product, $idState, $interval)
+    public function __construct(string $name, DomainObject $product,int $idStage)
     {
-        parent::__construct($name, $product, $idState);
-        $this->processTime = new \DateInterval($interval);
-        $this->startProcess = new \DateTime('now');
-        $this->endProcess = clone $this->startProcess;
-        $this->endProcess->add($this->processTime);
+        $this->name = $name;
+        $this->product = $product;
+        $this->idStage = $idStage;
+        $this->setStart();
+        $this->minPeriod = new \DateInterval(ProcedureRequirements::MIN_PROCEDURE_TIME);
+    }
+
+    public function setStart() : void
+    {
+        $this->start = new \DateTime('now');
+    }
+
+    public function getStart() : \DateTime
+    {
+        return $this->start;
     }
 
     /**
      * @return mixed
      */
-    public function getProcessTime()
+    public function getEnd() : ?\DateTime
     {
-        return $this->processTime;
+        return $this->end;
     }
 
-    /**
-     * @param mixed $process_time
-     *P    public function setProcessTime($processTime): void
+    public function end() : void
     {
-        $this->processTime = $processTime;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getStartProcess()
-    {
-        return $this->startProcess;
-    }
-
-    /**
-     * @param mixed $start_process
-     */
-    public function setStartProcess($startProcess): void
-    {
-        $this->startProcess = $startProcess;
+        if (is_null($this->start)) throw new AppException('в журнале нет отметки' .
+        ' о начале данной процедуры - операция не выполнена');
+        $endPeriod = (clone (new \DateTime('now')))->add($this->minPeriod);
+        $now = new \DateTime('now');
+        if ($endPeriod < $now)
+        $this->end = $now;
+        else throw new AppException(
+            'операция не выполнена: минимальное время отведенное на выполнение процедуры  - ' .
+            $this->minPeriod->format('%i минут : время сейчас ' . $now->format('H:i:s')));
     }
 
     /**
      * @return mixed
      */
-    public function getEndProcess()
+    public function getName() : string
     {
-        return $this->endProcess;
+        return $this->name;
     }
 
     /**
-     * @param mixed $end_process
+     * @param mixed $name
      */
-    public function setEndProcess($endProcess): void
+    public function setName($name): void
     {
-        $this->endProcess = $endProcess;
+        $this->name = $name;
     }
 
+    /**
+     * @return int
+     */
+    public function getIdStage(): int
+    {
+        return $this->idStage;
+    }
+
+ /*   public function isValidCall($class)
+    {
+        $targetObject = $this->targetObject();
+        if ($class instanceof $targetObject) {
+            return;
+        }
+        throw new AppException('wrong called class');
+    }
+
+    public function targetObject()
+    {
+        return '\App\domain\DomainObject';
+    }*/
 }
-
