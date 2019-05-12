@@ -32,7 +32,10 @@ class AppHelper
     public static function getEntityManager($devMode = true)
     {
         if (!(file_exists('data/DatabaseConf.php') && (class_exists('\data\DatabaseConf')))) {
-            throw new AppException('configuration class does not exists');
+            throw new AppException(
+                'configuration class does not exists in /data dir "DatabaseConf::getConf()"' .
+                            'method required by Doctrine ORM'
+            );
         }
         $conf = \data\DatabaseConf::getConf();
         $doctrineConf = \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(array('app/domain'), $devMode);

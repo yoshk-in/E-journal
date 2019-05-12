@@ -11,7 +11,9 @@ class TechnicalProcedure extends Procedure
 
     public function __construct(string $name, DomainObject $product, int $idStage, $time)
     {
-        parent::__construct($name, $product, $idStage);
+        $this->name = $name;
+        $this->product = $product;
+        $this->idStage = $idStage;
         $this->setProcedureTime($time);
         $this->setStartProcess();
     }
@@ -42,9 +44,13 @@ class TechnicalProcedure extends Procedure
 
     public function isFinished() : bool
     {
-        $now = new \DateTime('now');
-        if ($now > $this->end) return true;
+        if ((new \DateTime('now')) > $this->end) return true;
         return false;
+    }
+
+    public function getMinTime(): \DateInterval
+    {
+        return $this->procedureTime;
     }
 
 }
