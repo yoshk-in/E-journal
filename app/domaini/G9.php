@@ -62,7 +62,7 @@ class G9 extends DomainObject
 
     }
 
-    protected function startTTProcedure(string $name)
+    public function startTTProcedure(string $name)
     {
         $this->ensure(
             $this->isCompositeProcedure($this->currentProcedure->getName()),
@@ -71,29 +71,31 @@ class G9 extends DomainObject
         $this->ensure(array_search($name, array_keys(self::$TECHNICAL_PROCEDURES_REGULATIONS)), 'wrong name');
         $now = new \DateTime('now');
         foreach ($this->TTCollection as $elem) {
-            if ($elem->getName() === $name) {
+            if ($elem->getName() === $name)
                 $this->ensure(is_null($elem->getStart()), ' - данная процедура уже отмечена');
-                $this->ensure($now < $elem->getEnd(), ' - предыдущая процедура еще не завершена');
-                if (in_array($name, self::$CLIMATIC_TESTS)) {
-                    $climatics = self::$CLIMATIC_TESTS;
-                    $prevTest = array_filter($climatics, function ($climatic) use ($name) {
-                        if ($climatic === $name) return false;
-                        return true;
-                    });
-                    $now = new \DateTime('now');
-                    $relaxPeriod = new \DateInterval(self::$CLIMATIC_RELAX[0]);
-                    $requiredEnd = $now->add($relaxPeriod);
-                    $end = $this->TTCollection[$prevTest[0]]->getEnd();
-                    if (is_null($end)) break 1;
-                    $this->ensure($end < $requiredEnd, '- не соблюдается перерыв между жарой и морозом');
-                }
-                $elem->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
-                $elem->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
-            }
         }
-
-
+        $currentTTproc = $this->currentTTProcedure;
+        if (!is_null($currentTTproc))
+            $this->ensure($now < $currentTTproc->getEnd(), ' - предыдущая процедура еще не завершена');
+        if (in_array($name, self::$CLIMATIC_TESTS)) {
+            $climatics = self::$CLIMATIC_TESTS;
+            $prevTest = array_filter($climatics, function ($climatic) use ($name) {
+                if ($climatic === $name) return false;
+                return true;
+            });
+            $now = new \DateTime('now');
+            $relaxPeriod = new \DateInterval(self::$CLIMATIC_RELAX[0]);
+            $requiredEnd = $now->add($relaxPeriod);
+            $end = $this->TTCollection[$prevTest[0]]->getEnd();
+            if (!is_null($end))
+                $this->ensure($end < $requiredEnd, '- не соблюдается перерыв между жарой и морозом');
+        }
+        $elem->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
+        $elem->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
     }
+
+
+
 
 
 }
