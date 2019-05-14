@@ -33,13 +33,12 @@ abstract class DomainObject
         $this->ensure(is_array($this->compositeProcedures), 'compositeProcedure must be array');
     }
 
-    public function setNumber(int $number): void
+    public function initByNumber(int $number): void
     {
         //procedures are initialized?
         $this->proceduresAreInitialized();
         $this->number = $number;
         $this->initProcedures();
-        $this->currentProcedure = $this->procedureCollection->first();
         $this->currentProcedureId = 0;
     }
 
@@ -60,29 +59,26 @@ abstract class DomainObject
 
     public function startProcedure()
     {
-        $currentProcedure = $this->getCurrentProcedure();
-        if ($this->currentProcedureId !== 0) {
-            $last = $this->procedureCollection[--$this->currentProcedureId];
-            $this->ensure(!is_null($last->getEnd()), 'окончание прошлой процедуры еше не отмечено');
-        }
-        $this->ensure(is_null($this->currentProcedure->getStart()), ' - начало данной процедуры уже отмечено');
+        $currentProcedure = $this->getCurrentProcedureByStageId();
+        $this->checkLastProcedureEnd();
+        $this->ensure(is_null($currentProcedure->getStart()), ' - начало данной процедуры уже отмечено');
         $currentProcedure->setStart();
     }
 
     public function endProcedure()
     {
-        $currentProcedure = $this->getCurrentProcedure();
+        $currentProcedure = $this->getCurrentProcedureByStageId();
         $this->checkStartAndEndProcedure($currentProcedure);
         if ($this->isCompositeProcedure($currentProcedure->getName()))
-            $this->compositeProcedureIsFinished($this->TTCollection, static::$TECHNICAL_PROCEDURES_REGULATIONS);
+            $this->checkCompositeProcedureIsFinished($this->TTCollection, static::$TECHNICAL_PROCEDURES_REGULATIONS);
         $currentProcedure->setEnd();
-        $nextId = $this->currentProcedure->getIdStage();
+        $nextId = $currentProcedure->getIdStage();
         $this->currentProcedureId[++$nextId];
     }
 
     protected function proceduresAreInitialized()
     {
-        $alreadyInit = !is_null($this->procedureCollection->first());
+        $alreadyInit = $this->procedureCollection->first();
         $this->ensure($alreadyInit,'procedures already are initialized');
 
     }
@@ -101,7 +97,7 @@ abstract class DomainObject
         }
     }
 
-    protected function getCurrentProcedure() : Procedure
+    protected function getCurrentProcedureByStageId() : Procedure
     {
         return $this->procedureCollection[$this->currentProcedureId];
     }
@@ -118,8 +114,16 @@ abstract class DomainObject
         $this->ensure(is_null($procedure->getEnd()), ' - окончание данной процедуры уже отмечено');
     }
 
+    protected function checkLastProcedureEnd() : void
+    {
+        if ($this->currentProcedureId !== 0) {
+            $last = $this->procedureCollection[--$this->currentProcedureId];
+            $this->ensure(!is_null($last->getEnd()), 'окончание прошлой процедуры еше не отмечено');
+        }
+    }
 
-    abstract protected function compositeProcedureIsFinished(Collection $collection, array $arrayOfComposite);
+
+    abstract protected function checkCompositeProcedureIsFinished(Collection $collection, array $arrayOfComposite) : void ;
 
 
 }

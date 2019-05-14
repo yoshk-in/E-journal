@@ -55,10 +55,10 @@ class G9 extends DomainObject
 
     public function startTTProcedure(string $name)
     {
-        $this->checkNewTTProcedure($name);
         $nextProcedure = $this->getProcedureByNameFromCollection($name, $this->TTCollection);
+        $this->checkNewTTProcedure($nextProcedure);
 
-        if (in_array($name, self::$CLIMATIC_TESTS)) {
+        if ($this->isClimaticProcedure($name)) {
             $this->checkClimaticProcedure($nextProcedure);
         }
         $nextProcedure->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
@@ -66,12 +66,13 @@ class G9 extends DomainObject
         $this->currentTTProcedureId = $nextProcedure->getIdStage();
     }
 
-    protected function compositeProcedureIsFinished(Collection $collection, array $arrayOfComposite)
+    protected function checkCompositeProcedureIsFinished(Collection $collection, array $arrayOfComposite): void
     {
         $errMsg = '- нет отмечены частично или полностью входящие в данную процедуры испытания';
         $this->ensure($collection->count() === count($arrayOfComposite), $errMsg);
         foreach ($collection as $elem) $this->ensure(!is_null($elem->getEnd()), $errMsg);
     }
+
     protected function getPrevClimaticTest(string $nextTest): string
     {
         $climaticTests = self::$CLIMATIC_TESTS;
@@ -82,7 +83,7 @@ class G9 extends DomainObject
         return $prevClimaticTestArray[0];
     }
 
-    protected function getProcedureByNameFromCollection(string $procedureName, Collection $procedureCollection) : Procedure
+    protected function getProcedureByNameFromCollection(string $procedureName, Collection $procedureCollection): Procedure
     {
         foreach ($procedureCollection as $elem) {
             if ($elem->getName() === $procedureName)
@@ -91,12 +92,13 @@ class G9 extends DomainObject
         }
     }
 
-    protected function checkNewTTProcedure(string $procedureName): void
+    protected function checkNewTTProcedure(Procedure $procedure): void
     {
+        $procedureName = $procedure->getName();
         $this->ensure($this->isCompositeProcedure($procedureName), 'it is must be compositeProcedure');
         $this->ensure(array_search($procedureName, array_keys(self::$TECHNICAL_PROCEDURES_REGULATIONS)), 'wrong name');
         $now = new \DateTime('now');
-        $currentTTproc = $this->currentTTProcedure;
+        $currentTTproc = $this->TTCollection[$this->currentProcedureId];
         if (!is_null($currentTTproc))
             $this->ensure($now < $currentTTproc->getEnd(), ' - предыдущая процедура еще не завершена');
     }
@@ -110,6 +112,10 @@ class G9 extends DomainObject
         $this->ensure($now < $relaxEnd, '- не соблюдается перерыв между жарой и морозом');
     }
 
-
+    protected function isClimaticProcedure(string $name)
+    {
+        if (in_array($name, self::$CLIMATIC_TESTS)) return true;
+        return false;
+    }
 }
 
