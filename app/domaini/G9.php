@@ -25,8 +25,8 @@ class G9 extends DomainObject
         'jara' => 'PT2H'
     ];
 
-    protected static $CLIMATIC_RELAX = [
-        'relax' => 'PT2H'
+    protected static $RELAX_PROCEDURE = [
+        'climatic_relax' => 'PT2H'
     ];
 
     protected static $PROCEDURES_REGULATIONS = [
@@ -55,51 +55,62 @@ class G9 extends DomainObject
 
     protected function compositeProcedureIsFinished(Collection $collection, array $arrayOfComposite)
     {
-        // TODO: Implement compositeProcedureIsFinished() method.
-        $errMsg = '- нет отмечаны частично или полностью входящие в данную процедуры испытания';
+        $errMsg = '- нет отмечены частично или полностью входящие в данную процедуры испытания';
         $this->ensure($collection->count() === count($arrayOfComposite), $errMsg);
         foreach ($collection as $elem) $this->ensure(!is_null($elem->getEnd()), $errMsg);
-
     }
 
     public function startTTProcedure(string $name)
     {
-        $this->ensure(
-            $this->isCompositeProcedure($this->currentProcedure->getName()),
-            'it is must be compositeProcedure'
-        );
-        $this->ensure(array_search($name, array_keys(self::$TECHNICAL_PROCEDURES_REGULATIONS)), 'wrong name');
-        $now = new \DateTime('now');
-        foreach ($this->TTCollection as $elem) {
-            if ($elem->getName() === $name)
-                $this->ensure(is_null($elem->getStart()), ' - данная процедура уже отмечена');
+        $this->checkNewTTProcedure($name);
+        $nextProcedure = $this->getNewProcedureFromCollection($name, $this->TTCollection);
+
+        if (in_array($name, self::$CLIMATIC_TESTS)) {
+            $this->checkClimaticProcedure($name);
         }
+        $nextProcedure->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
+        $nextProcedure->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
+        $this->currentTTProcedure = $nextProcedure;
+        $this->currentTTProcedureId = $this->currentTTProcedure->getIdStage();
+    }
+
+    protected function getPrevClimaticTest(string $nextTest): string
+    {
+        $climaticTests = self::$CLIMATIC_TESTS;
+        $prevClimaticTestArray = array_filter($climaticTests, function ($climatic) use ($nextTest) {
+            if ($climatic === $nextTest) return false;
+            return true;
+        });
+        return $prevClimaticTestArray[0];
+    }
+
+    protected function getNewProcedureFromCollection(string $procedureName, Collection $procedureCollection) : Procedure
+    {
+        foreach ($procedureCollection as $elem) {
+            if ($elem->getName() === $procedureName)
+                $this->ensure(is_null($elem->getStart()), ' - данная процедура уже отмечена');
+            return $elem;
+        }
+    }
+
+    protected function checkNewTTProcedure(string $procedureName): void
+    {
+        $this->ensure($this->isCompositeProcedure($procedureName), 'it is must be compositeProcedure');
+        $this->ensure(array_search($procedureName, array_keys(self::$TECHNICAL_PROCEDURES_REGULATIONS)), 'wrong name');
+        $now = new \DateTime('now');
         $currentTTproc = $this->currentTTProcedure;
         if (!is_null($currentTTproc))
             $this->ensure($now < $currentTTproc->getEnd(), ' - предыдущая процедура еще не завершена');
-        if (in_array($name, self::$CLIMATIC_TESTS)) {
-            $climatics = self::$CLIMATIC_TESTS;
-            $prevTest = array_filter($climatics, function ($climatic) use ($name) {
-                if ($climatic === $name) return false;
-                return true;
-            });
-            $now = new \DateTime('now');
-            $relaxPeriod = new \DateInterval(self::$CLIMATIC_RELAX[0]);
-            $requiredEnd = $now->add($relaxPeriod);
-            $end = $this->TTCollection[$prevTest[0]]->getEnd();
-            if (!is_null($end))
-                $this->ensure($end < $requiredEnd, '- не соблюдается перерыв между жарой и морозом');
-        }
-        $elem->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
-        $elem->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
     }
 
-
-
-
+    protected function checkClimaticProcedure(Procedure $procedure)
+    {
+        $prevClimaticTest = $this->getPrevClimaticTest($procedure->getName());
+        $relaxPeriod = new \DateInterval(self::$RELAX_PROCEDURE['climatic_relax']);
+        $relaxEnd = (clone $this->TTCollection[$prevClimaticTest]->getEnd())->add($relaxPeriod);
+        $now = new \DateTime('now');
+        $this->ensure($now < $relaxEnd, '- не соблюдается перерыв между жарой и морозом');
+    }
 
 }
-
-
-
 
