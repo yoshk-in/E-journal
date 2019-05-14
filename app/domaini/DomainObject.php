@@ -19,7 +19,6 @@ abstract class DomainObject
     protected static $PROCEDURES;
     protected static $TECHNICAL_PROCEDURES_REGULATIONS;
     protected static $PROCEDURES_REGULATIONS;
-    protected $currentProcedure;
     protected $currentProcedureId;
 
     public function __construct()
@@ -67,7 +66,7 @@ abstract class DomainObject
             $this->ensure(!is_null($last->getEnd()), 'окончание прошлой процедуры еше не отмечено');
         }
         $this->ensure(is_null($this->currentProcedure->getStart()), ' - начало данной процедуры уже отмечено');
-        $this->currentProcedure->setStart();
+        $currentProcedure->setStart();
     }
 
     public function endProcedure()
