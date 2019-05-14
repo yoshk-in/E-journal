@@ -61,6 +61,7 @@ abstract class DomainObject
 
     public function startProcedure()
     {
+        $currentProcedure = $this->getCurrentProcedure();
         if ($this->currentProcedureId !== 0) {
             $last = $this->procedureCollection[--$this->currentProcedureId];
             $this->ensure(!is_null($last->getEnd()), 'окончание прошлой процедуры еше не отмечено');
@@ -71,13 +72,12 @@ abstract class DomainObject
 
     public function endProcedure()
     {
-        $this->ensure(!is_null($this->currentProcedure->getStart()), ' - начало данной процедуры не отмечено');
-        $this->ensure(is_null($this->currentProcedure->getEnd()), ' - окончание данной процедуры уже отмечено');
-        if ($this->isCompositeProcedure($this->currentProcedure->getName()))
+        $currentProcedure = $this->getCurrentProcedure();
+        $this->checkStartAndEndProcedure($currentProcedure);
+        if ($this->isCompositeProcedure($currentProcedure->getName()))
             $this->compositeProcedureIsFinished($this->TTCollection, static::$TECHNICAL_PROCEDURES_REGULATIONS);
-        $this->currentProcedure->setEnd();
+        $currentProcedure->setEnd();
         $nextId = $this->currentProcedure->getIdStage();
-        $this->currentProcedure = $this->procedureCollection[++$nextId];
         $this->currentProcedureId[++$nextId];
     }
 
@@ -102,18 +102,26 @@ abstract class DomainObject
         }
     }
 
-    protected function getCurrentProcedure()
+    protected function getCurrentProcedure() : Procedure
     {
         return $this->procedureCollection[$this->currentProcedureId];
     }
-
-    abstract protected function compositeProcedureIsFinished(Collection $collection, array $arrayOfComposite);
 
     protected function isCompositeProcedure(string $name)
     {
         if (in_array($name, $this->compositeProcedures)) return true;
         return false;
     }
+
+    protected function checkStartAndEndProcedure(Procedure $procedure) : void
+    {
+        $this->ensure(!is_null($procedure->getStart()), ' - начало данной процедуры не отмечено');
+        $this->ensure(is_null($procedure->getEnd()), ' - окончание данной процедуры уже отмечено');
+    }
+
+
+    abstract protected function compositeProcedureIsFinished(Collection $collection, array $arrayOfComposite);
+
 
 }
 

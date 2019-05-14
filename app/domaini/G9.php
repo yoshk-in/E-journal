@@ -53,27 +53,25 @@ class G9 extends DomainObject
         parent::__construct();
     }
 
+    public function startTTProcedure(string $name)
+    {
+        $this->checkNewTTProcedure($name);
+        $nextProcedure = $this->getProcedureByNameFromCollection($name, $this->TTCollection);
+
+        if (in_array($name, self::$CLIMATIC_TESTS)) {
+            $this->checkClimaticProcedure($nextProcedure);
+        }
+        $nextProcedure->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
+        $nextProcedure->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
+        $this->currentTTProcedureId = $nextProcedure->getIdStage();
+    }
+
     protected function compositeProcedureIsFinished(Collection $collection, array $arrayOfComposite)
     {
         $errMsg = '- нет отмечены частично или полностью входящие в данную процедуры испытания';
         $this->ensure($collection->count() === count($arrayOfComposite), $errMsg);
         foreach ($collection as $elem) $this->ensure(!is_null($elem->getEnd()), $errMsg);
     }
-
-    public function startTTProcedure(string $name)
-    {
-        $this->checkNewTTProcedure($name);
-        $nextProcedure = $this->getNewProcedureFromCollection($name, $this->TTCollection);
-
-        if (in_array($name, self::$CLIMATIC_TESTS)) {
-            $this->checkClimaticProcedure($name);
-        }
-        $nextProcedure->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
-        $nextProcedure->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
-        $this->currentTTProcedure = $nextProcedure;
-        $this->currentTTProcedureId = $this->currentTTProcedure->getIdStage();
-    }
-
     protected function getPrevClimaticTest(string $nextTest): string
     {
         $climaticTests = self::$CLIMATIC_TESTS;
@@ -84,7 +82,7 @@ class G9 extends DomainObject
         return $prevClimaticTestArray[0];
     }
 
-    protected function getNewProcedureFromCollection(string $procedureName, Collection $procedureCollection) : Procedure
+    protected function getProcedureByNameFromCollection(string $procedureName, Collection $procedureCollection) : Procedure
     {
         foreach ($procedureCollection as $elem) {
             if ($elem->getName() === $procedureName)
@@ -111,6 +109,7 @@ class G9 extends DomainObject
         $now = new \DateTime('now');
         $this->ensure($now < $relaxEnd, '- не соблюдается перерыв между жарой и морозом');
     }
+
 
 }
 
