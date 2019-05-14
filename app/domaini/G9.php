@@ -53,13 +53,13 @@ class G9 extends DomainObject
         parent::__construct();
     }
 
-    public function startTTProcedure(string $name)
+    public function startTTProcedure(string $name) : void
     {
         $nextProcedure = $this->getProcedureByNameFromCollection($name, $this->TTCollection);
         $this->checkNewTTProcedure($nextProcedure);
 
         if ($this->isClimaticProcedure($name)) {
-            $this->checkClimaticProcedure($nextProcedure);
+            $this->checkClimaticRelax($nextProcedure);
         }
         $nextProcedure->setInterval(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
         $nextProcedure->setStart(self::$TECHNICAL_PROCEDURES_REGULATIONS[$name]);
@@ -97,13 +97,12 @@ class G9 extends DomainObject
         $procedureName = $procedure->getName();
         $this->ensure($this->isCompositeProcedure($procedureName), 'it is must be compositeProcedure');
         $this->ensure(array_search($procedureName, array_keys(self::$TECHNICAL_PROCEDURES_REGULATIONS)), 'wrong name');
-        $now = new \DateTime('now');
         $currentTTproc = $this->TTCollection[$this->currentProcedureId];
         if (!is_null($currentTTproc))
-            $this->ensure($now < $currentTTproc->getEnd(), ' - предыдущая процедура еще не завершена');
+            $this->ensure( $currentTTproc->ifFinised(), ' - предыдущая процедура еще не завершена');
     }
 
-    protected function checkClimaticProcedure(Procedure $procedure)
+    protected function checkClimaticRelax(Procedure $procedure) : void
     {
         $prevClimaticTest = $this->getPrevClimaticTest($procedure->getName());
         $relaxPeriod = new \DateInterval(self::$RELAX_PROCEDURE['climatic_relax']);
@@ -112,7 +111,7 @@ class G9 extends DomainObject
         $this->ensure($now < $relaxEnd, '- не соблюдается перерыв между жарой и морозом');
     }
 
-    protected function isClimaticProcedure(string $name)
+    protected function isClimaticProcedure(string $name) : bool
     {
         if (in_array($name, self::$CLIMATIC_TESTS)) return true;
         return false;
