@@ -59,7 +59,6 @@ class GNine extends Product
     {
         $next_procedure = $this->getProcByName($name, $this->ttCollection);
         $this->checkNewTTProc($next_procedure);
-
         if ($this->isClimatic($name)) {
             $this->checkTTRelax($next_procedure);
         }
@@ -117,7 +116,7 @@ class GNine extends Product
         $current_tt_proc = $this->ttCollection[$this->currentProcId];
         if (!is_null($current_tt_proc)) {
             $this->ensureRightLogic(
-                $current_tt_proc->ifFinised(),
+                $current_tt_proc->isFinished(),
                 ' - предыдущая процедура еще не завершена'
             );
         }

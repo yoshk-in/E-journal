@@ -5,6 +5,7 @@ namespace App\domaini;
 
 use App\base\exceptions\AppException;
 use App\base\exceptions\IncorrectInputException;
+use App\base\exceptions\WrongModelException;
 
 
 /**
@@ -56,6 +57,9 @@ class Procedure
 
     public function setEndProcedure(): void
     {
+        if (is_null($this->interval)) {
+            throw new WrongModelException('interval is not set');
+        }
         $this->ensureRighInput(
             !is_null($this->startProcedure),
             'в журнале нет отметки' .
@@ -88,6 +92,15 @@ class Procedure
     public function getIdStage(): int
     {
         return $this->idStage;
+    }
+
+    public function isFinished() : bool
+    {
+
+        if ($this->endProcedure) {
+            return true;
+        }
+        return false;
     }
 
     protected function ensureRighInput(bool $condition, $msg = null)

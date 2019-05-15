@@ -37,5 +37,14 @@ class TechProcedure extends Procedure
         return $this->interval;
     }
 
+    public function isFinished() : bool
+    {
+        $now_time = new \DateTime('now');
+        if ($now_time < $this->endProcedure) {
+            return true;
+        }
+        return false;
+    }
+
 }
 
