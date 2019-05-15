@@ -2,7 +2,8 @@
 
 namespace App\domaini;
 
-use App\base\exceptions\AppException;
+use App\base\exceptions\IncorrectInputException;
+use App\base\exceptions\WrongModelException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -76,7 +77,6 @@ abstract class Product
     public function endProcedure()
     {
         $current_process = $this->getCurrentProc();
-        $this->checkProcProps($current_process);
         if ($this->isCompositeProc($current_process->getName())) {
             $this->checkTTisFinish($this->ttCollection, static::$ttProcedureRules);
         }
@@ -87,16 +87,20 @@ abstract class Product
 
     protected function ensureRightLogic($conditions, string $msg = null)
     {
-        if (is_array($conditions)) {
-            foreach ($conditions as $condition) {
-                if (!$condition) {
-                    throw new AppException('ошибка: операция не выполнена ' . $msg);
-                }
-            }
-        } else {
-            if (!$conditions) {
-                throw new AppException('ошибка: операция не выполнена ' . $msg);
-            }
+        if (!$conditions) {
+            throw new WrongModelException(
+                'have mistake in domain logic program ' . $msg
+            );
+        }
+
+    }
+
+    protected function ensureRightInput($condition, string $msg = null)
+    {
+        if (!$condition) {
+            throw new IncorrectInputException(
+                'ошибка: операция не выполнена ' . $msg
+            );
         }
     }
 
@@ -121,7 +125,7 @@ abstract class Product
         }
     }
 
-    protected function getCurrentProc() : Procedure
+    protected function getCurrentProc(): Procedure
     {
         return $this->procsCollection[$this->currentProcId];
     }
@@ -134,33 +138,20 @@ abstract class Product
         return false;
     }
 
-    protected function checkProcProps(Procedure $procedure) : void
-    {
-        $this->ensureRightLogic(
-            !is_null($procedure->getStartProc()),
-            ' - начало данной процедуры не отмечено'
-        );
-        $this->ensureRightLogic(
-            is_null($procedure->getEndProcedure()),
-            ' - окончание данной процедуры уже отмечено'
-        );
-    }
-
-    protected function checkLastProcEnd() : void
+    protected function checkLastProcEnd(): void
     {
         if ($this->currentProcId !== 0) {
             $last_procedure = $this->procsCollection[--$this->currentProcId];
-            $this->ensureRightLogic(
-                !is_null($last_procedure->getEnd()),
+            $this->ensureRightInput(
+                $last_procedure->isFinished(),
                 'окончание прошлой процедуры еше не отмечено'
             );
         }
     }
 
-
     abstract protected function checkTTisFinish(
         Collection $collection, array $arrayOfComposite
-    ) : void;
+    ): void;
 
 
 }

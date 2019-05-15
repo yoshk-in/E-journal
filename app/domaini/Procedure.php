@@ -4,6 +4,7 @@
 namespace App\domaini;
 
 use App\base\exceptions\AppException;
+use App\base\exceptions\IncorrectInputException;
 
 
 /**
@@ -22,12 +23,12 @@ class Procedure
 
     public function __construct()
     {
-
     }
 
     public function setIdentityData(
         string $name, Product $product, int $idState
-    ): void {
+    ): void
+    {
         $this->name = $name;
         $this->product = $product;
         $this->idStage = $idState;
@@ -39,7 +40,9 @@ class Procedure
         if (is_null($this->startProcedure)) {
             $this->startProcedure = new \DateTime('now');
         } else {
-            throw new AppException('данное событие уже отмечено в журнале');
+            throw new IncorrectInputException(
+                'данное событие уже отмечено в журнале'
+            );
         }
     }
 
@@ -55,21 +58,23 @@ class Procedure
 
     public function setEndProcedure(): void
     {
-        if (is_null($this->startProcedure)) {
-            throw new AppException(
-                'в журнале нет отметки' .
-                ' о начале данной процедуры - операция не выполнена'
+        $this->ensureRighInput(
+            !is_null($this->startProcedure),
+            'в журнале нет отметки' .
+            ' о начале данной процедуры '
         );
-        }
-        if (is_null($this->endProcedure)) {
-            $now_time = new \DateTime('now');
-            if ($now_time < (clone $this->startProcedure)->add($this->interval)) {
-                throw new AppException(' minTime exception');
-            }
-            $this->endProcedure = $now_time;
-        } else {
-            throw new AppException('данное событие уже отмечено в журнале');
-        }
+        $this->ensureRighInput(
+            is_null($this->endProcedure), 'данное событие уже отмечено в журнале'
+        );
+        $now_time = new \DateTime('now');
+        $this->ensureRighInput(
+            $now_time < (clone $this->startProcedure)->add($this->interval),
+            ' не соблюден минимальный интервал выполнения ' .
+            'процедуры - по умолчанию:' .
+            $this->interval->format('%H часов % минут % секунд')
+        );
+        $this->endProcedure = $now_time;
+
     }
 
     public function getName(): string
@@ -87,5 +92,14 @@ class Procedure
         return $this->idStage;
     }
 
+    protected function ensureRighInput(bool $condition, $msg = null)
+    {
+        if (!$condition) {
+            throw new IncorrectInputException(
+                'ошибка: операция не выполнена ' . $msg
+            );
+        }
+
+    }
 
 }
