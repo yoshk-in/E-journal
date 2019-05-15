@@ -3,76 +3,65 @@
 namespace App\console;
 
 use App\base\AppHelper;
+use App\base\exceptions\AppException;
 
-class G9Parser extends ConsoleSyntaxParser
+class G9Parser extends ConsoleParser
 {
-    private $arg1;
+    private $_arg1;
 
-    private $arg2;
+    private $_arg2;
 
-    private $arg3;
+    private $_arg3;
 
-    private $cache;
+    private $_cache;
 
     public function __construct()
     {
         parent::__construct();
-
-        $i = 0;
-
-        foreach ($_SERVER['argv'] as $arg) {
-            $prop = "arg".$i;
-
-            $this->$prop = $arg;
-
-            ++$i;
-
+        $args_counter = 0;
+        foreach ($_SERVER['argv'] as $argN) {
+            $prop_object = "arg" . $args_counter;
+            $this->$prop_object = $argN;
+            ++$args_counter;
         }
-        $this->cache = AppHelper::getCacheObject();
-
+        $this->_cache = AppHelper::getCacheObject();
     }
 
     protected function doParse()
     {
-        if ($this->arg2) {
+        if ($this->_arg2) {
             $this->setCommand();
-
         }
-
-        if (!is_null($this->arg3)) {
-            $numbers = $this->parseBlocksNumbers($this->arg3);
-
-            $uniqueNumbers = array_unique($numbers);
-
-            $this->ensure($uniqueNumbers == $numbers, 'переданы повторяющиеся номера');
-
+        if (!is_null($this->_arg3)) {
+            $numbers = $this->parseBlocksNumbers($this->_arg3);
+            $unique_numbers = array_unique($numbers);
+            $this->ensure(
+                $unique_numbers == $numbers, 'переданы повторяющиеся номера'
+            );
             sort($numbers, SORT_NUMERIC);
-
             $this->request->setBlockNumbers($numbers);
-
         }
-
     }
 
     protected function setCommand()
     {
-        if ($this->arg2 === '+') {
-            $this->ensure(!is_null($this->arg3), 'введите номера блоков');
+        if ($this->_arg2 === '+') {
+            $this->ensure(!is_null($this->_arg3), 'введите номера блоков');
 
             $this->request->addCommand('addObject');
             $this->request->addCommand('nextWorkStageG9');
             return;
         };
-        if (mb_stripos($this->arg2, 'партия=') !== false) {
-            list($key, $value) = explode('=', $arg2);
+        if (mb_stripos($this->_arg2, 'партия=') !== false) {
+            $value = (explode('=', $this->_arg2))[1];
             $this->ensure(strlen($value) === 3);
             $this->request->addCommand('setPartNumber');
             $this->request->setPartNumber($value);
             return;
         }
 
-        if (mb_stripos($this->arg2, 'стат') !== false) {
-            if ($this->arg3) {
+        if (mb_stripos($this->_arg2, 'стат') !== false) {
+            if ($this->_arg3) {
                 $this->request->addCommand('printRangeStat');
             } else {
                 $this->request->addCommand('printFullStat');
@@ -80,7 +69,8 @@ class G9Parser extends ConsoleSyntaxParser
             return;
         }
 
-        if ($this->arg2 === 'очистка') {$this->request->addCommand('clearJournal');
+        if ($this->_arg2 === 'очистка') {
+            $this->request->addCommand('clearJournal');
         }
 
         $this->ensure(false);
@@ -89,65 +79,63 @@ class G9Parser extends ConsoleSyntaxParser
 
     protected function parseBlocksNumbers(string $arg)
     {
-        $arrayOfNumbers = [];
-        $raw            = $this->explodeByComma($arg);
-        foreach ($raw as $line) {
-            if (strpos($line, '-')) {
+        $numbers_array = [];
+        $raw_data = $this->explodeByComma($arg);
+        foreach ($raw_data as $line_data) {
+            if (strpos($line_data, '-')) {
 
-                $this->ensure(substr_count($line, '-') === 1);
-                $range = self::explodeByHyphen($line);
+                $this->ensure(substr_count($line_data, '-') === 1);
+                $range = self::explodeByHyphen($line_data);
 
                 list($first, $last) = $this->getFullNumbers($range);
                 $this->ensure($first < $last);
 
-                $arrayOfNumbers = array_merge($arrayOfNumbers, range($first, $last));
+                $numbers_array = array_merge($numbers_array, range($first, $last));
             } else {
-                $fullNumbers    = $this->getFullNumbers(array($line));
-                $arrayOfNumbers = array_merge($arrayOfNumbers, $fullNumbers);
+                $full_numbers = $this->getFullNumbers([$line_data]);
+                $numbers_array = array_merge($numbers_array, $full_numbers);
             }
         }
 
-        return $arrayOfNumbers;
+        return $numbers_array;
     }
 
-    protected function ensure(bool $condition, $msg = 'неверно заданы параметры запроса')
+    protected function ensure(
+        bool $condition, $msg = 'неверно заданы параметры запроса'
+    )
     {
         if (!$condition) {
-            throw new \App\base\AppException($msg);
+            throw new AppException($msg);
         }
     }
 
     protected function getFullNumbers($numbers)
     {
-        $fullNumbers = [];
+        $full_numbers = [];
         foreach ($numbers as $number) {
-            $this->ensure(is_int((int) $number));
-            $number = (string) $number;
+            $this->ensure(is_int((int)$number));
+            $number = (string)$number;
             if (strlen($number) === 6) {
-                $partNumber = substr($number, 0, 3);
-                (AppHelper::getCacheObject())->setPartNumber($partNumber);
-                $fullNumbers[] = (int) $number;
+                $part_number = substr($number, 0, 3);
+                (AppHelper::getCacheObject())->setPartNumber($part_number);
+                $full_numbers[] = (int)$number;
             } else if (strlen($number) === 3) {
-                $partNumber    = (AppHelper::getCacheObject())->getPartNumber();
-                $fullNumbers[] = (int) (((string) $partNumber).$number);
+                $part_number = (AppHelper::getCacheObject())->getPartNumber();
+                $full_numbers[] = (int)(((string)$part_number) . $number);
 
             } else {
                 $this->ensure(false);
             }
         }
-        return $fullNumbers;
+        return $full_numbers;
     }
 
-    protected static function explodeByComma(string $string):array
-
-
+    protected static function explodeByComma(string $string): array
     {
         return explode(',', $string);
     }
 
-    protected static function explodeByHyphen(string $string):array
-
-
+    protected static function explodeByHyphen(string $string): array
     {
         return explode('-', $string);
     }

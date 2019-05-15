@@ -4,14 +4,12 @@
 namespace App\cache;
 
 
-use App\base\AppException;
-
 class Cache
 {
-    private $cacheData = [];
-    private static $instance;
-    private $mtimes = [];
-    private $path = 'data/';
+    private $_cacheData = [];
+    private static $_instance;
+    private $_modifyTimes = [];
+    private $_path = 'data/';
 
 
     private function __construct()
@@ -21,46 +19,53 @@ class Cache
 
     public static function init()
     {
-        if (is_null(self::$instance)) self::$instance = new Cache();
+        if (is_null(self::$_instance)) {
+            self::$_instance = new Cache();
+        }
 
-        return self::$instance;
+        return self::$_instance;
     }
 
-    public function set($name, $value)
+    public function setProp($name, $value)
     {
-        $this->cacheData[$name] = $value;
-        if (!file_exists($this->path)) {
-            mkdir($this->path);
+        $this->_cacheData[$name] = $value;
+        if (!file_exists($this->_path)) {
+            mkdir($this->_path);
         }
         $serialized = serialize($value);
-        file_put_contents($this->path . $name, $serialized);
-        $this->mtimes[$name] = time();
+        file_put_contents($this->_path . $name, $serialized);
+        $this->_modifyTimes[$name] = time();
     }
 
-    public function get($name)
+    public function getProp($name_prop)
     {
-        $file = $this->path . "/" . $name;
-        if (file_exists($file)) {
+        $cache_file = $this->_path . "/" . $name_prop;
+        if (file_exists($cache_file)) {
             clearstatcache();
-            $mtime = filemtime($file);
-            if (!isset($this->mtimes[$name])) {
-                $this->mtimes[$name] = 0;
+            $mtime = filemtime($cache_file);
+            if (!isset($this->_modifyTimes[$name_prop])) {
+                $this->_modifyTimes[$name_prop] = 0;
             }
-            if ($mtime > $this->mtimes[$name]) {
-                $this->mtimes[$name] = $mtime;
-                return ($this->cacheData[$name] = unserialize(file_get_contents($file)));
+            if ($mtime > $this->_modifyTimes[$name_prop]) {
+                $this->_modifyTimes[$name_prop] = $mtime;
+                return (
+                    $this->_cacheData[$name_prop]
+                        = unserialize(file_get_contents($cache_file))
+                    );
             }
         }
-        if (isset($this->cacheData[$name])) return $this->cacheData[$name];
+        if (isset($this->_cacheData[$name_prop])) {
+            return $this->_cacheData[$name_prop];
+        }
     }
 
     public function getPartNumber()
     {
-        return (int) $this->get('partNumber');
+        return (int) $this->getProp('partNumber');
     }
 
     public function setPartNumber($number)
     {
-        $this->set('partNumber', $number);
+        $this->setProp('partNumber', $number);
     }
 }

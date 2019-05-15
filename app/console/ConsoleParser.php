@@ -4,7 +4,7 @@ namespace App\console;
 
 use \App\base\AppHelper;
 
-abstract class ConsoleSyntaxParser
+abstract class ConsoleParser
 {
     protected $request;
 
@@ -18,9 +18,9 @@ abstract class ConsoleSyntaxParser
     public function parse()
     {
         $params = $_SERVER['argv'];
-        $i      = 0;
-        foreach ($params as $arg) {
-            $this->request->setProperty($i++, $arg);
+        $args_counter      = 0;
+        foreach ($params as $argument) {
+            $this->request->setProperty(++$args_counter, $argument);
         }
         $this->doParse();
     }

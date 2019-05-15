@@ -23,7 +23,9 @@ class PrintRangeStatCommand extends Command
         }
 
         foreach ($blocks as $block) {
-            $request->setFeedback((string) $block->getNumber().' - на стадии: '.$block->getStatement());
+            $request->setFeedback(
+                (string) $block->getNumber().' - на стадии: '.$block->getStatement()
+            );
 
         }
 

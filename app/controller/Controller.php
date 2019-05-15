@@ -6,39 +6,39 @@ use App\base\AppHelper;
 
 class Controller
 {
-    private static $inst;
-    private $helper;
+    private static $_inst;
+    private $_helper;
 
     private function __construct()
     {
-        $this->helper = AppHelper::class;
+        $this->_helper = AppHelper::class;
     }
 
     public static function init()
     {
-        if (self::$inst === null) {
-            self::$inst = new Controller();
+        if (self::$_inst === null) {
+            self::$_inst = new Controller();
         }
-        return self::$inst;
+        return self::$_inst;
     }
 
     public function handleRequest()
     {
-        $request = $this->helper::getRequest();
-        $consoleParser = $this->helper::getConsoleSyntaxParser();
-        if ($consoleParser) {
-            $consoleParser->parse($request);
+        $request = $this->_helper::getRequest();
+        $console_parser = $this->_helper::getConsoleSyntaxParser();
+        if ($console_parser) {
+            $console_parser->parse($request);
         }
-        $cmds = \App\command\CommandResolver::getCommand($request);
-        foreach ($cmds as $cmd) {
-            $cmd->execute($request);
+        $commands = \App\command\CommandResolver::getCommand($request);
+        foreach ($commands as $command) {
+            $command->execute($request);
         }
         echo $request->getFeedbackString();
     }
 
     public static function run()
     {
-        $inst = self::init();
-        $inst->handleRequest();
+        $instance = self::init();
+        $instance->handleRequest();
     }
 }

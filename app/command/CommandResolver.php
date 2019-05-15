@@ -3,12 +3,13 @@
 namespace App\command;
 
 use App\base\Request;
+use App\base\exceptions\AppException;
 
 class CommandResolver
 {
-    private static $base_cmd    = 'Command';
-    private static $default_cmd = 'App\command\DefaultCommand';
-    private static $inst;
+    private static $_baseCmd    = 'Command';
+    private static $_defaultCmd = 'App\command\DefaultCommand';
+    private static $_inst;
 
 
 
@@ -18,38 +19,43 @@ class CommandResolver
 
     public static function init()
     {
-        if (is_null(self::$inst)) {
+        if (is_null(self::$_inst)) {
             return new self;
         }
-        return self::$inst;
+        return self::$_inst;
 
     }
 
     public static function getCommand(Request $request)
     {
-        $cmdArray = [];
-        if ($cmds = $request->getCommands()) {
-            foreach ($cmds as $cmd) {
-                $cmd = ucfirst($cmd) . self::$base_cmd;
-                $file = __DIR__ . '/' . $cmd . '.php';
-                $class = '\\' . __NAMESPACE__ . '\\' . $cmd;
+        $result_cmd_array = [];
+        $commands = $request->getCommands();
+        if ($commands) {
+            foreach ($commands as $command) {
+                $command = ucfirst($command) . self::$_baseCmd;
+                $file_of_command = __DIR__ . '/' . $command . '.php';
+                $class = '\\' . __NAMESPACE__ . '\\' . $command;
 
-                if (file_exists($file)) {
-                    require_once $file;
+                if (file_exists($file_of_command)) {
+                    require_once $file_of_command;
                 } else {
-                    throw new \App\base\AppException("The command file not found: $file is given");
+                    throw new AppException(
+                        "The command file not found: $file_of_command is given"
+                    );
                 }
 
                 if (class_exists($class)) {
-                    $cmdArray[] = new $class;
+                    $result_cmd_array[] = new $class;
                 } else {
-                    throw new \App\base\AppException("The command class not found: $class is given");
+                    throw new AppException(
+                        "The command class not found: $class is given"
+                    );
                 }
             }
-            return $cmdArray;
+            return $result_cmd_array;
         } else {
 
-            return new self::$default_cmd;
+            return new self::$_defaultCmd;
         }
     }
 }

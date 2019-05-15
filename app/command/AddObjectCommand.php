@@ -2,7 +2,7 @@
 
 namespace App\command;
 
-use App\base\AppException;
+use App\base\exceptions\AppException;
 use App\base\Request;
 
 use App\domain\G9;

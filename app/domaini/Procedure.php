@@ -3,8 +3,8 @@
 
 namespace App\domaini;
 
-use App\base\AppException;
-use App\domain\ProcedureRequirements;
+use App\base\exceptions\AppException;
+
 
 /**
  * @Entity @Table(name="states")
@@ -12,8 +12,8 @@ use App\domain\ProcedureRequirements;
  **/
 class Procedure
 {
-    protected $start;
-    protected $end;
+    protected $startProcedure;
+    protected $endProcedure;
     protected $name;
     protected $product;
     protected $idStage;
@@ -25,39 +25,48 @@ class Procedure
 
     }
 
-    public function setIdentityData(string $name, DomainObject $product, int $idState): void
-    {
+    public function setIdentityData(
+        string $name, Product $product, int $idState
+    ): void {
         $this->name = $name;
         $this->product = $product;
         $this->idStage = $idState;
     }
 
 
-    public function setStart(): void
+    public function setStartProc(): void
     {
-        if (is_null($this->start)) $this->start = new \DateTime('now');
-        else throw new AppException('данное событие уже отмечено в журнале');
+        if (is_null($this->startProcedure)) {
+            $this->startProcedure = new \DateTime('now');
+        } else {
+            throw new AppException('данное событие уже отмечено в журнале');
+        }
     }
 
-    public function getStart(): \DateTime
+    public function getStartProc(): \DateTime
     {
-        return $this->start;
+        return $this->startProcedure;
     }
 
-    public function getEnd(): ?\DateTime
+    public function getEndProcedure(): ?\DateTime
     {
-        return $this->end;
+        return $this->endProcedure;
     }
 
-    public function setEnd(): void
+    public function setEndProcedure(): void
     {
-        if (is_null($this->start)) throw new AppException('в журнале нет отметки' .
-            ' о начале данной процедуры - операция не выполнена');
-        if (is_null($this->end)) {
-            $now = new \DateTime('now');
-            if ($now < (clone $this->start)->add($this->interval))
+        if (is_null($this->startProcedure)) {
+            throw new AppException(
+                'в журнале нет отметки' .
+                ' о начале данной процедуры - операция не выполнена'
+        );
+        }
+        if (is_null($this->endProcedure)) {
+            $now_time = new \DateTime('now');
+            if ($now_time < (clone $this->startProcedure)->add($this->interval)) {
                 throw new AppException(' minTime exception');
-            $this->end = $now;
+            }
+            $this->endProcedure = $now_time;
         } else {
             throw new AppException('данное событие уже отмечено в журнале');
         }
