@@ -37,13 +37,11 @@ class Procedure
 
     public function setStartProc(): void
     {
-        if (is_null($this->startProcedure)) {
-            $this->startProcedure = new \DateTime('now');
-        } else {
-            throw new IncorrectInputException(
-                'данное событие уже отмечено в журнале'
-            );
-        }
+        $this->ensureRighInput(
+            is_null($this->startProcedure),
+            'данное событие уже отмечено в журнале'
+        );
+        $this->startProcedure = new \DateTime('now');
     }
 
     public function getStartProc(): \DateTime

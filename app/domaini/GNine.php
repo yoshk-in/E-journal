@@ -71,13 +71,10 @@ class GNine extends Product
     protected function checkTTisFinish(
         Collection $collection, array $arrayOfComposite
     ): void {
-        $err_msg = '- нет отмечены частично или полностью входящие' . '
+        $err_msg = '- не отмечены частично или полностью входящие' . '
          в данную процедуры испытания';
-        $this->ensureRightLogic(
-            $collection->count() === count($arrayOfComposite), $err_msg
-        );
         foreach ($collection as $procedure) {
-            $this->ensureRightLogic(!is_null($procedure->getEnd()), $err_msg);
+            $this->ensureRightInput($procedure->isFinished(), $err_msg);
         }
     }
 
@@ -91,7 +88,6 @@ class GNine extends Product
             return true;
         };
         $prev_climatic = array_filter($climatic_array, $callback_filter);
-
         return $prev_climatic[0];
     }
 
@@ -101,13 +97,10 @@ class GNine extends Product
     ) : Procedure {
         foreach ($procedureCollection as $procedure) {
             if ($procedure->getName() === $procedureName) {
-                $this->ensureRightLogic(
-                    is_null($procedure->getStart()),
-                    ' - данная процедура уже отмечена'
-                );
+                return $procedure;
             }
-            return $procedure;
         }
+        $this->ensureRightLogic(false, 'wrong name procedure');
     }
 
     protected function checkNewTTProc(Procedure $procedure): void
