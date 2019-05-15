@@ -35,8 +35,12 @@ class Procedure
         $this->idStage = $idState;
     }
 
+    public function setInterval(string $interval)
+    {
+        $this->interval = $interval;
+    }
 
-    public function setStartProc(): void
+    public function setStartProc() : void
     {
         $this->ensureRighInput(
             is_null($this->startProcedure),
@@ -45,7 +49,7 @@ class Procedure
         $this->startProcedure = new \DateTime('now');
     }
 
-    public function getStartProc(): \DateTime
+    public function getStartProc(): ?\DateTime
     {
         return $this->startProcedure;
     }
@@ -55,11 +59,13 @@ class Procedure
         return $this->endProcedure;
     }
 
+    // в связи с тем что установка старта и окончания процедеры производится
+    // в разных запросах-сессиях программы (свойство интервал не сохраняется
+    // между запусками прогаммы в БД) проверка минимального времени выполнения
+    // процедуры (GNine::proceduresRules) производится в классе Product
+    // который реализует GNine
     public function setEndProcedure(): void
     {
-        if (is_null($this->interval)) {
-            throw new WrongModelException('interval is not set');
-        }
         $this->ensureRighInput(
             !is_null($this->startProcedure),
             'в журнале нет отметки' .
@@ -68,15 +74,7 @@ class Procedure
         $this->ensureRighInput(
             is_null($this->endProcedure), 'данное событие уже отмечено в журнале'
         );
-        $now_time = new \DateTime('now');
-        $this->ensureRighInput(
-            $now_time < (clone $this->startProcedure)->add($this->interval),
-            ' не соблюден минимальный интервал выполнения ' .
-            'процедуры - по умолчанию:' .
-            $this->interval->format('%H часов % минут % секунд')
-        );
-        $this->endProcedure = $now_time;
-
+        $this->endProcedure = new \DateTime('now');
     }
 
     public function getName(): string

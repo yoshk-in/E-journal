@@ -67,10 +67,6 @@ abstract class Product
     {
         $current_process = $this->getCurrentProc();
         $this->checkLastProcEnd();
-        $this->ensureRightLogic(
-            is_null($current_process->getStartProc()),
-            ' - начало данной процедуры уже отмечено'
-        );
         $current_process->setStartProc();
     }
 
@@ -80,6 +76,7 @@ abstract class Product
         if ($this->isCompositeProc($current_process->getName())) {
             $this->checkTTisFinish($this->ttCollection, static::$ttProcedureRules);
         }
+        $this->checkProcRules($current_process);
         $current_process->setEndProcedure();
         $next_id = $current_process->getIdStage();
         $this->currentProcId[++$next_id];
@@ -113,14 +110,16 @@ abstract class Product
 
     protected function initProcedures()
     {
-        foreach (static::$procedures as $key => $procedure) {
+        foreach (static::$procedures as $id_stage => $procedure) {
             $this->procsCollection->add(new Procedure());
-            $this->procsCollection[$key]->setIdentityData($procedure, $this, $key);
+            $this->procsCollection[$id_stage]
+                ->setIdentityData($procedure, $this, $id_stage);
         }
         $index = 0;
         foreach (static::$ttProcedureRules as $tt_procedure => $procedure_time) {
             $this->ttCollection->add(new TechProcedure());
-            $this->ttCollection[$index]->setIdentityData($tt_procedure, $this, $key);
+            $this->ttCollection[$index]
+                ->setIdentityData($tt_procedure, $this, $index);
             ++$index;
         }
     }
@@ -147,6 +146,18 @@ abstract class Product
                 'окончание прошлой процедуры еше не отмечено'
             );
         }
+    }
+
+    protected function checkProcRules(Procedure $current_procedure)
+    {
+        $start = clone $current_procedure->getStartProc();
+        $interval = new \DateInterval(static::$proceduresRules['minTime']);
+        $end_by_rules = $start->add($interval);
+        $this->ensureRightInput(
+            new \DateTime('now') < $end_by_rules,
+            '- минимальное время проведения процедуры' .
+            $end_by_rules->format('%H часов %i минут %i секунд')
+        );
     }
 
     abstract protected function checkTTisFinish(

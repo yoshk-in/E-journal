@@ -21,11 +21,11 @@ class GNine extends Product
     ];
 
     protected static $relaxProcedure = [
-        'climatic_relax' => 'PT2H'
+        'climaticRelax' => 'PT2H'
     ];
 
     protected static $proceduresRules = [
-        'minProcTime' => 'PT30M'
+        'minTime' => 'PT30M'
     ];
 
     protected $currentTTProcId;
@@ -63,7 +63,7 @@ class GNine extends Product
             $this->checkTTRelax($next_procedure);
         }
         $next_procedure->setInterval(self::$ttProcedureRules[$name]);
-        $next_procedure->setStartProc(self::$ttProcedureRules[$name]);
+        $next_procedure->setStartProc();
         $this->currentTTProcId = $next_procedure->getIdStage();
     }
 
@@ -125,7 +125,7 @@ class GNine extends Product
     protected function checkTTRelax(Procedure $procedure) : void
     {
         $prev_climatic = $this->getPrevClimatic($procedure->getName());
-        $relax_period = new \DateInterval(self::$relaxProcedure['climatic_relax']);
+        $relax_period = new \DateInterval(self::$relaxProcedure['climaticRelax']);
         $prev_climatic = clone $this->ttCollection[$prev_climatic];
         $relax_end = ($prev_climatic->getEnd())->add($relax_period);
         $now_time = new \DateTime('now');
