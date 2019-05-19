@@ -3,44 +3,52 @@
 namespace App\domaini;
 
 use App\base\exceptions\WrongModelException;
+use DateTimeImmutable;
+use DateInterval;
 
 class TechProcedure extends Procedure
 {
+    protected $interval;
 
-    public function getStartProc() : \DateTime
+    public function getStart() : ?DateTimeImmutable
     {
         return $this->startProcedure;
     }
 
-    public function setStartProc(): void
+    public function setStart(): void
     {
         if (is_null($this->interval)) {
             throw new WrongModelException('prop interval is required');
         }
-        $this->startProcedure = new \DateTime('now');
-        $this->endProcedure = (clone $this->startProcedure)->add($this->interval);
+        $this->startProcedure = new \DateTimeImmutable('now');
+        $this->endProcedure =  $this->startProcedure->add($this->interval);
     }
 
-    public function setEndProcedure(): void
+    public function setEnd(): void
     {
         throw new WrongModelException('tt procedure end is not selectable');
     }
 
 
-    public function getEndProcess() : \DateTime
+    public function getEndProcess() : ?DateTimeImmutable
     {
         return $this->endProcedure;
     }
 
-    public function getInterval(): \DateInterval
+    public function setInterval(string $interval): void
+    {
+        $this->interval = new DateInterval($interval);
+    }
+
+    public function getInterval(): DateInterval
     {
         return $this->interval;
     }
 
     public function isFinished() : bool
     {
-        $now_time = new \DateTime('now');
-        if ($now_time < $this->endProcedure) {
+        $now_time = new DateTimeImmutable('now');
+        if ($now_time > $this->endProcedure) {
             return true;
         }
         return false;

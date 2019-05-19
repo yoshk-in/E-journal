@@ -5,21 +5,36 @@ namespace tests;
 
 
 use App\domaini\GNine;
+use Doctrine\Common\Collections\ArrayCollection;
 
 class MockGNine extends GNine
 {
-    protected static $ttProcedureRules = [
+    protected $ttProcedureRules = [
         'vibro' => 'PT1S',
         'progon' => 'PT2S',
         'moroz' => 'PT2S',
         'jara' => 'PT2S'
     ];
 
-    protected static $relaxProcedure = [
-        'climatic_relax' => 'PT2S'
+    protected $relaxProcedure = [
+        'climaticRelax' => 'PT2S'
     ];
 
-    protected static $proceduresRules = [
-        'minProcTime' => 'PT1S'
+    protected $proceduresRules = [
+        'minTime' => 'PT1S'
     ];
+
+    public function __clone()
+    {
+        $buffer = new ArrayCollection();
+        foreach ($this->ttCollection as $proc) {
+            $buffer->add(clone $proc);
+        }
+        $this->ttCollection = $buffer;
+        $buffer = new ArrayCollection();
+        foreach ($this->procsCollection as $proc) {
+            $buffer->add(clone $proc);
+        }
+        $this->procsCollection = $buffer;
+    }
 }

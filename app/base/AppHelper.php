@@ -2,12 +2,20 @@
 
 namespace App\base;
 
+use App\base\exceptions\ExceptionGenerator;
 use \Doctrine\ORM\Tools\Setup;
 use \Doctrine\ORM\EntityManager;
+use App\command\CommandResolver;
+use App\console\ParserResolver;
+use App\cache\Cache;
+use data\DatabaseConf;
+use App\base\exceptions\AppException;
+
 
 class AppHelper
 {
     private static $request;
+    private static $exceptionGenerator;
 
     public static function getRequest(): Request
     {
@@ -19,17 +27,17 @@ class AppHelper
 
     public function getConsoleSyntaxParser()
     {
-        return \App\console\ParserResolver::getConsoleParser();
+        return ParserResolver::getConsoleParser();
     }
 
     public static function getCacheObject()
     {
-        return \App\cache\Cache::init();
+        return Cache::init();
     }
 
     public static function getCommandResolver()
     {
-        return \App\command\CommandResolver::class;
+        return CommandResolver::class;
     }
 
     public static function getEntityManager($devMode = true)
@@ -43,10 +51,19 @@ class AppHelper
                 "by Doctrine ORM"
             );
         }
-        $config = \data\DatabaseConf::getConf();
+        $config =DatabaseConf::getConf();
         $doctrine_conf = Setup::createAnnotationMetadataConfiguration(
             array('app/domain'), $devMode
         );
         return EntityManager::create($config, $doctrine_conf);
     }
+
+    public static function getExceptionGenerator()
+    {
+        if (is_null(self::$exceptionGenerator)) {
+            self::$exceptionGenerator = new ExceptionGenerator();
+        }
+        return self::$exceptionGenerator;
+    }
+
 }
