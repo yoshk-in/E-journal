@@ -14,115 +14,108 @@ class GNineTest extends TestCase
 
     public function setUp(): void
     {
-
-        $this->gnine = new MockGNine();
-        $this->snapshot = [];
-
+        $this->prepareProductLife();
     }
 
-    public function testExceptionWithoutInit()
-    {
-        $this->expectException(WrongModelException::class);
-        $this->gnine->startProcedure();
-    }
 
-    private function snapShot()
+    public function testProcedureSnapshots()
     {
-        $this->snapshot[] = clone $this->gnine;
-    }
-
-    public function testProductLife()
-    {
-        $this->gnine->initByNumber(120051);
-        $this->snapShot();  //0
-        $this->gnine->startProcedure();
-        $this->snapShot();  //1 start nastroy
-        sleep(1);
-        $this->snapShot();  //2
-        $this->gnine->endProcedure();
-        $this->snapShot();  //3  end nastroy
-        $this->gnine->startProcedure();
-        $this->snapShot();  //4   start TT
-        $this->gnine->startTTProcedure('vibro');
-        $this->snapShot();  //5
-        sleep(1);
-        $this->snapShot();  //6
-        $this->gnine->startTTProcedure('progon');
-        $this->snapShot();  //7
-        sleep(2);
-        $this->snapShot();  //8
-        $this->gnine->startTTProcedure('moroz');
-        $this->snapShot();  //9
-        sleep(2);
-        $this->snapShot();  //10
-        $this->gnine->startTTProcedure('jara');
-        $this->snapShot();  //11
-        sleep(2);
-        $this->gnine->endProcedure();
-        $this->snapShot();  //12  end TT
-        sleep(1);
-        $this->snapShot();  //13
-        $this->gnine->startProcedure();
-        $this->snapShot();  //14  start OTK
-        sleep(1);
-        $this->snapShot();  //15
-        $this->gnine->endProcedure();
-        $this->snapShot();  //16  endOTK
-        $this->gnine->startProcedure();
-        $this->snapShot(); //17  start PZ
-        sleep(1);
-        $this->snapShot(); //18
-        $this->gnine->endProcedure();
-        $this->snapShot();  //19 endPz
-        $this->assertSame(true, $this->gnine instanceof GNine);
-        return [
-            'snapshot' => $this->snapshot,
-            'gnine' => $this->gnine
-        ];
-    }
-
-    /** @depends  testProductLife */
-    public function testProcedureSnapshots(array $stack)
-    {
-        $procs = $stack['gnine']->getProcCollection();
+        $procs = $this->gnine->getProcCollection();
         $nastroy = $procs[0];
         $tt = $procs[1];
         $OTK = $procs[2];
         $PZ = $procs[3];
-        $snapshot = $stack['snapshot'];
         $this->assertSame($nastroy->getName(), 'nastroy');
         $this->assertSame($tt->getName(), 'technicalTraining');
         $this->assertSame($OTK->getName(), 'electrikaOTK');
         $this->assertSame($PZ->getName(), 'electrikaPZ');
-        $this->goAssertNullThroughSnapShot($snapshot[0]);
-        $this->assertSame($nastroy->getStart(), $snapshot[1]->getProcCollection()[0]->getStart());
-        $this->goAssertNullThroughSnapShot($snapshot[1], array('nastroy' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[2], array('nastroy' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[3], array('nastroy' => 'exceptAll'));
-        $this->assertSame($tt->getStart(), $snapshot[4]->getProcCollection()[1]->getStart());
-        $this->goAssertNullThroughSnapShot($snapshot[4], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[5], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[6], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[7], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[8], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[9], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[10], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[11], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[12], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll'));
-        $this->goAssertNullThroughSnapShot($snapshot[13], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll'));
-        $this->goAssertNullThroughSnapShot($snapshot[14], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[15], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[16], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll'));
-        $this->goAssertNullThroughSnapShot($snapshot[17], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll', 'electrikaPZ' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[18], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll', 'electrikaPZ' => 'exceptStart'));
-        $this->goAssertNullThroughSnapShot($snapshot[17], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll', 'electrikaPZ' => 'exceptAll'));
-        $this->assertSame($OTK->getStart(), $snapshot[14]->getProcCollection()[2]->getStart());
-        $this->assertSame($PZ->getStart(), $snapshot[17]->getProcCollection()[3]->getStart());
-        $this->assertSame($nastroy->getEnd(), $snapshot[3]->getProcCollection()[0]->getEnd());
-        $this->assertSame($tt->getEnd(), $snapshot[12]->getProcCollection()[1]->getEnd());
-        $this->assertSame($OTK->getEnd(), $snapshot[16]->getProcCollection()[2]->getEnd());
-        $this->assertSame($PZ->getEnd(), $snapshot[19]->getProcCollection()[3]->getEnd());
+        $snapshot = $this->snapshot;
+        foreach ($procs as $index => $proc) {
+            $this->assertSame($proc->getStart(), $snapshot['after']['start'][$proc->getName()]->getProcCollection()[$index]->getStart());
+            $this->assertSame($proc->getEnd(), $snapshot['after']['end'][$proc->getName()]->getProcCollection()[$index]->getEnd());
+        }
+        $this->goAssertNullThroughSnapShot($snapshot['after']['init']);
+        $this->goAssertNullThroughSnapShot($snapshot['after']['start']['nastroy'], array('nastroy' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['before']['end']['nastroy'], array('nastroy' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['end']['nastroy'], array('nastroy' => 'exceptAll'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['start']['technicalTraining'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['before']['end']['technicalTraining'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['end']['technicalTraining'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['start']['electrikaOTK'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['before']['end']['electrikaOTK'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['end']['electrikaOTK'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['start']['electrikaPZ'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll', 'electrikaPZ' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['before']['end']['electrikaPZ'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll', 'electrikaPZ' => 'exceptStart'));
+        $this->goAssertNullThroughSnapShot($snapshot['after']['end']['electrikaPZ'], array('nastroy' => 'exceptAll', 'technicalTraining' => 'exceptAll', 'electrikaOTK' => 'exceptAll', 'electrikaPZ' => 'exceptAll'));
     }
+
+    public function afterStartsProvider()
+    {
+        $this->prepareProductLife();
+        $result = [];
+        foreach ($this->snapshot['after']['start'] as $shot) {
+            $result[][] = $shot;
+        }
+        return $result;
+    }
+
+    /** @dataProvider afterStartsProvider */
+    public function testExceptionDoubleStart(GNine $gnine)
+    {
+        $this->expectException(IncorrectInputException::class);
+        $gnine->startProcedure();
+    }
+
+    public function afterEndsProvider()
+    {
+        $this->prepareProductLife();
+        $result = [];
+        $index = 0;
+        foreach ($this->snapshot['after']['end'] as $stage => $shot) {
+            $result[$index]['for_double_end_test'] = $shot;
+            if ($stage !== 'electrikaPZ') {
+                $result[$index]['for_early_end_test'] = $shot;
+            } else {
+                $result[$index]['for_early_end_test'] = $this->snapshot['after']['init'];
+            }
+            ++$index;
+        }
+
+        return $result;
+    }
+
+    /** @dataProvider afterEndsProvider */
+    public function testExceptionDoubleEnd(GNine $gnine)
+    {
+        $this->expectException(IncorrectInputException::class);
+        $gnine->endProcedure();
+    }
+
+    public function beforeEndProvider()
+    {
+        $this->prepareProductLife();
+        $result = [];
+        foreach ($this->snapshot['before']['end'] as $shot) {
+            $result[][] = $shot;
+        }
+        return $result;
+    }
+
+    /** @dataProvider beforeEndProvider */
+    public function testDoubleStartAfterPauseProduct($gnine)
+    {
+        $this->expectException(IncorrectInputException::class);
+        $gnine->startProcedure();
+    }
+
+    /** @dataProvider afterEndsProvider */
+    public function testEarlyEndException($miss, GNine $gnine)
+    {
+        $gnine->startProcedure();
+        $this->expectException(IncorrectInputException::class);
+        $gnine->endProcedure();
+    }
+
 
     private function goAssertNullThroughSnapShot($snapshot, ?array $exceptProcName = null)
     {
@@ -134,6 +127,7 @@ class GNineTest extends TestCase
             }
         }
     }
+
 
     private function assertAllNullExceptNames(array $names, \App\domaini\Procedure $procedure)
     {
@@ -160,6 +154,61 @@ class GNineTest extends TestCase
 
         }
 
+    }
+
+    private function snapShot(string $name1, string $name2 = null, ?string $name3 = null, ?string $name4 = null)
+    {
+        $clone = clone $this->gnine;
+        if (!is_null($name4)) $this->snapshot[$name1][$name2][$name3][$name4] = $clone;
+        else if (!is_null($name3)) $this->snapshot[$name1][$name2][$name3] = $clone;
+        else if (!is_null($name2)) $this->snapshot[$name1][$name2] = $clone;
+    }
+
+    private function prepareProductLife()
+    {
+        $this->gnine = new MockGNine();
+        $this->snapshot = [];
+        $this->gnine->initByNumber(120051);
+        $this->snapShot('after', 'init');  //0
+        $this->gnine->startProcedure();
+        $this->snapShot('after', 'start', 'nastroy');  //1 start nastroy
+        sleep(1);
+        $this->snapShot('before', 'end', 'nastroy');  //2
+        $this->gnine->endProcedure();
+        $this->snapShot('after', 'end', 'nastroy');  //3  end nastroy
+        $this->gnine->startProcedure();
+        $this->snapShot('after', 'start', 'technicalTraining');  //4   start TT
+        $this->gnine->startTTProcedure('vibro');
+        $this->snapShot('after', 'start', 'technicalTraining');  //5
+        sleep(1);
+        $this->snapShot('after', 'start', 'technicalTraining');  //6
+        $this->gnine->startTTProcedure('progon');
+        $this->snapShot('after', 'start', 'technicalTraining');  //7
+        sleep(1);
+        $this->snapShot('after', 'start', 'technicalTraining');  //8
+        $this->gnine->startTTProcedure('moroz');
+        $this->snapShot('after', 'start', 'technicalTraining');  //9
+        sleep(2);
+        $this->snapShot('after', 'start', 'technicalTraining');  //10
+        $this->gnine->startTTProcedure('jara');
+        $this->snapShot('after', 'start', 'technicalTraining');  //11
+        sleep(1);
+        $this->snapShot('before', 'end', 'technicalTraining');
+        $this->gnine->endProcedure();
+        $this->snapShot('after', 'end', 'technicalTraining');  //12  end TT
+        $this->snapShot('after', 'end', 'doubling');  //13
+        $this->gnine->startProcedure();
+        $this->snapShot('after', 'start', 'electrikaOTK');  //14  start OTK
+        sleep(1);
+        $this->snapShot('before', 'end', 'electrikaOTK');  //15
+        $this->gnine->endProcedure();
+        $this->snapShot('after', 'end', 'electrikaOTK');  //16  endOTK
+        $this->gnine->startProcedure();
+        $this->snapShot('after', 'start', 'electrikaPZ'); //17  start PZ
+        sleep(1);
+        $this->snapShot('before', 'end', 'electrikaPZ'); //18
+        $this->gnine->endProcedure();
+        $this->snapShot('after', 'end', 'electrikaPZ');  //19 endPz
     }
 
 }

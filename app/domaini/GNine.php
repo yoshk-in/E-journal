@@ -139,14 +139,14 @@ class GNine extends Product
     protected function checkTTRelax(Procedure $procedure): void
     {
         $prev_climatic_name = $this->getPrevClimatic($procedure->getName());
-        $relax_period = new DateInterval($this->relaxProcedure['climaticRelax']);
         $prev_climatic
             = $this->getProcByName($prev_climatic_name, $this->ttCollection);
         if ($prev_climatic->getStart() !== null) {
-            $relax_end = ($prev_climatic->getEnd())->add($relax_period);
             $now_time = new DateTimeImmutable('now');
+            $relax_period = new DateInterval($this->relaxProcedure['climaticRelax']);
+            $relax_end = ($prev_climatic->getEnd())->add($relax_period);
             $this->ensureRightLogic(
-                $now_time < $relax_end,
+                $now_time > $relax_end,
                 '- не соблюдается перерыв между жарой и морозом'
             );
         }

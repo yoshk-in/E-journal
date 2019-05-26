@@ -11,13 +11,13 @@ class MockGNine extends GNine
 {
     protected $ttProcedureRules = [
         'vibro' => 'PT1S',
-        'progon' => 'PT2S',
-        'moroz' => 'PT2S',
-        'jara' => 'PT2S'
+        'progon' => 'PT1S',
+        'moroz' => 'PT1S',
+        'jara' => 'PT1S'
     ];
 
     protected $relaxProcedure = [
-        'climaticRelax' => 'PT2S'
+        'climaticRelax' => 'PT1S'
     ];
 
     protected $proceduresRules = [

@@ -67,6 +67,7 @@ abstract class Product
     public function startProcedure()
     {
         $this->checkProcsInit(true);
+        $this->checkProcsIsNotFinish();
         $current_process = $this->getCurrentProc();
         $this->checkLastProcEnd();
         $current_process->setStart();
@@ -75,6 +76,7 @@ abstract class Product
     public function endProcedure()
     {
         $this->checkProcsInit(true);
+        $this->checkProcsIsNotFinish();
         $current_process = $this->getCurrentProc();
         $this->ensureRightInput(
             !is_null($current_process->getStart()),
@@ -178,6 +180,12 @@ abstract class Product
             '- минимальное время проведения процедуры' .
             $interval->format(' %H часов %i минут %s секунд')
         );
+    }
+
+    protected function checkProcsIsNotFinish()
+    {
+        $end_of_last_proc = $this->procsCollection->last()->getEnd();
+        $this->ensureRightInput(is_null($end_of_last_proc), ' блок уже сдан на склад');
     }
 
     abstract protected function checkTTisFinish(
