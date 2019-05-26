@@ -1,6 +1,6 @@
 <?php
 
-namespace App\domaini;
+namespace App\domain;
 
 use Doctrine\Common\Collections\Collection;
 use DateTimeImmutable;

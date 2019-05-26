@@ -3,89 +3,113 @@
 
 namespace App\domain;
 
-use App\base\AppException;
-use App\domain\ProcedureRequirements;
+use App\base\exceptions\IncorrectInputException;
+use App\base\exceptions\WrongModelException;
+use DateTimeImmutable;
+
 
 /**
  * @Entity @Table(name="states")
  *
  **/
-
 class Procedure
 {
-    protected $start;
-    protected $end;
+    protected $startProcedure;
+    protected $endProcedure;
     protected $name;
     protected $product;
     protected $idStage;
-    protected $minTime;
 
-    public function __construct(string $name, DomainObject $product,int $idStage, $minTime)
+
+    public function __construct()
     {
-        $this->name = $name;
-        $this->product = $product;
-        $this->idStage = $idStage;
-        $this->minTime = new \DateInterval($minTime);
-        $this->setStart();
     }
 
-    public function setStart() : void
-    {;
-        if (is_null($this->start)) $this->start = new \DateTime('now');
-        else throw new AppException('данное событие уже отмечено в журнале');
-    }
-
-    public function getStart() : \DateTime
+    public function setIdentityData(
+        string $name, Product $product, int $idState
+    ): void
     {
-        return $this->start;
+        if (!($product instanceof Product)) {
+            throw new WrongModelException('own object must be instance of Product');
+        }
+        if (is_null($this->name)
+            && is_null($this->product)
+            && is_null($this->idStage)
+        ) {
+            $this->name = $name;
+            $this->product = $product;
+            $this->idStage = $idState;
+            return;
+        }
+        throw new WrongModelException('identity data already is set');
     }
 
-    /**
-     * @return mixed
-     */
-    public function getEnd() : ?\DateTime
+    public function setStart(): void
     {
-        return $this->end;
+        $not_inited = (is_null($this->name) && is_null($this->product) && is_null($this->idStage));
+        if ($not_inited) {
+            throw new WrongModelException('object is not inited');
+        }
+        $this->ensureRighInput(
+            is_null($this->startProcedure),
+            'данное событие уже отмечено в журнале'
+        );
+        $this->startProcedure = new DateTimeImmutable('now');
     }
 
-    public function setEnd() : void
+    public function getStart(): ?DateTimeImmutable
     {
-        if (is_null($this->start)) throw new AppException('в журнале нет отметки' .
-        ' о начале данной процедуры - операция не выполнена');
-        if (is_null($this->end)) $this->end = new \DateTime('now');
-        else throw new AppException('данное событие уже отмечено в журнале');
+        return $this->startProcedure;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getName() : string
+    public function getEnd(): ?DateTimeImmutable
+    {
+        return $this->endProcedure;
+    }
+
+
+    public function setEnd(): void
+    {
+        $this->ensureRighInput(
+            !is_null($this->startProcedure),
+            'в журнале нет отметки' .
+            ' о начале данной процедуры '
+        );
+        $this->ensureRighInput(
+            is_null($this->endProcedure), 'данное событие уже отмечено в журнале'
+        );
+        $this->endProcedure = new DateTimeImmutable('now');
+    }
+
+
+    public function getName(): string
     {
         return $this->name;
     }
 
-    /**
-     * @param mixed $name
-     */
-    public function setName($name): void
-    {
-        $this->name = $name;
-    }
 
-    /**
-     * @return int
-     */
-    public function getIdStage(): int
+    public function getStageId(): int
     {
         return $this->idStage;
     }
 
-    /**
-     * @return \DateInterval
-     */
-    public function getMinTime(): \DateInterval
+    public function isFinished(): bool
     {
-        return $this->minTime;
+
+        if ($this->endProcedure) {
+            return true;
+        }
+        return false;
+    }
+
+    protected function ensureRighInput(bool $condition, $msg = null): ?\Exception
+    {
+        if (!$condition) {
+            throw new IncorrectInputException(
+                'ошибка: операция не выполнена ' . $msg
+            );
+        }
+        return null;
     }
 
 }

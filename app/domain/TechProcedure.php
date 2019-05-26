@@ -1,6 +1,6 @@
 <?php
 
-namespace App\domaini;
+namespace App\domain;
 
 use App\base\exceptions\WrongModelException;
 use DateTimeImmutable;
@@ -17,10 +17,10 @@ class TechProcedure extends Procedure
 
     public function setStart(): void
     {
+        parent::setStart();
         if (is_null($this->interval)) {
             throw new WrongModelException('prop interval is required');
         }
-        $this->startProcedure = new \DateTimeImmutable('now');
         $this->endProcedure =  $this->startProcedure->add($this->interval);
     }
 

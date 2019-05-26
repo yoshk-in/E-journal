@@ -1,6 +1,6 @@
 <?php
 
-namespace App\domaini;
+namespace App\domain;
 
 use App\base\exceptions\IncorrectInputException;
 use App\base\exceptions\WrongModelException;

@@ -4,7 +4,7 @@
 namespace tests;
 
 
-use App\domaini\GNine;
+use App\domain\GNine;
 use Doctrine\Common\Collections\ArrayCollection;
 
 class MockGNine extends GNine
