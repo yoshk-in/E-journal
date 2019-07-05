@@ -54,7 +54,6 @@ class CommandResolver
             }
             return $result_cmd_array;
         } else {
-
             return new self::$_defaultCmd;
         }
     }

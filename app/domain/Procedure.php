@@ -7,22 +7,43 @@ use App\base\exceptions\IncorrectInputException;
 use App\base\exceptions\WrongModelException;
 use DateTimeImmutable;
 
-
 /**
- * @Entity @Table(name="states")
- *
- **/
-class Procedure
+ * @MappedSuperClass
+ */
+
+abstract class Procedure
 {
+    /**
+     *
+     * @Column(type="datetime", nullable=true)
+     **/
     protected $startProcedure;
+    /**
+     *
+     * @Column(type="datetime", nullable=true)
+     **/
     protected $endProcedure;
+    /**
+     *
+     * @Column(type="string")
+     **/
     protected $name;
-    protected $product;
+
     protected $idStage;
+    /**
+     * @Id
+     * @Column(type="integer")
+     **/
+    protected $id;
 
-
-    public function __construct()
+    protected function ensureRighInput(bool $condition, $msg = null): ?\Exception
     {
+        if (!$condition) {
+            throw new IncorrectInputException(
+                'ошибка: операция не выполнена ' . $msg
+            );
+        }
+        return null;
     }
 
     public function setIdentityData(
@@ -39,6 +60,7 @@ class Procedure
             $this->name = $name;
             $this->product = $product;
             $this->idStage = $idState;
+            $this->id = (int)($this->product->getId() . $this->idStage);
             return;
         }
         throw new WrongModelException('identity data already is set');
@@ -57,30 +79,14 @@ class Procedure
         $this->startProcedure = new DateTimeImmutable('now');
     }
 
-    public function getStart(): ?DateTimeImmutable
+    public function isFinished(): bool
     {
-        return $this->startProcedure;
+
+        if ($this->endProcedure) {
+            return true;
+        }
+        return false;
     }
-
-    public function getEnd(): ?DateTimeImmutable
-    {
-        return $this->endProcedure;
-    }
-
-
-    public function setEnd(): void
-    {
-        $this->ensureRighInput(
-            !is_null($this->startProcedure),
-            'в журнале нет отметки' .
-            ' о начале данной процедуры '
-        );
-        $this->ensureRighInput(
-            is_null($this->endProcedure), 'данное событие уже отмечено в журнале'
-        );
-        $this->endProcedure = new DateTimeImmutable('now');
-    }
-
 
     public function getName(): string
     {
@@ -93,23 +99,13 @@ class Procedure
         return $this->idStage;
     }
 
-    public function isFinished(): bool
+    public function getStart(): ?DateTimeImmutable
     {
-
-        if ($this->endProcedure) {
-            return true;
-        }
-        return false;
+        return $this->startProcedure;
     }
 
-    protected function ensureRighInput(bool $condition, $msg = null): ?\Exception
+    public function getEnd(): ?DateTimeImmutable
     {
-        if (!$condition) {
-            throw new IncorrectInputException(
-                'ошибка: операция не выполнена ' . $msg
-            );
-        }
-        return null;
+        return $this->endProcedure;
     }
-
 }

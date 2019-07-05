@@ -20,7 +20,7 @@ class G9Parser extends ConsoleParser
         parent::__construct();
         $args_counter = 0;
         foreach ($_SERVER['argv'] as $argN) {
-            $prop_object = "arg" . $args_counter;
+            $prop_object = "_arg" . $args_counter;
             $this->$prop_object = $argN;
             ++$args_counter;
         }
@@ -29,9 +29,14 @@ class G9Parser extends ConsoleParser
 
     protected function doParse()
     {
+        if ($this->_arg1) {
+            if ('г9' === mb_strtolower($this->_arg1)) $target = 'GNine';
+                else $target = $this->_arg1;
+            $this->request->setProperty('targetClass', $target);
+        } else $this->ensure(false);
         if ($this->_arg2) {
             $this->setCommand();
-        }
+        } else $this->ensure(false);
         if (!is_null($this->_arg3)) {
             $numbers = $this->parseBlocksNumbers($this->_arg3);
             $unique_numbers = array_unique($numbers);
@@ -68,11 +73,18 @@ class G9Parser extends ConsoleParser
             }
             return;
         }
-
         if ($this->_arg2 === 'очистка') {
             $this->request->addCommand('clearJournal');
+            return;
         }
-
+        if ($this->_arg2 === 'приход') {
+            $this->request->addCommand('blocksAreArrived');
+            return;
+        }
+        if ($this->_arg2 === 'вынос') {
+            $this->request->addCommand('blocksAreDispatched');
+            return;
+        }
         $this->ensure(false);
 
     }

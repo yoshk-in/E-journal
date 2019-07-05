@@ -6,14 +6,12 @@ use App\base\exceptions\WrongModelException;
 use DateTimeImmutable;
 use DateInterval;
 
-class TechProcedure extends Procedure
-{
-    protected $interval;
 
-    public function getStart() : ?DateTimeImmutable
-    {
-        return $this->startProcedure;
-    }
+trait TechProcedureTrait
+{
+    use ProcedureTrait;
+
+    protected $interval;
 
     public function setStart(): void
     {
@@ -24,16 +22,6 @@ class TechProcedure extends Procedure
         $this->endProcedure =  $this->startProcedure->add($this->interval);
     }
 
-    public function setEnd(): void
-    {
-        throw new WrongModelException('tt procedure end is not selectable');
-    }
-
-
-    public function getEndProcess() : ?DateTimeImmutable
-    {
-        return $this->endProcedure;
-    }
 
     public function setInterval(string $interval): void
     {

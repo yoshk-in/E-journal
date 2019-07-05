@@ -189,7 +189,7 @@ class GNineTest extends TestCase
     }
 
 
-    private function assertAllNullExceptNames(array $names, \App\domain\Procedure $procedure)
+    private function assertAllNullExceptNames(array $names, \App\domain\G9Procedure $procedure)
     {
         if (array_key_exists($procedure->getName(), $names)) {
             $this->assertNullExceptStartOrEnd($procedure, $names[$procedure->getName()]);
@@ -199,7 +199,7 @@ class GNineTest extends TestCase
 
     }
 
-    private function assertNullExceptStartOrEnd(\App\domain\Procedure $procedure, string $exceptStartOrEnd)
+    private function assertNullExceptStartOrEnd(\App\domain\G9Procedure $procedure, string $exceptStartOrEnd)
     {
         switch ($exceptStartOrEnd) {
             case  'exceptStart' :

@@ -8,22 +8,33 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use DateTimeImmutable;
 use DateInterval;
-use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
 
+/**
+ * @MappedSuperClass
+ *
+ *
+ */
 abstract class Product
 {
     /**
      * @Id
      * @Column(type="integer")
      **/
-    protected $number;
+    protected $id;
+
     protected $procsCollection;
+
     protected $ttCollection;
+    /**
+     *
+     * @Column(type="integer")
+     **/
+    protected $currentProcId;
+
     protected $compositeProcs;
     protected $procedures;
     protected $ttProcedureRules;
     protected $proceduresRules;
-    protected $currentProcId;
 
     public function __construct()
     {
@@ -54,14 +65,15 @@ abstract class Product
 
     public function initByNumber(int $number): void
     {
-        $this->number = $number;
-        $this->initProcedures();
+        $this->id = $number;
+        list($proc, $tt_proc) = $this->getTargetProcNames();
+        $this->initProcedures($proc, $tt_proc);
         $this->currentProcId = 0;
     }
 
-    public function getNumber(): int
+    public function getId(): int
     {
-        return $this->number;
+        return $this->id;
     }
 
     public function startProcedure()
@@ -91,7 +103,7 @@ abstract class Product
         $this->currentProcId = ++$next_id;
     }
 
-    public function getCurrentProc(): ?Procedure
+    public function getCurrentProc(): ?G9Procedure
     {
         $this->checkProcsInit(true);
         return $this->procsCollection[$this->currentProcId];
@@ -134,23 +146,23 @@ abstract class Product
 
     }
 
-    protected function initProcedures() : void
+    protected function initProcedures(string $abstr_proc, string $abstr_tt_proc) : void
     {
         foreach ($this->procedures as $id_stage => $procedure) {
-            $this->procsCollection->add(new Procedure());
+            $this->procsCollection->add(new $abstr_proc);
             $this->procsCollection[$id_stage]
                 ->setIdentityData($procedure, $this, $id_stage);
         }
         $index = 0;
         foreach ($this->ttProcedureRules as $tt_procedure => $procedure_time) {
-            $this->ttCollection->add(new TechProcedure());
+            $this->ttCollection->add(new $abstr_tt_proc);
             $this->ttCollection[$index]
                 ->setIdentityData($tt_procedure, $this, $index);
             ++$index;
         }
     }
 
-    protected function isCompositeProc(Procedure $procedure) : bool
+    protected function isCompositeProc(G9Procedure $procedure) : bool
     {
         if (in_array($procedure->getName(), $this->compositeProcs)) {
             return true;
@@ -170,7 +182,7 @@ abstract class Product
         }
     }
 
-    protected function checkProcRules(Procedure $current_procedure) : void
+    protected function checkProcRules(G9Procedure $current_procedure) : void
     {
         $start = $current_procedure->getStart();
         $interval = new DateInterval($this->proceduresRules['minTime']);
@@ -192,6 +204,7 @@ abstract class Product
         Collection $collection, array $arrayOfComposite
     ): void;
 
+    abstract protected function getTargetProcNames() : array;
 
 }
 

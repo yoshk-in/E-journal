@@ -12,20 +12,28 @@ abstract class Command
 
     protected $repo;
 
+    protected $targetClass;
+
     final public function __construct()
     {
         $this->entityManager = AppHelper::getEntityManager();
-
-        $this->repo = $this->entityManager->getRepository('\App\domain\G9');
 
     }
 
     public function execute(Request $request)
     {
+        $target = $request->getProperty('targetClass');
+        $this->targetClass = $this->getTargetClass($target);
+        $this->repo = $this->entityManager->getRepository($this->targetClass);
         $this->doExecute($request);
 
         echo static::class ."\n";
 
+    }
+
+    protected function getTargetClass(string $name)
+    {
+        return '\App\domain\\'.$name;
     }
 
     abstract protected function doExecute(Request $request);

@@ -6,16 +6,37 @@ use Doctrine\Common\Collections\Collection;
 use DateTimeImmutable;
 use DateInterval;
 
-/** @Entity @Table(name="g9s") * */
+/**
+ * @Entity
+ *
+ **/
 class GNine extends Product
 {
+    /**
+     * @Column(type="integer")
+     **/
+    protected $currentTTProcId;
+    /**
+     *
+     * @OneToMany(targetEntity="G9Procedure", mappedBy="product", cascade="persist")
+     **/
+    protected $procsCollection;
+    /**
+     *
+     * @OneToMany(targetEntity="G9TechProcedure", mappedBy="product", cascade="persist")
+     **/
+    protected $ttCollection;
+
+
+
     protected $procedures = [
         'nastroy',
         'technicalTraining',
         'electrikaOTK',
         'electrikaPZ'
     ];
-    protected  $ttProcedureRules = [
+
+    protected $ttProcedureRules = [
         'vibro' => 'PT30M',
         'progon' => 'PT2H',
         'moroz' => 'PT2H',
@@ -25,12 +46,9 @@ class GNine extends Product
     protected $relaxProcedure = [
         'climaticRelax' => 'PT2H'
     ];
-
     protected $proceduresRules = [
         'minTime' => 'PT30M'
     ];
-
-    protected $currentTTProcId;
 
     protected $climaticProcs = [
         'moroz',
@@ -59,6 +77,12 @@ class GNine extends Product
         parent::__construct();
     }
 
+    public function initByNumber(int $number): void
+    {
+        parent::initByNumber($number);
+        $this->currentTTProcId = 0;
+    }
+
     public function startTTProcedure(string $name): void
     {
         $next_procedure = $this->getProcByName($name, $this->ttCollection);
@@ -71,7 +95,7 @@ class GNine extends Product
         $this->currentTTProcId = $next_procedure->getStageId();
     }
 
-    public function getTTCollection() : Collection
+    public function getTTCollection(): Collection
     {
         return $this->ttCollection;
     }
@@ -115,7 +139,7 @@ class GNine extends Product
         $this->ensureRightLogic(false, 'wrong name procedure');
     }
 
-    protected function checkNewTTProc(Procedure $procedure): void
+    protected function checkNewTTProc(G9TechProcedure $procedure): void
     {
         $procedure_name = $procedure->getName();
         $this->ensureRightLogic(
@@ -136,7 +160,7 @@ class GNine extends Product
         }
     }
 
-    protected function checkTTRelax(Procedure $procedure): void
+    protected function checkTTRelax(G9TechProcedure $procedure): void
     {
         $prev_climatic_name = $this->getPrevClimatic($procedure->getName());
         $prev_climatic
@@ -158,6 +182,11 @@ class GNine extends Product
             return true;
         }
         return false;
+    }
+
+    protected function getTargetProcNames(): array
+    {
+        return [G9Procedure::class, G9TechProcedure::class];
     }
 
 }

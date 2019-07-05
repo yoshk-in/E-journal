@@ -19,7 +19,7 @@ class AddObjectCommand extends Command
         $objects  = [];
         $dberrors = [];
         $offset   = 0;
-        $lastObject = $this->repo->findOneBy(array(), ['number' => 'desc']);
+        $lastObject = $this->repo->findOneBy(array(), ['id' => 'desc']);
         if (is_null($lastObject)) {
             $partNumber = (\App\base\AppHelper::getCacheObject())->getPartNumber();
             if (is_null($partNumber)) throw new AppException("установити сначала номер партии командой вида: \n
@@ -35,9 +35,10 @@ class AddObjectCommand extends Command
         }
 
         foreach ($range as $unit) {
-            $object    = new G9($unit);
+            $target = $this->targetClass;
+            $object    = new $target();
+            $object->initByNumber($unit);
             $objects[] = $object;
-            $object->setStatement('writeInBD');
             $this->entityManager->persist($object);
 
             ++$offset;
