@@ -12,6 +12,7 @@ use DateInterval;
  **/
 class GNine extends Product
 {
+    use Notifying;
     /**
      * @Column(type="integer")
      **/
@@ -28,7 +29,6 @@ class GNine extends Product
     protected $ttCollection;
 
 
-
     protected $procedures = [
         'nastroy',
         'technicalTraining',
@@ -37,17 +37,18 @@ class GNine extends Product
     ];
 
     protected $ttProcedureRules = [
-        'vibro' => 'PT30M',
-        'progon' => 'PT2H',
-        'moroz' => 'PT2H',
-        'jara' => 'PT2H'
+        'vibro' => 'PT1S',
+        'progon' => 'PT1S',
+        'moroz' => 'PT1S',
+        'jara' => 'PT1S'
     ];
 
     protected $relaxProcedure = [
-        'climaticRelax' => 'PT2H'
+        'climaticRelax' => 'PT1S'
     ];
+
     protected $proceduresRules = [
-        'minTime' => 'PT30M'
+        'minTime' => 'PT1S'
     ];
 
     protected $climaticProcs = [
@@ -55,10 +56,11 @@ class GNine extends Product
         'jara'
     ];
 
+    protected $compositeProcs = ['technicalTraining'];
 
     public function __construct()
     {
-        $this->compositeProcs = ['technicalTraining'];
+
         foreach ($this->compositeProcs as $composite) {
             $this->ensureRightLogic(
                 in_array($composite, $this->procedures),
@@ -77,6 +79,11 @@ class GNine extends Product
         parent::__construct();
     }
 
+    public function getCompositeProc(): array
+    {
+        return $this->compositeProcs;
+    }
+
     public function initByNumber(int $number): void
     {
         parent::initByNumber($number);
@@ -93,11 +100,17 @@ class GNine extends Product
         $next_procedure->setInterval($this->ttProcedureRules[$name]);
         $next_procedure->setStart();
         $this->currentTTProcId = $next_procedure->getStageId();
+        $this->notify($next_procedure);
     }
 
     public function getTTCollection(): Collection
     {
         return $this->ttCollection;
+    }
+
+    protected function getCurrentTTProc(): G9Procedure
+    {
+        return $this->ttCollection[$this->currentTTProcId];
     }
 
     protected function checkTTisFinish(
@@ -136,7 +149,7 @@ class GNine extends Product
                 return $procedure;
             }
         }
-        $this->ensureRightLogic(false, 'wrong name procedure');
+        $this->ensureRightLogic(self::THROW_EXCEPT, 'wrong name procedure');
     }
 
     protected function checkNewTTProc(G9TechProcedure $procedure): void
@@ -151,14 +164,14 @@ class GNine extends Product
             !== false,
             'wrong name'
         );
-        $current_tt_proc = $this->ttCollection[$this->currentTTProcId];
-        if (!is_null($current_tt_proc)) {
-            $this->ensureRightInput(
-                $current_tt_proc->isFinished(),
-                ' - предыдущая процедура еще не завершена'
-            );
-        }
+        $prev_tt_proc_is_finished = $this->ttCollection->forAll(function ($key, $tt_proc) {
+            $result = $tt_proc->getStart() ? $tt_proc->isFinished() : true;
+            return (bool)$result;
+        });
+
+        $this->ensureRightInput($prev_tt_proc_is_finished, ' - предыдущая процедура еще не завершена');
     }
+
 
     protected function checkTTRelax(G9TechProcedure $procedure): void
     {

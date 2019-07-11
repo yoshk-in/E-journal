@@ -3,6 +3,7 @@
 namespace App\controller;
 
 use App\base\AppHelper;
+use App\command\CommandResolver;
 
 class Controller
 {
@@ -29,7 +30,7 @@ class Controller
         if ($console_parser) {
             $console_parser->parse($request);
         }
-        $commands = \App\command\CommandResolver::getCommand($request);
+        $commands = CommandResolver::getCommand($request);
         foreach ($commands as $command) {
             $command->execute($request);
         }

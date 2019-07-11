@@ -42,7 +42,7 @@ class Request
     {
         $string = "";
         foreach ($this->feedback as $message) {
-            $string .= $message."\n";
+            $string .= $message . "\n";
         }
         return $string;
     }
@@ -50,6 +50,17 @@ class Request
     public function addCommand($name)
     {
         $this->data['cmds'][] = $name;
+    }
+
+    public function addTTCommand($name)
+    {
+        $this->data['tt'] = $name;
+    }
+
+    public function getTTCommand()
+    {
+        if (isset($this->data['tt']))
+            return $this->data['tt'];
     }
 
     public function getCommands()

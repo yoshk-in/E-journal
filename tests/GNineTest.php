@@ -12,6 +12,12 @@ class GNineTest extends TestCase
     protected $gnine;
     protected $snapshot;
 
+    public function __construct($name = null, array $data = [], $dataName = '')
+    {
+        parent::__construct($name, $data, $dataName);
+        $this->shortTest = 0;
+    }
+
     public function setUp(): void
     {
         $this->prepareProductLife();
@@ -32,7 +38,8 @@ class GNineTest extends TestCase
         $snapshot = $this->snapshot;
         foreach ($procs as $index => $proc) {
             $this->assertSame($proc->getStart(), $snapshot['after']['start'][$proc->getName()]->getProcCollection()[$index]->getStart());
-            $this->assertSame($proc->getEnd(), $snapshot['after']['end'][$proc->getName()]->getProcCollection()[$index]->getEnd());        }
+            $this->assertSame($proc->getEnd(), $snapshot['after']['end'][$proc->getName()]->getProcCollection()[$index]->getEnd());
+        }
 
         $this->goAssertNullThroughSnapShot($snapshot['after']['init']);
         $this->goAssertNullThroughSnapShot($snapshot['after']['start']['nastroy'], array('nastroy' => 'exceptStart'));
@@ -101,12 +108,8 @@ class GNineTest extends TestCase
     /** @dataProvider ttAfterEndsWithCompletedProcNamesProvider */
     public function testDoublingStartTT(GNine $gnine, $stageName)
     {
-        static $count = 0;
-        ++$count;
-//        if ($count < 32) {
-            $this->expectException(IncorrectInputException::class);
-            $gnine->startTTProcedure($stageName);
-//        } else $this->assertSame(true, !is_null($stageName));
+        $this->expectException(IncorrectInputException::class);
+        $gnine->startTTProcedure($stageName);
     }
 
     public function afterStartsProvider()
@@ -174,6 +177,16 @@ class GNineTest extends TestCase
         $gnine->startProcedure();
         $this->expectException(IncorrectInputException::class);
         $gnine->endProcedure();
+    }
+
+    public function testEarlyTTEndException()
+    {
+        $this->prepareProductLife();
+        $gnineAfterTT = $this->snapshot['after']['start']['technicalTraining'];
+        $this->sleep();
+        $this->expectException(IncorrectInputException::class);
+        $gnineAfterTT->endProcedure();
+
     }
 
 
@@ -277,6 +290,7 @@ class GNineTest extends TestCase
 
     private function sleep(int $time = 1)
     {
+        if ($this->shortTest) $time = 0;
         sleep($time);
     }
 

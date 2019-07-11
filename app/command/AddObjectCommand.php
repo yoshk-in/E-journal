@@ -4,12 +4,13 @@ namespace App\command;
 
 use App\base\exceptions\AppException;
 use App\base\Request;
+use Doctrine\Common\Collections\Collection;
+use App\base\AppHelper;
 
-use App\domain\G9;
 
 class AddObjectCommand extends Command
 {
-    protected function doExecute(Request $request)
+    protected function doExecute(Request $request, ?Collection $blockCollection)
     {
         $blocks   = $request->getBlockNumbers();
 
@@ -21,16 +22,19 @@ class AddObjectCommand extends Command
         $offset   = 0;
         $lastObject = $this->repo->findOneBy(array(), ['id' => 'desc']);
         if (is_null($lastObject)) {
-            $partNumber = (\App\base\AppHelper::getCacheObject())->getPartNumber();
-            if (is_null($partNumber)) throw new AppException("установити сначала номер партии командой вида: \n
+            $partNumber = (AppHelper::getCacheObject())->getPartNumber();
+            if (is_null($partNumber)) throw new AppException("установите сначала номер партии командой вида: \n
             г9 партия=120\n
             отсчет номеров блоков в журнале начнется с 'номер партии'001");
             $startNumber = (string) $partNumber . '001';
             $range = range($startNumber, $max);
         } else  {
-            if ($lastObject->getNumber() <= $min) {
-                $min = $lastObject->getNumber();
+            if ($lastObject->getId() < $min) {
+                $min = $lastObject->getid();
                 $range = range(++$min, $max);
+            } else {
+                $request->setFeedback('данные номера уже добавлены в журнал');
+                return;
             }
         }
 
@@ -44,7 +48,7 @@ class AddObjectCommand extends Command
             ++$offset;
         }
 
-        $this->entityManager->flush();
+
 
 
         if (!empty($blocks)) {

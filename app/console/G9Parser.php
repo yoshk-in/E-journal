@@ -31,7 +31,7 @@ class G9Parser extends ConsoleParser
     {
         if ($this->_arg1) {
             if ('г9' === mb_strtolower($this->_arg1)) $target = 'GNine';
-                else $target = $this->_arg1;
+            else $target = $this->_arg1;
             $this->request->setProperty('targetClass', $target);
         } else $this->ensure(false);
         if ($this->_arg2) {
@@ -54,7 +54,6 @@ class G9Parser extends ConsoleParser
             $this->ensure(!is_null($this->_arg3), 'введите номера блоков');
 
             $this->request->addCommand('addObject');
-            $this->request->addCommand('nextWorkStageG9');
             return;
         };
         if (mb_stripos($this->_arg2, 'партия=') !== false) {
@@ -83,6 +82,11 @@ class G9Parser extends ConsoleParser
         }
         if ($this->_arg2 === 'вынос') {
             $this->request->addCommand('blocksAreDispatched');
+            return;
+        }
+        if ($tt = $this->getLatinWord($this->_arg2)) {
+            $this->request->addCommand('blocksAreArrived');
+            $this->request->addTTCommand($tt);
             return;
         }
         $this->ensure(false);
@@ -150,6 +154,15 @@ class G9Parser extends ConsoleParser
     protected static function explodeByHyphen(string $string): array
     {
         return explode('-', $string);
+    }
+
+    private function getLatinWord(string $word)
+    {
+        $list = ['вибро' => 'vibro', 'прогон' => 'progon', 'мороз' => 'moroz', 'жара' => 'jara'];
+        if (in_array($word, array_keys($list)))
+            return $list[$word];
+        return false;
+
     }
 }
 

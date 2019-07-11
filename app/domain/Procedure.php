@@ -15,12 +15,12 @@ abstract class Procedure
 {
     /**
      *
-     * @Column(type="datetime", nullable=true)
+     * @Column(type="datetime_immutable", nullable=true)
      **/
     protected $startProcedure;
     /**
      *
-     * @Column(type="datetime", nullable=true)
+     * @Column(type="datetime_immutable", nullable=true)
      **/
     protected $endProcedure;
     /**
@@ -35,6 +35,8 @@ abstract class Procedure
      * @Column(type="integer")
      **/
     protected $id;
+
+    protected $product;
 
     protected function ensureRighInput(bool $condition, $msg = null): ?\Exception
     {
@@ -59,8 +61,7 @@ abstract class Procedure
         ) {
             $this->name = $name;
             $this->product = $product;
-            $this->idStage = $idState;
-            $this->id = (int)($this->product->getId() . $this->idStage);
+            $this->id = $idState;
             return;
         }
         throw new WrongModelException('identity data already is set');
@@ -81,7 +82,6 @@ abstract class Procedure
 
     public function isFinished(): bool
     {
-
         if ($this->endProcedure) {
             return true;
         }
@@ -96,7 +96,7 @@ abstract class Procedure
 
     public function getStageId(): int
     {
-        return $this->idStage;
+        return $this->id;
     }
 
     public function getStart(): ?DateTimeImmutable
@@ -107,5 +107,10 @@ abstract class Procedure
     public function getEnd(): ?DateTimeImmutable
     {
         return $this->endProcedure;
+    }
+
+    public function getProduct() : Product
+    {
+        return $this->product;
     }
 }

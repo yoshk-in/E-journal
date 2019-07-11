@@ -39,7 +39,7 @@ trait ProcedureTrait
     public function setEnd(): void
     {
         $this->ensureRighInput(
-            !is_null($this->startProcedure),
+            (bool)($this->startProcedure),
             'в журнале нет отметки' .
             ' о начале данной процедуры '
         );

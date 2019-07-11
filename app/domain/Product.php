@@ -11,11 +11,10 @@ use DateInterval;
 
 /**
  * @MappedSuperClass
- *
- *
  */
 abstract class Product
 {
+    use Notifying;
     /**
      * @Id
      * @Column(type="integer")
@@ -35,6 +34,10 @@ abstract class Product
     protected $procedures;
     protected $ttProcedureRules;
     protected $proceduresRules;
+
+    const THROW_EXCEPT = 0;
+    const NOT_THROW_EXCEPT = 1;
+    const INIT = 1;
 
     public function __construct()
     {
@@ -71,6 +74,7 @@ abstract class Product
         $this->currentProcId = 0;
     }
 
+
     public function getId(): int
     {
         return $this->id;
@@ -78,20 +82,21 @@ abstract class Product
 
     public function startProcedure()
     {
-        $this->checkProcsInit(true);
+        $this->checkProcsInit(self::INIT);
         $this->checkProcsIsNotFinish();
         $current_process = $this->getCurrentProc();
         $this->checkLastProcEnd();
         $current_process->setStart();
+        $this->notify($current_process, $current_process->getStart());
     }
 
     public function endProcedure()
     {
-        $this->checkProcsInit(true);
+        $this->checkProcsInit(self::INIT);
         $this->checkProcsIsNotFinish();
         $current_process = $this->getCurrentProc();
         $this->ensureRightInput(
-            !is_null($current_process->getStart()),
+            (bool)($current_process->getStart()),
             ' в журнале нет отметки о начале данной процедуры'
         );
         if ($this->isCompositeProc($current_process)) {
@@ -101,18 +106,18 @@ abstract class Product
         $current_process->setEnd();
         $next_id = $current_process->getStageId();
         $this->currentProcId = ++$next_id;
+        $this->notify($current_process, $current_process->getEnd());
     }
 
-    public function getCurrentProc(): ?G9Procedure
+    public function getProcCollection(): Collection
     {
-        $this->checkProcsInit(true);
-        return $this->procsCollection[$this->currentProcId];
-    }
-
-    public function getProcCollection() : Collection
-    {
-        $this->checkProcsInit(true);
+        $this->checkProcsInit(self::INIT);
         return $this->procsCollection;
+    }
+
+    protected function getCurrentProc(): ?Procedure
+    {
+        return $this->procsCollection[$this->currentProcId];
     }
 
     protected function ensureRightLogic($conditions, string $msg = null)
@@ -146,7 +151,7 @@ abstract class Product
 
     }
 
-    protected function initProcedures(string $abstr_proc, string $abstr_tt_proc) : void
+    protected function initProcedures(string $abstr_proc, string $abstr_tt_proc): void
     {
         foreach ($this->procedures as $id_stage => $procedure) {
             $this->procsCollection->add(new $abstr_proc);
@@ -162,7 +167,7 @@ abstract class Product
         }
     }
 
-    protected function isCompositeProc(G9Procedure $procedure) : bool
+    protected function isCompositeProc(G9Procedure $procedure): bool
     {
         if (in_array($procedure->getName(), $this->compositeProcs)) {
             return true;
@@ -182,7 +187,7 @@ abstract class Product
         }
     }
 
-    protected function checkProcRules(G9Procedure $current_procedure) : void
+    protected function checkProcRules(G9Procedure $current_procedure): void
     {
         $start = $current_procedure->getStart();
         $interval = new DateInterval($this->proceduresRules['minTime']);
@@ -194,17 +199,21 @@ abstract class Product
         );
     }
 
-    protected function checkProcsIsNotFinish()
+    protected function checkProcsIsNotFinish(?int $throw_exp = 0)
     {
         $end_of_last_proc = $this->procsCollection->last()->getEnd();
-        $this->ensureRightInput(is_null($end_of_last_proc), ' блок уже сдан на склад');
+        $throw_exp ?: $this->ensureRightInput(is_null($end_of_last_proc), ' блок уже сдан на склад');
+        if (is_null($end_of_last_proc)) {
+            return true;
+        }
+        return false;
     }
 
     abstract protected function checkTTisFinish(
         Collection $collection, array $arrayOfComposite
     ): void;
 
-    abstract protected function getTargetProcNames() : array;
+    abstract protected function getTargetProcNames(): array;
 
 }
 

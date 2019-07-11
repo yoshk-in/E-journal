@@ -14,6 +14,7 @@ class G9Procedure extends Procedure
     use ProcedureTrait;
 
     /**
+     * @Id
      * @ManyToOne(targetEntity="GNine")
      **/
     protected $product;

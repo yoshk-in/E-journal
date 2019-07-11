@@ -24,6 +24,21 @@ class MockGNine extends GNine
         'minTime' => 'PT1S'
     ];
 
+    protected $time = 'PT1S';
+
+    public function __construct()
+    {
+        parent::__construct();
+        if ($this->time) {
+            foreach ($this->ttProcedureRules as $key => $rule) {
+                $this->ttProcedureRules[$key] = $this->time;
+            }
+            $this->relaxProcedure['climaticRelax'] = $this->time;
+            $this->proceduresRules['minTime'] = $this->time;
+        }
+
+    }
+
     public function __clone()
     {
         $buffer = new ArrayCollection();

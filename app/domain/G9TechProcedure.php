@@ -13,6 +13,7 @@ class G9TechProcedure extends Procedure
     protected $interval;
 
     /**
+     * @id
      * @ManyToOne(targetEntity="GNine")
      **/
     protected $product;

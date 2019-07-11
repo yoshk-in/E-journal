@@ -36,8 +36,10 @@ trait TechProcedureTrait
     public function isFinished() : bool
     {
         $now_time = new DateTimeImmutable('now');
-        if ($now_time > $this->endProcedure) {
-            return true;
+        if (!is_null($this->endProcedure)) {
+            if ($now_time > $this->endProcedure) {
+                return true;
+            }
         }
         return false;
     }
