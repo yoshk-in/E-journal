@@ -2,6 +2,7 @@
 
 namespace App\domain;
 
+use App\base\exceptions\WrongModelException;
 use Doctrine\Common\Collections\Collection;
 use DateTimeImmutable;
 use DateInterval;
@@ -29,19 +30,20 @@ class GNine extends Product
     protected $ttCollection;
 
 
-    protected $procedures = [
-        'nastroy',
-        'technicalTraining',
-        'electrikaOTK',
-        'electrikaPZ'
+    protected static $procedures = [
+        'nastroy' => ['настройка', 'прическа'],
+        'technicalTraining' => ['техтренировка', 'механика ОТК'],
+        'electrikaOTK' => ['электрика ОТК', 'механика ПЗ'],
+        'electrikaPZ' => ['электрика ПЗ', 'склад']
     ];
 
-    protected $ttProcedureRules = [
-        'vibro' => 'PT1S',
-        'progon' => 'PT1S',
-        'moroz' => 'PT1S',
-        'jara' => 'PT1S'
+    protected static $ttProcedureRules = [
+        'vibro' => ['PT1S', 'вибро'],
+        'progon' => ['PT1S', 'прогон'],
+        'moroz' => ['PT1S', 'мороз'],
+        'jara' => ['PT1S', 'жара']
     ];
+
 
     protected $relaxProcedure = [
         'climaticRelax' => 'PT1S'
@@ -60,22 +62,7 @@ class GNine extends Product
 
     public function __construct()
     {
-
-        foreach ($this->compositeProcs as $composite) {
-            $this->ensureRightLogic(
-                in_array($composite, $this->procedures),
-                '$this->compositeProcs must be equals "technicalTraining"'
-            );
-        }
-        $this->ensureRightLogic(
-            !is_null($this->climaticProcs), 'climatic tests are required'
-        );
-        foreach ($this->climaticProcs as $climatic) {
-            $this->ensureRightLogic(
-                in_array($climatic, array_keys($this->ttProcedureRules)),
-                'wrong name climatic'
-            );
-        }
+        $this->ensureGNineLogicInit();
         parent::__construct();
     }
 
@@ -90,17 +77,17 @@ class GNine extends Product
         $this->currentTTProcId = 0;
     }
 
-    public function startTTProcedure(string $name): void
+    public function startTTProcedure(string $name) : string
     {
         $next_procedure = $this->getProcByName($name, $this->ttCollection);
         $this->checkNewTTProc($next_procedure);
         if ($this->isClimatic($name)) {
             $this->checkTTRelax($next_procedure);
         }
-        $next_procedure->setInterval($this->ttProcedureRules[$name]);
+        $next_procedure->setInterval($this->getTTProcedureList()[$name]);
         $next_procedure->setStart();
         $this->currentTTProcId = $next_procedure->getStageId();
-        $this->notify($next_procedure);
+        return $this->notify($next_procedure);
     }
 
     public function getTTCollection(): Collection
@@ -113,12 +100,9 @@ class GNine extends Product
         return $this->ttCollection[$this->currentTTProcId];
     }
 
-    protected function checkTTisFinish(
-        Collection $collection, array $arrayOfComposite
-    ): void
+    protected function checkTTisFinish(Collection $collection, array $arrayOfComposite) : void
     {
-        $err_msg = '- не отмечены частично или полностью входящие' . '
-         в данную процедуры испытания';
+        $err_msg = '- не отмечены частично или полностью входящие в данную процедуры испытания';
         foreach ($collection as $procedure) {
             $this->ensureRightInput($procedure->isFinished(), $err_msg);
         }
@@ -128,21 +112,14 @@ class GNine extends Product
     {
         $climatic_array = $this->climaticProcs;
         $callback_filter = function ($climatic) use ($next_procedure) {
-            if ($climatic === $next_procedure) {
-                return false;
-            }
+            if ($climatic === $next_procedure) return false;
             return true;
         };
-        $prev_climatic = array_values(
-            array_filter($climatic_array, $callback_filter)
-        );
+        $prev_climatic = array_values(array_filter($climatic_array, $callback_filter));
         return $prev_climatic[0];
     }
 
-    protected function getProcByName(
-        string $procedureName,
-        Collection $procedureCollection
-    ): Procedure
+    protected function getProcByName(string $procedureName,Collection $procedureCollection): Procedure
     {
         foreach ($procedureCollection as $procedure) {
             if ($procedure->getName() === $procedureName) {
@@ -160,7 +137,7 @@ class GNine extends Product
             'it is must be compositeProcedure'
         );
         $this->ensureRightLogic(
-            array_search($procedure_name, array_keys($this->ttProcedureRules))
+            array_search($procedure_name, array_keys($this->getTTProcedureList()))
             !== false,
             'wrong name'
         );
@@ -168,7 +145,6 @@ class GNine extends Product
             $result = $tt_proc->getStart() ? $tt_proc->isFinished() : true;
             return (bool)$result;
         });
-
         $this->ensureRightInput($prev_tt_proc_is_finished, ' - предыдущая процедура еще не завершена');
     }
 
@@ -176,8 +152,7 @@ class GNine extends Product
     protected function checkTTRelax(G9TechProcedure $procedure): void
     {
         $prev_climatic_name = $this->getPrevClimatic($procedure->getName());
-        $prev_climatic
-            = $this->getProcByName($prev_climatic_name, $this->ttCollection);
+        $prev_climatic = $this->getProcByName($prev_climatic_name, $this->ttCollection);
         if ($prev_climatic->getStart() !== null) {
             $now_time = new DateTimeImmutable('now');
             $relax_period = new DateInterval($this->relaxProcedure['climaticRelax']);
@@ -191,15 +166,32 @@ class GNine extends Product
 
     protected function isClimatic(string $name): bool
     {
-        if (in_array($name, $this->climaticProcs)) {
-            return true;
-        }
+        if (in_array($name, $this->climaticProcs)) return true;
         return false;
     }
 
     protected function getTargetProcNames(): array
     {
         return [G9Procedure::class, G9TechProcedure::class];
+    }
+
+    protected function ensureGNineLogicInit()
+    {
+        foreach ($this->compositeProcs as $composite) {
+            $this->ensureRightLogic(
+                in_array($composite, $this->getProcedureList()),
+                '$this->compositeProcs must be equals "technicalTraining"'
+            );
+        }
+        $this->ensureRightLogic(
+            !is_null($this->climaticProcs), 'climatic tests are required'
+        );
+        foreach ($this->climaticProcs as $climatic) {
+            $this->ensureRightLogic(
+                in_array($climatic, array_keys($this->getTTProcedureList())),
+                'wrong name climatic'
+            );
+        }
     }
 
 }

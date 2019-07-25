@@ -9,12 +9,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 class MockGNine extends GNine
 {
-    protected $ttProcedureRules = [
-        'vibro' => 'PT1S',
-        'progon' => 'PT1S',
-        'moroz' => 'PT1S',
-        'jara' => 'PT1S'
-    ];
 
     protected $relaxProcedure = [
         'climaticRelax' => 'PT1S'
@@ -30,8 +24,9 @@ class MockGNine extends GNine
     {
         parent::__construct();
         if ($this->time) {
-            foreach ($this->ttProcedureRules as $key => $rule) {
-                $this->ttProcedureRules[$key] = $this->time;
+            foreach ($this->getTTProcedureList() as $key => $rule) {
+                self::$ttProcedureRules[$key][] = $this->time;
+                self::$ttProcedureRules[$key][] = $rule[1];
             }
             $this->relaxProcedure['climaticRelax'] = $this->time;
             $this->proceduresRules['minTime'] = $this->time;

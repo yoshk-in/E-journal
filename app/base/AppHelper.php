@@ -3,6 +3,7 @@
 namespace App\base;
 
 use App\base\exceptions\ExceptionGenerator;
+use App\domain\Product;
 use \Doctrine\ORM\Tools\Setup;
 use \Doctrine\ORM\EntityManager;
 use App\command\CommandResolver;
@@ -25,8 +26,9 @@ class AppHelper
         return self::$request;
     }
 
-    public function getConsoleSyntaxParser()
+    public static function getConsoleSyntaxParser(?string $product = null)
     {
+        if ($product) return ParserResolver::getConsoleParser($product);
         return ParserResolver::getConsoleParser();
     }
 

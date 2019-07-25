@@ -4,40 +4,28 @@
 namespace App\domain;
 
 
-use App\base\AppHelper;
-use DateTimeImmutable;
-
 trait Notifying
 {
-    private $format_time = "Y-m-d H:i:s";
+    static $format_time = "Y-m-d H:i";
 
-    protected function notify(Procedure $procedure, ?DateTimeImmutable $time = null)
+    protected function notify(Procedure $procedure) : string
     {
-        $destination = $this->getDestination();
         $info = $procedure->getProduct()->getId();
-        $info .= $this->getProcedureInfo($procedure, $time);
-        $destination->setFeedback($info);
+        $info .= " " . $this->getProcedureInfoString($procedure);
+        return $info;
     }
 
-    protected function getDestination()
+    static function getProcedureInfoString($procedure, ?string $short = null) : string
     {
-        return AppHelper::getRequest();
+        return $procedure->getInfo($short) . ' ';
     }
 
-    protected function getProcedureInfo($procedure, $time)
-    {
-        $name = $procedure->getName();
-        $format = $this->format_time;
-        $string = ' время';
-        if ($procedure instanceof G9Procedure) {
-            $string .= ($procedure->getStart() === $time) ?
-                ' начала ' . $name . ' ' . $procedure->getStart()->format($format) :
-                ' завершения ' . $name . ' ' . $procedure->getEnd()->format($format) ;
 
-        } elseif ($procedure instanceof G9TechProcedure) {
-            $string .= ' начала ' . $name . ' ' . $procedure->getStart()->format($format) .
-                ' время завершения ' . $procedure->getEnd()->format($format) ;
-        }
-        return $string;
+    public static function getClassTableData(): array
+    {
+        $currentProcId = 'currentProcId';
+        $id = 'id';
+        $procedure_list = static::getProcedureList();
+        return array(count($procedure_list), $currentProcId, $id);
     }
 }

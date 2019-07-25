@@ -31,39 +31,22 @@ abstract class Product
     protected $currentProcId;
 
     protected $compositeProcs;
-    protected $procedures;
-    protected $ttProcedureRules;
+
     protected $proceduresRules;
+
 
     const THROW_EXCEPT = 0;
     const NOT_THROW_EXCEPT = 1;
     const INIT = 1;
 
+    protected static $procedures;
+    protected static $ttProcedureRules;
+
     public function __construct()
     {
         $this->procsCollection = new ArrayCollection();
         $this->ttCollection = new ArrayCollection();
-        $err_msg = 'some constants is not defined in child class: ';
-        $this->ensureRightLogic(
-            !is_null($this->procedures),
-            $err_msg . 'PROCEDURES are not defined'
-        );
-        $this->ensureRightLogic(
-            !is_null($this->ttProcedureRules),
-            $err_msg . 'TECH_PROC_REG are not defined'
-        );
-        $this->ensureRightLogic(
-            !is_null($this->proceduresRules),
-            $err_msg . 'PROC_REG are not defined'
-        );
-        $this->ensureRightLogic(
-            !is_null($this->compositeProcs),
-            'prop compositeProcedure is required'
-        );
-        $this->ensureRightLogic(
-            is_array($this->compositeProcs),
-            'compositeProcedure must be array'
-        );
+        $this->ensureProductLogicInit();
     }
 
     public function initByNumber(int $number): void
@@ -80,17 +63,17 @@ abstract class Product
         return $this->id;
     }
 
-    public function startProcedure()
+    public function startProcedure() : string
     {
         $this->checkProcsInit(self::INIT);
         $this->checkProcsIsNotFinish();
         $current_process = $this->getCurrentProc();
         $this->checkLastProcEnd();
         $current_process->setStart();
-        $this->notify($current_process, $current_process->getStart());
+        return $this->notify($current_process);
     }
 
-    public function endProcedure()
+    public function endProcedure() : string
     {
         $this->checkProcsInit(self::INIT);
         $this->checkProcsIsNotFinish();
@@ -100,13 +83,34 @@ abstract class Product
             ' в журнале нет отметки о начале данной процедуры'
         );
         if ($this->isCompositeProc($current_process)) {
-            $this->checkTTisFinish($this->ttCollection, $this->ttProcedureRules);
+            $this->checkTTisFinish($this->ttCollection, $this->getTTProcedureList());
         }
         $this->checkProcRules($current_process);
         $current_process->setEnd();
         $next_id = $current_process->getStageId();
         $this->currentProcId = ++$next_id;
-        $this->notify($current_process, $current_process->getEnd());
+        return $this->notify($current_process);
+    }
+
+    public static function getProcedureList(?string $option = null)
+    {
+        if (is_null($option)) return array_keys(static::$procedures);
+        foreach (static::$procedures as $key => $value) {
+            switch ($option) {
+                case 'ru' : $ru_result[$key] = $value[0]; break;
+                case 'next_state' : $ru_result[$key] = $value[1];
+            }
+        }
+        return $ru_result;
+
+    }
+
+    public static function getTTProcedureList(?string $ru = null)
+    {
+        foreach (static::$ttProcedureRules as $key => $value) {
+            $rule_list[$key] = ($ru === 'ru') ? $value[1] : $value[0];
+        }
+        return $rule_list;
     }
 
     public function getProcCollection(): Collection
@@ -115,28 +119,25 @@ abstract class Product
         return $this->procsCollection;
     }
 
-    protected function getCurrentProc(): ?Procedure
+    public function getCurrentProc(): ?Procedure
     {
         return $this->procsCollection[$this->currentProcId];
     }
 
+    public function getCurrentProcId(): int
+    {
+        return $this->currentProcId;
+    }
+
     protected function ensureRightLogic($conditions, string $msg = null)
     {
-        if (!$conditions) {
-            throw new WrongModelException(
-                'have mistake in domain logic program: ' . $msg
-            );
-        }
-
+        if (!$conditions) throw new WrongModelException('have mistake in domain logic program: ' . $msg);
     }
 
     protected function ensureRightInput($condition, string $msg = null)
     {
-        if (!$condition) {
-            throw new IncorrectInputException(
-                'ошибка: операция не выполнена: ' . $msg
-            );
-        }
+        if (!$condition) throw new IncorrectInputException('ошибка: операция не выполнена: ' . $msg);
+
     }
 
     protected function checkProcsInit(bool $inited = true)
@@ -153,13 +154,13 @@ abstract class Product
 
     protected function initProcedures(string $abstr_proc, string $abstr_tt_proc): void
     {
-        foreach ($this->procedures as $id_stage => $procedure) {
+        foreach ($this->getProcedureList() as $id_stage => $procedure) {
             $this->procsCollection->add(new $abstr_proc);
             $this->procsCollection[$id_stage]
                 ->setIdentityData($procedure, $this, $id_stage);
         }
         $index = 0;
-        foreach ($this->ttProcedureRules as $tt_procedure => $procedure_time) {
+        foreach ($this->getTTProcedureList() as $tt_procedure => $procedure_time) {
             $this->ttCollection->add(new $abstr_tt_proc);
             $this->ttCollection[$index]
                 ->setIdentityData($tt_procedure, $this, $index);
@@ -167,7 +168,7 @@ abstract class Product
         }
     }
 
-    protected function isCompositeProc(G9Procedure $procedure): bool
+    public function isCompositeProc(G9Procedure $procedure): bool
     {
         if (in_array($procedure->getName(), $this->compositeProcs)) {
             return true;
@@ -180,10 +181,7 @@ abstract class Product
         if ($this->currentProcId !== 0) {
             $current_id = $this->currentProcId;
             $last_procedure = $this->procsCollection[--$current_id];
-            $this->ensureRightInput(
-                $last_procedure->isFinished(),
-                'окончание прошлой процедуры еше не отмечено'
-            );
+            $this->ensureRightInput($last_procedure->isFinished(),'окончание прошлой процедуры еше не отмечено');
         }
     }
 
@@ -203,18 +201,27 @@ abstract class Product
     {
         $end_of_last_proc = $this->procsCollection->last()->getEnd();
         $throw_exp ?: $this->ensureRightInput(is_null($end_of_last_proc), ' блок уже сдан на склад');
-        if (is_null($end_of_last_proc)) {
-            return true;
-        }
+        if (is_null($end_of_last_proc)) return true;
         return false;
     }
 
-    abstract protected function checkTTisFinish(
-        Collection $collection, array $arrayOfComposite
-    ): void;
+    protected function ensureProductLogicInit()
+    {
+        $err_msg = 'some properties is not defined in child class! ';
+        $this->ensureRightLogic(
+            !is_null($this->getProcedureList()) &&
+            !is_null($this->getTTProcedureList()) &&
+            !is_null($this->proceduresRules) &&
+            !is_null($this->compositeProcs) && is_array($this->compositeProcs),
+            $err_msg
+        );
+    }
+
+    abstract protected function checkTTisFinish(Collection $collection, array $arrayOfComposite): void;
 
     abstract protected function getTargetProcNames(): array;
 
+    abstract public static function getClassTableData();
 }
 
 

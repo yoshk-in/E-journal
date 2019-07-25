@@ -27,35 +27,42 @@ class G9Parser extends ConsoleParser
         $this->_cache = AppHelper::getCacheObject();
     }
 
+
     protected function doParse()
     {
         if ($this->_arg1) {
-            if ('г9' === mb_strtolower($this->_arg1)) $target = 'GNine';
+            if ('г9' === mb_strtolower($this->_arg1)) $target = 'App\domain\GNine';
             else $target = $this->_arg1;
             $this->request->setProperty('targetClass', $target);
         } else $this->ensure(false);
-        if ($this->_arg2) {
-            $this->setCommand();
-        } else $this->ensure(false);
-        if (!is_null($this->_arg3)) {
+        $this->setCommand();
+        if ($this->isBlockNumbers($this->_arg3)) {
             $numbers = $this->parseBlocksNumbers($this->_arg3);
-            $unique_numbers = array_unique($numbers);
-            $this->ensure(
-                $unique_numbers == $numbers, 'переданы повторяющиеся номера'
-            );
-            sort($numbers, SORT_NUMERIC);
             $this->request->setBlockNumbers($numbers);
         }
     }
 
     protected function setCommand()
     {
-        if ($this->_arg2 === '+') {
-            $this->ensure(!is_null($this->_arg3), 'введите номера блоков');
-
-            $this->request->addCommand('addObject');
+        switch ($this->_arg2) {
+            case 'очистка' :
+                $this->request->addCommand('clearJournal');
+                return;
+            case 'приход' :
+                $this->request->addCommand('blocksAreArrived');
+                return;
+            case 'вынос' :
+                $this->request->addCommand('blocksAreDispatched');
+                return;
+            case null :
+                $this->request->addCommand('printFullStat');
+                return;
+        }
+        if ($tt = $this->isTTProc($this->_arg2)) {
+            $this->request->addCommand('blocksAreArrived');
+            $this->request->addTTCommand($tt);
             return;
-        };
+        }
         if (mb_stripos($this->_arg2, 'партия=') !== false) {
             $value = (explode('=', $this->_arg2))[1];
             $this->ensure(strlen($value) === 3);
@@ -63,34 +70,13 @@ class G9Parser extends ConsoleParser
             $this->request->setPartNumber($value);
             return;
         }
+        if ($this->isBlockNumbers($this->_arg2)) {
+            $this->request->addCommand('printRangeStat');
+            $this->request->setBlockNumbers($this->parseBlocksNumbers($this->_arg2));
+            return;
+        }
 
-        if (mb_stripos($this->_arg2, 'стат') !== false) {
-            if ($this->_arg3) {
-                $this->request->addCommand('printRangeStat');
-            } else {
-                $this->request->addCommand('printFullStat');
-            }
-            return;
-        }
-        if ($this->_arg2 === 'очистка') {
-            $this->request->addCommand('clearJournal');
-            return;
-        }
-        if ($this->_arg2 === 'приход') {
-            $this->request->addCommand('blocksAreArrived');
-            return;
-        }
-        if ($this->_arg2 === 'вынос') {
-            $this->request->addCommand('blocksAreDispatched');
-            return;
-        }
-        if ($tt = $this->getLatinWord($this->_arg2)) {
-            $this->request->addCommand('blocksAreArrived');
-            $this->request->addTTCommand($tt);
-            return;
-        }
         $this->ensure(false);
-
     }
 
     protected function parseBlocksNumbers(string $arg)
@@ -99,13 +85,10 @@ class G9Parser extends ConsoleParser
         $raw_data = $this->explodeByComma($arg);
         foreach ($raw_data as $line_data) {
             if (strpos($line_data, '-')) {
-
                 $this->ensure(substr_count($line_data, '-') === 1);
                 $range = self::explodeByHyphen($line_data);
-
                 list($first, $last) = $this->getFullNumbers($range);
                 $this->ensure($first < $last);
-
                 $numbers_array = array_merge($numbers_array, range($first, $last));
             } else {
                 $full_numbers = $this->getFullNumbers([$line_data]);
@@ -113,16 +96,17 @@ class G9Parser extends ConsoleParser
             }
         }
 
+        $this->ensure(
+            count($numbers_array) == count(array_unique($numbers_array)),
+            'переданы повторяющиеся номера'
+        );
+        sort($numbers_array, SORT_NUMERIC);
         return $numbers_array;
     }
 
-    protected function ensure(
-        bool $condition, $msg = 'неверно заданы параметры запроса'
-    )
+    protected function ensure(bool $condition, $msg = 'неверно заданы параметры запроса')
     {
-        if (!$condition) {
-            throw new AppException($msg);
-        }
+        if (!$condition) throw new AppException($msg);
     }
 
     protected function getFullNumbers($numbers)
@@ -146,23 +130,36 @@ class G9Parser extends ConsoleParser
         return $full_numbers;
     }
 
-    protected static function explodeByComma(string $string): array
+    protected static function explodeByComma(?string $string): array
     {
         return explode(',', $string);
     }
 
-    protected static function explodeByHyphen(string $string): array
+    protected static function explodeByHyphen(?string $string): array
     {
         return explode('-', $string);
     }
 
-    private function getLatinWord(string $word)
+    private function isTTProc(string $word)
     {
-        $list = ['вибро' => 'vibro', 'прогон' => 'progon', 'мороз' => 'moroz', 'жара' => 'jara'];
-        if (in_array($word, array_keys($list)))
-            return $list[$word];
+        $target_class = $this->request->getProperty('targetClass');
+        $tt_procs = $target_class::getTTProcedureList('ru');
+
+        if ((!is_null($word)) && in_array($word, $tt_procs))
+            return array_flip($tt_procs)[$word];
         return false;
 
+    }
+
+    private function isBlockNumbers(?string $arg)
+    {
+        $array_by_comma = static::explodeByComma($arg);
+        foreach ($array_by_comma as $elem) {
+            $array_by_hyphen = static::explodeByHyphen($elem);
+            foreach ($array_by_hyphen as $is_number)
+                if (!(is_int((int)$is_number) && (strlen($is_number) == 3 || strlen($is_number) == 6))) return false;
+        }
+        return true;
     }
 }
 

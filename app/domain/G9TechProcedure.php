@@ -6,7 +6,7 @@ namespace App\domain;
 /**
  * @Entity
  **/
-class G9TechProcedure extends Procedure
+class G9TechProcedure extends Procedure implements TechProcedure
 {
     use TechProcedureTrait;
 
