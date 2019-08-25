@@ -4,19 +4,23 @@
 namespace App\command;
 
 
-use Doctrine\Common\Collections\Collection;
-
 class BlocksAreDispatchedCommand extends Command
 {
-    protected function doExecute(Collection $blockCollection)
+    protected function doExecute(
+        \ArrayAccess $collection,
+        $repository,
+        $domainClass,
+        $productName,
+        ?array $not_found = null,
+        ?string $procedure = null
+    ): array
     {
         $this->ensureRightInput(
-            $this->numbersCountEqCollCount($this->request()->getBlockNumbers(), $blockCollection),
-            ' данные блоки еще не поступали на прозвону(или настройку) '
-            );
-        $output_info_array = $blockCollection->map(function ($block) {
-            return $block->endProcedure();
-        })->toArray();
-        $this->addFeedback('отмечены следующие события: ', $output_info_array);
+            (bool)!$not_found,
+            ' данные блоки еще не поступали на прозвону(или настройку) ',
+            $not_found
+        );
+        foreach ($collection as $product) $output[] = $product->endProcedure();
+        return $this->getCommonInfo($output ?? null);
     }
 }

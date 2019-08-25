@@ -59,13 +59,13 @@ class Cache
         }
     }
 
-    public function getPartNumber()
+    public function getPartNumber(string $product) : ?int
     {
-        return (int) $this->getProp('partNumber');
+        return $this->getProp($product . 'partNumber') ?? null;
     }
 
-    public function setPartNumber($number)
+    public function setPartNumber(string $product, int$number)
     {
-        $this->setProp('partNumber', $number);
+        $this->setProp($product . 'partNumber', $number);
     }
 }

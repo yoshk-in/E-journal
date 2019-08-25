@@ -2,37 +2,22 @@
 
 namespace App\command;
 
-use App\base\Request;
+use App\base\AbstractRequest;
 use App\base\exceptions\AppException;
 
 class CommandResolver
 {
-    private static $_baseCmd    = 'Command';
-    private static $_defaultCmd = 'App\command\DefaultCommand';
-    private static $_inst;
+    private $baseCmd = 'Command';
+    private $defaultCmd = 'App\command\DefaultCommand';
 
 
-
-    private function __construct()
-    {
-    }
-
-    public static function init()
-    {
-        if (is_null(self::$_inst)) {
-            return new self;
-        }
-        return self::$_inst;
-
-    }
-
-    public static function getCommand(Request $request)
+    public function getCommand(AbstractRequest $request)
     {
         $result_cmd_array = [];
         $commands = $request->getCommands();
         if ($commands) {
             foreach ($commands as $command) {
-                $command = ucfirst($command) . self::$_baseCmd;
+                $command = ucfirst($command) . $this->baseCmd;
                 $file_of_command = __DIR__ . '/' . $command . '.php';
                 $class = '\\' . __NAMESPACE__ . '\\' . $command;
 
@@ -54,7 +39,7 @@ class CommandResolver
             }
             return $result_cmd_array;
         } else {
-            return new self::$_defaultCmd;
+            return new $this->defaultCmd;
         }
     }
 }

@@ -2,100 +2,67 @@
 
 namespace App\command;
 
-use \App\base\AppHelper;
-
 use App\base\exceptions\IncorrectInputException;
-use App\base\Request;
-use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\Collection;
+use App\base\ConsoleRequest;
+use App\domain\ProcedureConfigurations;
+use App\domain\ProductRepository;
+use \ArrayAccess;
 
 abstract class Command
 {
-    protected $entityManager;
-
-    protected $repo;
-
-    protected $targetClass;
-
     protected $request;
 
     final public function __construct()
     {
-        $this->entityManager = AppHelper::getEntityManager();
+
     }
 
-    public function execute(Request $request)
-    {
+    public function execute(
+        ConsoleRequest $request,
+        ProductRepository $repository,
+        string $domainClass,
+        ProcedureConfigurations $productMap
+    ) : array {
         $this->request = $request;
-        $this->targetClass = $this->getTargetClass();
-        $this->repo = $this->entityManager->getRepository($this->targetClass);
+        $product_name = $request->getProductName();
         $numbers = $request->getBlockNumbers();
-        $blockCollection = $this->findByCriteria($numbers);
-        $this->doExecute($blockCollection);
-        $this->entityManager->flush();
+        $procedure_map = $productMap->getProcedures($product_name);
+        [$found_collection, $not_found_array] =
+            $repository->findByNumbers($domainClass, $product_name, count($procedure_map), $numbers);
+        $command = $this->request()->getPartialProcCommand();
+        $output = $this->doExecute($found_collection, $repository, $domainClass, $product_name, $not_found_array, $command);
+        $repository->save();
         echo static::class . "\n";
-
+        return $output;
     }
 
 
-    protected function addFeedback(string $title, ?array $messages = null)
-    {
-        $this->request()->setFeedback($title);
-        is_null($messages) ?: array_map(function ($string) {
-            $this->request()->setFeedback($string);
-        }, $messages);
-    }
 
-    protected function findByCriteria(?array $numbers = null)
-    {
-        $target = $this->getTargetClass();
-        $criteria = Criteria::create();
-        list($current_proc_id_value, $current_proc_id_name, $id_name) = $target::getClassTabledata();
-        if (is_null($numbers)) {
-            $criteria->orWhere(Criteria::create()->expr()->lt($current_proc_id_name, $current_proc_id_value));
-            $blockCollection = $this->repo->matching($criteria);
-        } else {
-            foreach ($numbers as $number) {
-                $criteria->orWhere(Criteria::create()->expr()->eq($id_name, $number));
-            }
-            $blockCollection = $this->repo->matching($criteria);
-        }
-        return $blockCollection;
-    }
-
-
-    protected function getNotPersistedNumbers(array $numbers, $blockCollection)
-    {
-        $new_numbers = array_filter($numbers, function ($number) use ($blockCollection) {
-            return !$blockCollection->exists(function ($key) use ($number, $blockCollection) {
-                return $blockCollection[$key]->getId() === $number;
-            });
-        });
-        return $new_numbers;
-    }
-
-    protected function numbersCountEqCollCount(array $numbers, Collection $blockCollection)
-    {
-        if ($blockCollection->count() !== count($numbers)) return false;
-        return true;
-    }
-
-    protected function getTargetClass()
-    {
-        return $this->request->getProperty('targetClass');
-    }
-
-    protected function request()
+    protected function request() : ConsoleRequest
     {
         return $this->request;
     }
 
-    protected function ensureRightInput(bool $condition, string $msg = '')
+    protected function ensureRightInput(bool $condition, string $msg = '', ?array $numbers = null)
     {
-        if (!$condition) throw new IncorrectInputException('неверно заданы параметры запроса: ' . $msg);
+        $numb_str = '';
+        if ($numbers) foreach ($numbers as $number) $numb_str .=  $number . "\n";
+        if (!$condition) throw new IncorrectInputException("неверно заданы параметры запроса: $msg\n $numb_str");
     }
 
-    abstract protected function doExecute(Collection $blockCollection);
+    protected function getCommonInfo($output) : array
+    {
+        return ['отмечены следующие события: ', $output ?? null];
+    }
+
+    abstract protected function doExecute(
+        ArrayAccess $collection,
+        ProductRepository $repository,
+        string $domainClass,
+        string $productName,
+        array $not_found_numbers,
+        ?string $procedure
+    ) : array;
 
 }
 

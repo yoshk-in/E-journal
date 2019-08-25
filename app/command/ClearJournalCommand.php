@@ -3,14 +3,12 @@
 
 namespace App\command;
 
-use \App\base\Request;
+use \App\base\ConsoleRequest;
 
 class ClearJournalCommand extends Command
 {
-    public function doExecute(Request $request)
+    protected function doExecute(\ArrayAccess $collection, ?array $not_found = null, ?string $command = null)
     {
-        $this->entityManager;
-
     }
 }
 

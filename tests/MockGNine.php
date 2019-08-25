@@ -42,9 +42,9 @@ class MockGNine extends GNine
         }
         $this->ttCollection = $buffer;
         $buffer = new ArrayCollection();
-        foreach ($this->procsCollection as $proc) {
+        foreach ($this->procCollection as $proc) {
             $buffer->add(clone $proc);
         }
-        $this->procsCollection = $buffer;
+        $this->procCollection = $buffer;
     }
 }

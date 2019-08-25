@@ -4,42 +4,59 @@ namespace App\controller;
 
 use App\base\AppHelper;
 use App\command\CommandResolver;
+use App\domain\Product;
 
 class Controller
 {
-    private static $_inst;
-    private $_helper;
+    private static $inst;
+    private $helper;
 
     private function __construct()
     {
-        $this->_helper = AppHelper::class;
+        $this->helper = new AppHelper;
     }
 
     public static function init()
     {
-        if (self::$_inst === null) {
-            self::$_inst = new Controller();
+        if (self::$inst === null) {
+            self::$inst = new Controller();
         }
-        return self::$_inst;
+        return self::$inst;
     }
 
-    public function handleRequest()
+    public function handleConsoleRequest()
     {
-        $request = $this->_helper::getRequest();
-        $console_parser = $this->_helper::getConsoleSyntaxParser();
-        if ($console_parser) {
-            $console_parser->parse($request);
-        }
-        $commands = CommandResolver::getCommand($request);
+        $request = $this->helper->getconsoleRequest();
+        $domain_class = Product::class;
+        $console_parser = $this->helper->getConsoleSyntaxParser();
+        $cache = $this->helper->getCacheObject();
+        $procedure_map = $this->helper->getProcedureMap();
+        $console_parser->parseAndFillRequest(
+            $request,
+            $procedure_map,
+            $cache);
+        $product_repository = $this->helper->getProductRepository(
+            $domain_class,
+            $procedure_map,
+            $devMode = true
+            );
+        $commands = $this->helper->getCommandResolver()->getCommand($request);
         foreach ($commands as $command) {
-            $command->execute($request);
+            $output[] = $command->execute(
+                $request,
+                $product_repository,
+                $domain_class,
+                $procedure_map
+            );
         }
+        $render = $this->helper->getRender();
+        $render->renderCommand(...$output);
         echo $request->getFeedbackString();
     }
 
     public static function run()
     {
         $instance = self::init();
-        $instance->handleRequest();
+        $instance->handleConsoleRequest();
     }
 }

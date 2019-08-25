@@ -2,226 +2,141 @@
 
 namespace App\domain;
 
+use App\base\exceptions\AppException;
 use App\base\exceptions\IncorrectInputException;
-use App\base\exceptions\WrongModelException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use DateTimeImmutable;
 use DateInterval;
 
 /**
- * @MappedSuperClass
+ * @Entity
  */
-abstract class Product
+class Product
 {
-    use Notifying;
-    /**
-     * @Id
-     * @Column(type="integer")
-     **/
+
+    /** @Id @Column(type="integer") @GeneratedValue */
     protected $id;
 
-    protected $procsCollection;
+    /** @Column(type="integer") */
+    protected $number;
 
-    protected $ttCollection;
-    /**
-     *
-     * @Column(type="integer")
-     **/
-    protected $currentProcId;
+    /** @OneToMany(targetEntity="Procedure", mappedBy="owner", cascade="persist", fetch="EAGER")
+     * @OrderBy({"idState" = "desc"})
+     */
+    protected $procCollection;
 
-    protected $compositeProcs;
+    /** @Column(type="string") */
+    protected $name;
 
-    protected $proceduresRules;
+    /** @OneToOne(targetEntity="Procedure", fetch="EAGER")
+     * @JoinColumn(name="current_proc_id", referencedColumnName="id")
+     */
+    protected $currentProc;
 
-
-    const THROW_EXCEPT = 0;
-    const NOT_THROW_EXCEPT = 1;
-    const INIT = 1;
-
-    protected static $procedures;
-    protected static $ttProcedureRules;
-
-    public function __construct()
+    public function __construct(int $number, string $name, array $procedureList)
     {
-        $this->procsCollection = new ArrayCollection();
-        $this->ttCollection = new ArrayCollection();
-        $this->ensureProductLogicInit();
+        $this->number = $number;
+        $this->name = $name;
+        $this->procCollection = new ArrayCollection($this->initProcedures($procedureList));
     }
 
-    public function initByNumber(int $number): void
+    public function getNumber(): int
     {
-        $this->id = $number;
-        list($proc, $tt_proc) = $this->getTargetProcNames();
-        $this->initProcedures($proc, $tt_proc);
-        $this->currentProcId = 0;
+        return $this->number;
     }
 
-
-    public function getId(): int
+    public function getName()
     {
-        return $this->id;
+        return $this->name;
     }
 
-    public function startProcedure() : string
+    public function startProcedure(?string $partial = null): array
     {
-        $this->checkProcsInit(self::INIT);
-        $this->checkProcsIsNotFinish();
-        $current_process = $this->getCurrentProc();
-        $this->checkLastProcEnd();
-        $current_process->setStart();
-        return $this->notify($current_process);
-    }
-
-    public function endProcedure() : string
-    {
-        $this->checkProcsInit(self::INIT);
-        $this->checkProcsIsNotFinish();
-        $current_process = $this->getCurrentProc();
-        $this->ensureRightInput(
-            (bool)($current_process->getStart()),
-            ' в журнале нет отметки о начале данной процедуры'
-        );
-        if ($this->isCompositeProc($current_process)) {
-            $this->checkTTisFinish($this->ttCollection, $this->getTTProcedureList());
+        $this->ensureRightInput(!$this->isFinished(), ' блок уже сдан на склад');
+        if (is_null($this->currentProc)) {
+            $this->currentProc = $this->getProcCollection()->first();
+        } else {
+            $this->nextProc($partial);
         }
-        $this->checkProcRules($current_process);
-        $current_process->setEnd();
-        $next_id = $current_process->getStageId();
-        $this->currentProcId = ++$next_id;
-        return $this->notify($current_process);
+        return $this->_getInfo($this->getCurrentProc()->setStart($partial));
     }
 
-    public static function getProcedureList(?string $option = null)
+    public function switchState(Procedure $proc): void
     {
-        if (is_null($option)) return array_keys(static::$procedures);
-        foreach (static::$procedures as $key => $value) {
-            switch ($option) {
-                case 'ru' : $ru_result[$key] = $value[0]; break;
-                case 'next_state' : $ru_result[$key] = $value[1];
+        $next_state = $proc->getIdState() + 1;
+        foreach ($this->procCollection as $proc) {
+            if ($proc->getIdState() === $next_state) {
+                ($this->currentProc = $proc);
+                return;
             }
         }
-        return $ru_result;
-
+        throw new AppException('неизвестная процедура');
     }
 
-    public static function getTTProcedureList(?string $ru = null)
+    public function endProcedure(): array
     {
-        foreach (static::$ttProcedureRules as $key => $value) {
-            $rule_list[$key] = ($ru === 'ru') ? $value[1] : $value[0];
-        }
-        return $rule_list;
+        $this->ensureRightInput(!$this->isFinished(), ' блок уже сдан на склад');
+        return $this->_getInfo($this->getCurrentProc()->setEnd());
+
     }
+
 
     public function getProcCollection(): Collection
     {
-        $this->checkProcsInit(self::INIT);
-        return $this->procsCollection;
+        return $this->procCollection;
     }
 
-    public function getCurrentProc(): ?Procedure
+    public function getCurrentProc(): Procedure
     {
-        return $this->procsCollection[$this->currentProcId];
+        return $this->currentProc;
     }
 
-    public function getCurrentProcId(): int
+    public function getInfo(): array
     {
-        return $this->currentProcId;
+        return $this->_getInfo(
+            $this->getProcCollection()->map(function ($proc) {
+                return $proc->getInfo();
+            })->toArray()
+        );
     }
 
-    protected function ensureRightLogic($conditions, string $msg = null)
+    public function getNameAndNumber(): array
     {
-        if (!$conditions) throw new WrongModelException('have mistake in domain logic program: ' . $msg);
+        return [$this->getName(), $this->getNumber()];
     }
 
-    protected function ensureRightInput($condition, string $msg = null)
+    protected function nextProc(?string $partial): void
+    {
+        if ($partial) return;
+        $current = $this->getCurrentProc();
+        $this->ensureRightInput($current->isFinished(), 'нет отметки о завершении предыдущей процедуры - ' . $current->getName());
+        $this->switchState($current);
+    }
+
+
+    protected function ensureRightInput($condition, string $msg = null): void
     {
         if (!$condition) throw new IncorrectInputException('ошибка: операция не выполнена: ' . $msg);
-
     }
 
-    protected function checkProcsInit(bool $inited = true)
+
+    protected function isFinished(): bool
     {
-        $already_init = $this->procsCollection->first();
-        $err_msg = 'procedures are not initialized yet';
-        if (!$inited) {
-            $already_init = !$already_init;
-            $err_msg = 'procedures already are initialized';
-        }
-        $this->ensureRightLogic($already_init, $err_msg);
-
+        return $this->getProcCollection()->last()->isFinished();
     }
 
-    protected function initProcedures(string $abstr_proc, string $abstr_tt_proc): void
+    protected function initProcedures(array $procedureList): array
     {
-        foreach ($this->getProcedureList() as $id_stage => $procedure) {
-            $this->procsCollection->add(new $abstr_proc);
-            $this->procsCollection[$id_stage]
-                ->setIdentityData($procedure, $this, $id_stage);
-        }
-        $index = 0;
-        foreach ($this->getTTProcedureList() as $tt_procedure => $procedure_time) {
-            $this->ttCollection->add(new $abstr_tt_proc);
-            $this->ttCollection[$index]
-                ->setIdentityData($tt_procedure, $this, $index);
-            ++$index;
-        }
+        return ProcedureFactory::createProcedures($procedureList, $this);
     }
 
-    public function isCompositeProc(G9Procedure $procedure): bool
+    protected function _getInfo(array $info): array
     {
-        if (in_array($procedure->getName(), $this->compositeProcs)) {
-            return true;
-        }
-        return false;
+        return [[$this->getName(), $this->getNumber()], [$info]];
     }
 
-    protected function checkLastProcEnd(): void
-    {
-        if ($this->currentProcId !== 0) {
-            $current_id = $this->currentProcId;
-            $last_procedure = $this->procsCollection[--$current_id];
-            $this->ensureRightInput($last_procedure->isFinished(),'окончание прошлой процедуры еше не отмечено');
-        }
-    }
 
-    protected function checkProcRules(G9Procedure $current_procedure): void
-    {
-        $start = $current_procedure->getStart();
-        $interval = new DateInterval($this->proceduresRules['minTime']);
-        $end_by_rules = $start->add($interval);
-        $this->ensureRightInput(
-            new DateTimeImmutable('now') >= $end_by_rules,
-            '- минимальное время проведения процедуры' .
-            $interval->format(' %H часов %i минут %s секунд')
-        );
-    }
-
-    protected function checkProcsIsNotFinish(?int $throw_exp = 0)
-    {
-        $end_of_last_proc = $this->procsCollection->last()->getEnd();
-        $throw_exp ?: $this->ensureRightInput(is_null($end_of_last_proc), ' блок уже сдан на склад');
-        if (is_null($end_of_last_proc)) return true;
-        return false;
-    }
-
-    protected function ensureProductLogicInit()
-    {
-        $err_msg = 'some properties is not defined in child class! ';
-        $this->ensureRightLogic(
-            !is_null($this->getProcedureList()) &&
-            !is_null($this->getTTProcedureList()) &&
-            !is_null($this->proceduresRules) &&
-            !is_null($this->compositeProcs) && is_array($this->compositeProcs),
-            $err_msg
-        );
-    }
-
-    abstract protected function checkTTisFinish(Collection $collection, array $arrayOfComposite): void;
-
-    abstract protected function getTargetProcNames(): array;
-
-    abstract public static function getClassTableData();
 }
 
 

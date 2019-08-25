@@ -2,53 +2,70 @@
 
 namespace App\command;
 
-use App\domain\Product;
-use Doctrine\Common\Collections\Collection;
+use App\base\AppHelper;
 
-class PrintFullStatCommand extends Command
+
+class FullInfoCommand extends Command
 {
     private $procFeedback = [];
     private $stateNames = [];
 
-    protected function doExecute(Collection $blocksCollection)
+    protected function doExecute(
+        \ArrayAccess $collection,
+        $repository,
+        $domainClass,
+        $productName,
+        ?array $not_found = null,
+        ?string $procedure = null
+    ): array
     {
-        $this->setForeachBlockInfo($blocksCollection);
-        $this->addFeedback('информация по несданным блокам:', $this->getBlockInfo());
-        $total_count_block_info = $this->getStateNamesWithCountBlocks($this->getProcNames());
-        $this->addFeedback('кол-во блоков в работе: ' . $blocksCollection->count(), $total_count_block_info);
+        foreach ($collection as $product) {
+            $output[$productName] = $product->getInfo();
+        }
+        return [
+            "информация по найденным блокам: \n" => $output ?? null,
+        ];
+
+//        foreach ($info as $part) foreach ($part as $scratch) var_dump($scratch);
+//        $this->setForeachBlockInfo($blocksCollection);
+//        $this->addFeedback('информация по несданным блокам:', $this->getBlockInfo());
+//        $total_count_block_info = $this->getStateNamesWithCountBlocks($this->getProcNames());
+//        $this->addFeedback('кол-во блоков в работе: ' . $blocksCollection->count(), $total_count_block_info);
     }
 
-    private function getStateNamesWithCountBlocks(array $origArr) : array
+
+    private function getStateNamesWithCountBlocks(array $stateArr): array
     {
-        $total_count = [];
-        $result_info = [];
-        foreach ($origArr as $block_id => $state_name) {
-            if (array_key_exists($state_name, $total_count)) {
-                ++$total_count[$state_name][0];
-                $total_count[$state_name][1] = $total_count[$state_name][1] . ", $block_id";
-            }
-            else {
-                $total_count[$state_name][0] = 1;
-                $total_count[$state_name][1] = $block_id;
+        foreach ($stateArr as $block_id => $state_name) {
+            if (!isset($states[$state_name])) {
+                $state = new \stdClass();
+                $state->count = 1;
+                $state->ids_str = $block_id;
+                $states[$state_name] = $state;
+            } else {
+                ++$states[$state_name]->count;
+                $states[$state_name]->ids_str .= ', ' . $block_id;
             }
         }
-        foreach ($total_count as $state_name => $state_info) $result_info[] = $state_name . ":   $state_info[0] штук.:  " .$state_info[1];
 
-        return $result_info;
+        foreach ($states as $state_name => $state)
+            $info[] = $state_name . ":   $state->count штук.:  " . $state->ids_str;
+
+        return $info;
     }
 
 
-    private function getForeachProcInfoLine(array $info_array) : string
+    private function getForeachProcInfoLine(array $info_array): string
     {
         $info_string = '';
         foreach ($info_array as $key => $proc) {
             if ($key === 1) $info_string .= '  ---  завершенные испытания: ';
             $info_string .= $proc->getInfo('short');
         }
-        return $info_string ;
+        return $info_string;
     }
 
-    private function setForeachBlockInfo(Collection $blocksCollection) : void
+    private function setForeachBlockInfo(Collection $blocksCollection): void
     {
         $blocksCollection->map(function ($block) {
             list($blocId, $state_name, $executing_procs) = $this->getCurrentProcsInfo($block);
@@ -80,7 +97,7 @@ class PrintFullStatCommand extends Command
                 }
             });
         }
-        return [(int) $block->getId(), $state_name, $executing_proc_info];
+        return [(int)$block->getId(), $state_name, $executing_proc_info];
     }
 
     private function getBlockInfo(): array

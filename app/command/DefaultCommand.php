@@ -3,14 +3,11 @@
 namespace App\command;
 
 use Doctrine\Common\Collections\Collection;
-use App\base\Request;
+
 
 class DefaultCommand extends Command
 {
-    protected function doExecute(Request $request, Collection $blockCollection)
+    protected function doExecute(\ArrayAccess $collection, ?array $not_found = null, ?string $command = null)
     {
-        $blockCollection->map(function ($block) {
-
-        });
     }
 }

@@ -2,8 +2,8 @@
   "name": "anon/jornal",
   "type": "project",
   "require": {
-    "doctrine/orm": "2.*",
-    "ext-mbstring": "7.*"
+    "ext-mbstring": "7.*",
+    "doctrine/orm": "^2.6"
   },
   "authors": [
     {

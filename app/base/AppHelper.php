@@ -2,70 +2,78 @@
 
 namespace App\base;
 
-use App\base\exceptions\ExceptionGenerator;
-use App\domain\Product;
-use \Doctrine\ORM\Tools\Setup;
-use \Doctrine\ORM\EntityManager;
 use App\command\CommandResolver;
-use App\console\ParserResolver;
+use App\console\ConsoleParser;
+use App\domain\ProductRepository;
 use App\cache\Cache;
-use data\DatabaseConf;
-use App\base\exceptions\AppException;
-
+use \App\console\Render;
+use App\base\ConsoleRequest;
+use App\domain\ProcedureConfigurations;
 
 class AppHelper
 {
-    private static $request;
-    private static $exceptionGenerator;
+    private $multiTone = [];
+    private $base = 'App\base\\';
+    private $console = 'App\console\\';
+    private $domain = 'App\domain\\';
+    private static $inst;
 
-    public static function getRequest(): Request
+    /**
+     * AppHelper constructor.
+     * @param array $multiTone
+     */
+    final public function __construct()
     {
-        if (is_null(self::$request)) {
-            self::$request = new Request();
-        }
-        return self::$request;
     }
 
-    public static function getConsoleSyntaxParser(?string $product = null)
+
+    public static function init()
     {
-        if ($product) return ParserResolver::getConsoleParser($product);
-        return ParserResolver::getConsoleParser();
+        return self::$inst ?? self::$inst = new AppHelper();
     }
 
-    public static function getCacheObject()
+    public function getConsoleRequest(): ConsoleRequest
+    {
+        return $this->getSingleTone(ConsoleRequest::class);
+    }
+
+    public function getConsoleSyntaxParser(): ConsoleParser
+    {
+        return $this->getSingleTone($this->console . 'ConsoleParser');
+    }
+
+    public function getCacheObject(): Cache
     {
         return Cache::init();
     }
 
-    public static function getCommandResolver()
+    public function getProductRepository($productName, $productMap, $devMode): ProductRepository
     {
-        return CommandResolver::class;
+        return $this->getSingleTone($this->domain . 'ProductRepository', $productName, $productMap, $devMode);
     }
 
-    public static function getEntityManager($devMode = true)
+    public function getCommandResolver(): CommandResolver
     {
-        $config_exists = !(file_exists('data/DatabaseConf.php')
-            && (class_exists('\data\DatabaseConf')));
-        if ($config_exists) {
-            throw new AppException(
-                'configuration class does not exists in /data dir ' .
-                            '"DatabaseConf::getConf()" method required ' .
-                "by Doctrine ORM"
-            );
-        }
-        $config =DatabaseConf::getConf();
-        $doctrine_conf = Setup::createAnnotationMetadataConfiguration(
-            array('app/domain'), $devMode
-        );
-        return EntityManager::create($config, $doctrine_conf);
+        return $this->getSingleTone(CommandResolver::class);
     }
 
-    public static function getExceptionGenerator()
+    public function getProcedureMap(): ProcedureConfigurations
     {
-        if (is_null(self::$exceptionGenerator)) {
-            self::$exceptionGenerator = new ExceptionGenerator();
+        return $this->getSingleTone($this->domain . 'ProcedureConfigurations');
+    }
+
+
+    public function getRender(): Render
+    {
+        return $this->getSingleTone($this->console . 'Render');
+    }
+
+    private function getSingleTone(string $object, $option1 = null, $option2 = null, $option3 = null)
+    {
+        if (isset($this->multiTone[$object])) {
+            return $this->multiTone[$object];
         }
-        return self::$exceptionGenerator;
+        return $this->multiTone[$object] = new $object($option1, $option2, $option3);
     }
 
 }

@@ -3,59 +3,27 @@
 
 namespace App\command;
 
-use App\base\Request;
-use Doctrine\Common\Collections\Collection;
+
+use App\domain\ProductRepository;
 
 class BlocksAreArrivedCommand extends Command
 {
-
-    protected function doExecute(Collection $blockCollection)
+    protected function doExecute(
+        \ArrayAccess $collection,
+        ProductRepository $repository,
+        string $domainClass,
+        string $productName,
+        array $not_found,
+        ?string $procedure
+    ) : array
     {
-        $numbers = $this->request()->getBlockNumbers();
-        if (!$this->numbersCountEqCollCount($numbers, $blockCollection)) {
-            $newNumbers = $this->getNotPersistedNumbers($numbers, $blockCollection);
-            $newBlocks = $this->createAndPersistNewObjects($newNumbers);
-            $blockCollection = $this->mergeNewAndOldCollection($newBlocks, $blockCollection);
+        foreach ($collection as $product) $output[] = $product->startProcedure($procedure);
+        if (!empty($not_found)) {
+            $this->ensureRightInput(is_null($procedure), 'данные блоки еше не поступали на настройку:', $not_found);
+            $newCollection = $repository->createProducts($not_found, $domainClass, $productName);
+            foreach ($newCollection as $product) $output[] = $product->startProcedure();
         }
-        $output_info_array = $this->startProcedure($blockCollection);
-        $this->addFeedback( "в журнал занесены следующие блоки:", $output_info_array);
+        return $this->getCommonInfo($output ?? null);
     }
-
-    private function createAndPersistNewObjects(array $newBlocks)
-    {
-        $objects = [];
-        foreach ($newBlocks as $newBlock) {
-            $target = $this->targetClass;
-            $object = new $target();
-            $object->initByNumber($newBlock);
-            $objects[] = $object;
-            $this->entityManager->persist($object);
-        }
-        return $objects;
-    }
-
-    private function startProcedure(Collection $blockCollection)
-    {
-        if ($tt_name = $this->request()->getTTCommand()) {
-            $output_info = $blockCollection->map(function ($block) use ($tt_name) {
-                return $block->startTTProcedure($tt_name);
-            });
-        } else {
-            $output_info = $blockCollection->map(function ($block) {
-                return $block->startProcedure();
-            });
-        }
-        return $output_info->toArray();
-    }
-
-    private function mergeNewAndOldCollection(array $newObjects, Collection $oldCollection)
-    {
-        array_map(function ($newBlock) use ($oldCollection) {
-            $oldCollection->add($newBlock);
-        }, $newObjects);
-        return $oldCollection;
-    }
-
-
 
 }

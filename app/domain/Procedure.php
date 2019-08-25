@@ -3,114 +3,99 @@
 
 namespace App\domain;
 
-use App\base\exceptions\IncorrectInputException;
-use App\base\exceptions\WrongModelException;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 /**
- * @MappedSuperClass
+ * @Entity @Table(name="`Procedure`") @HasLifecycleCallbacks
  */
-
-abstract class Procedure
+class Procedure extends AbstractProcedure
 {
+    use DoctrineProcedureLifeCycleCallbacks;
     /**
-     *
-     * @Column(type="datetime_immutable", nullable=true)
-     **/
-    protected $startProcedure;
-    /**
-     *
-     * @Column(type="datetime_immutable", nullable=true)
-     **/
-    protected $endProcedure;
-    /**
-     *
-     * @Column(type="string")
-     **/
-    protected $name;
+     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist", fetch="EAGER")
+     */
+    protected $innerProcs;
 
-    protected $idStage;
     /**
-     * @Id
-     * @Column(type="integer")
+     * @ManyToOne(targetEntity="Product")
      **/
-    protected $id;
+    protected $owner;
 
-    protected $product;
-
-    protected function ensureRighInput(bool $condition, $msg = null): ?\Exception
+    public function __construct(string $name, int $idState, Product $product, ?array $innerProcs = null)
     {
-        if (!$condition) {
-            throw new IncorrectInputException(
-                'ошибка: операция не выполнена ' . $msg
-            );
-        }
-        return null;
+        parent::__construct($name, $idState, $product);
+        if ($innerProcs) $this->innerProcs = new ArrayCollection(ProcedureFactory::createPartials($innerProcs, $this));
     }
 
-    public function setIdentityData(
-        string $name, Product $product, int $idState
-    ): void
+    public function setEnd(): array
     {
-        if (!($product instanceof Product)) {
-            throw new WrongModelException('own object must be instance of Product');
-        }
-        if (is_null($this->name)
-            && is_null($this->product)
-            && is_null($this->idStage)
-        ) {
-            $this->name = $name;
-            $this->product = $product;
-            $this->id = $idState;
-            return;
-        }
-        throw new WrongModelException('identity data already is set');
-    }
-
-    public function setStart(): void
-    {
-        $not_inited = (is_null($this->name) && is_null($this->product) && is_null($this->idStage));
-        if ($not_inited) {
-            throw new WrongModelException('object is not inited');
-        }
-        $this->ensureRighInput(
-            is_null($this->startProcedure),
-            'данное событие уже отмечено в журнале'
+        $this->ensureRightInput((bool)$this->getStart(), 'нет отметки о начале данной процедуры');
+        $this->ensureRightInput(!$end = $this->getEnd(), "данное событие уже отмечено в журнале: вынос {$this->format($end)}");
+        $is_composite_proc = (bool)$this->innerProcs;
+        $this->ensureRightInput(
+            !$is_composite_proc || $this->innerProcsIsFinished(),
+            'нет отметки о завершении внутренних процедур: ',
+            $is_composite_proc ? $this->getInnerProcs() : null
         );
-        $this->startProcedure = new DateTimeImmutable('now');
+        $this->end = new DateTimeImmutable('now');
+        return $this->getInfo();
     }
 
-    public function isFinished(): bool
+
+    public function setStart(?string $partial = null): array
     {
-        if ($this->endProcedure) {
-            return true;
+        return $info = is_null($partial) ? parent::setStart() : $this->startInner($partial);
+    }
+
+    public function getInfo(): array
+    {
+        $self_info = parent::getInfo();
+        $inner_proc_info = $this->innerProcs ? $this->getInnerProcs()->map(function ($partial) {
+            return $partial->getInfo();
+        })->toArray() : null;
+        $self_info[] = $inner_proc_info;
+        return $self_info;
+    }
+
+    protected function getInnerProcs(): Collection
+    {
+        $this->ensureRightInput((bool)$this->innerProcs, "{$this->getName()} не имеет вложенных процедур");
+        return $this->innerProcs;
+    }
+
+
+    protected function innerProcsIsFinished(): bool
+    {
+        $inners = $this->getInnerProcs();
+        return $inners->forAll(function ($key) use ($inners) {
+            return $inners[$key]->isFinished();
+        });
+    }
+
+    protected function startInner(string $partial_name): array
+    {
+        foreach ($this->getInnerProcs() as $partial) {
+            if ($partial->getName() === $partial_name) {
+                $found = $partial;
+                break;
+            }
         }
-        return false;
+        $this->ensureRightInput(
+            (bool)($found ?? false),
+            "у процедуры {$this->getName()} вложенной процедуры под именем $partial_name не найдено"
+        );
+        return $info = $found->setStart();
     }
 
-    public function getName(): string
+    protected function ensureRightInput(bool $condition, $msg = '', ?Collection $inners = null): void
     {
-        return $this->name;
-    }
-
-
-    public function getStageId(): int
-    {
-        return $this->id;
-    }
-
-    public function getStart(): ?DateTimeImmutable
-    {
-        return $this->startProcedure;
-    }
-
-    public function getEnd(): ?DateTimeImmutable
-    {
-        return $this->endProcedure;
-    }
-
-    public function getProduct() : Product
-    {
-        return $this->product;
+        $product = $this->getOwner()->getName();
+        $number = $this->getOwner()->getNumber();
+        !(bool)$inners || $inners_info = array_reduce($inners->toArray(), function ($buffer, $inner) use ($inners) {
+            return $buffer .= implode($inner->getInfo(), ', ');
+        }, $buffer = '');
+        parent::ensureRightInput($condition, " $msg " . ($inners_info ?? ''));
     }
 }
