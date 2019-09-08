@@ -4,41 +4,49 @@ namespace App\command;
 
 use App\base\exceptions\IncorrectInputException;
 use App\base\ConsoleRequest;
-use App\domain\ProcedureConfigurations;
+use App\domain\ProcedureMap;
 use App\domain\ProductRepository;
 use \ArrayAccess;
 
 abstract class Command
 {
     protected $request;
+    protected $repository;
+    protected $productMap;
 
-    final public function __construct()
-    {
-
-    }
-
-    public function execute(
+    final public function __construct(
         ConsoleRequest $request,
         ProductRepository $repository,
-        string $domainClass,
-        ProcedureConfigurations $productMap
-    ) : array {
+        ProcedureMap $productMap
+    )  {
         $this->request = $request;
-        $product_name = $request->getProductName();
-        $numbers = $request->getBlockNumbers();
-        $procedure_map = $productMap->getProcedures($product_name);
+        $this->repository = $repository;
+        $this->productMap = $productMap;
+    }
+
+    public function execute(string $domainClass): array
+    {
+        $product_name = $this->request->getProductName();
+        $numbers = $this->request->getBlockNumbers();
+        $procedure_map = $this->productMap->getProcedures($product_name);
         [$found_collection, $not_found_array] =
-            $repository->findByNumbers($domainClass, $product_name, count($procedure_map), $numbers);
+            $this->repository->findByNumbers($domainClass, $product_name, count($procedure_map), $numbers);
         $command = $this->request()->getPartialProcCommand();
-        $output = $this->doExecute($found_collection, $repository, $domainClass, $product_name, $not_found_array, $command);
-        $repository->save();
+        $output = $this->doExecute(
+            $found_collection,
+            $this->repository,
+            $domainClass,
+            $product_name,
+            $not_found_array,
+            $command
+        );
+        $this->repository->save();
         echo static::class . "\n";
         return $output;
     }
 
 
-
-    protected function request() : ConsoleRequest
+    protected function request(): ConsoleRequest
     {
         return $this->request;
     }
@@ -46,11 +54,11 @@ abstract class Command
     protected function ensureRightInput(bool $condition, string $msg = '', ?array $numbers = null)
     {
         $numb_str = '';
-        if ($numbers) foreach ($numbers as $number) $numb_str .=  $number . "\n";
+        if ($numbers) foreach ($numbers as $number) $numb_str .= $number . "\n";
         if (!$condition) throw new IncorrectInputException("неверно заданы параметры запроса: $msg\n $numb_str");
     }
 
-    protected function getCommonInfo($output) : array
+    protected function getCommonInfo($output): array
     {
         return ['отмечены следующие события: ', $output ?? null];
     }
@@ -62,7 +70,7 @@ abstract class Command
         string $productName,
         array $not_found_numbers,
         ?string $procedure
-    ) : array;
+    ): array;
 
 }
 

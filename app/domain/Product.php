@@ -34,10 +34,13 @@ class Product
      */
     protected $currentProc;
 
+    private $initProcList;
+
     public function __construct(int $number, string $name, array $procedureList)
     {
         $this->number = $number;
         $this->name = $name;
+        $this->initProcList = $procedureList;
         $this->procCollection = new ArrayCollection($this->initProcedures($procedureList));
     }
 

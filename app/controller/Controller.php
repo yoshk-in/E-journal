@@ -2,61 +2,48 @@
 
 namespace App\controller;
 
-use App\base\AppHelper;
+
 use App\command\CommandResolver;
-use App\domain\Product;
+use App\console\ConsoleParser;
+use App\console\Render;
+use App\domain\EventChannel;
+use Psr\Container\ContainerInterface;
+
 
 class Controller
 {
-    private static $inst;
-    private $helper;
+    private $consoleParser;
+    private $render;
+    private $commandResolver;
+    private $container;
 
-    private function __construct()
-    {
-        $this->helper = new AppHelper;
-    }
-
-    public static function init()
-    {
-        if (self::$inst === null) {
-            self::$inst = new Controller();
-        }
-        return self::$inst;
+    public function __construct(
+        ContainerInterface $container,
+        ConsoleParser $consoleParser,
+        CommandResolver $commandResolver,
+        Render $render
+    ) {
+        $this->consoleParser = $consoleParser;
+        $this->commandResolver = $commandResolver;
+        $this->render = $render;
+        $this->container = $container;
     }
 
     public function handleConsoleRequest()
     {
-        $request = $this->helper->getconsoleRequest();
-        $domain_class = Product::class;
-        $console_parser = $this->helper->getConsoleSyntaxParser();
-        $cache = $this->helper->getCacheObject();
-        $procedure_map = $this->helper->getProcedureMap();
-        $console_parser->parseAndFillRequest(
-            $request,
-            $procedure_map,
-            $cache);
-        $product_repository = $this->helper->getProductRepository(
-            $domain_class,
-            $procedure_map,
-            $devMode = true
-            );
-        $commands = $this->helper->getCommandResolver()->getCommand($request);
+        $this->consoleParser->parseAndFillRequest();
+        $commands = $this->commandResolver->getCommand();
+        $domain_class = $this->container->get('app.domain_class');
+        $this->container->get(EventChannel::class);
         foreach ($commands as $command) {
-            $output[] = $command->execute(
-                $request,
-                $product_repository,
-                $domain_class,
-                $procedure_map
-            );
+            $command = $this->container->get($command);
+            $output[] = $command->execute($domain_class);
         }
-        $render = $this->helper->getRender();
-        $render->renderCommand(...$output);
-        echo $request->getFeedbackString();
+        $this->render->renderCommand(...$output);
     }
 
-    public static function run()
+    public function run()
     {
-        $instance = self::init();
-        $instance->handleConsoleRequest();
+        $this->handleConsoleRequest();
     }
 }

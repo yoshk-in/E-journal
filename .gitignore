@@ -1,5 +1,5 @@
-/data/partNumber
-/data/DatabaseConf.php
+/cache/partNumber
+/cache/DatabaseConf.php
 /vendor/
 .*
 !.gitignore

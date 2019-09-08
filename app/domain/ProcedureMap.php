@@ -3,7 +3,7 @@
 namespace App\domain;
 
 
-class ProcedureConfigurations
+class ProcedureMap
 {
     private const PROCEDURE_LIST = [
         'Г9' => [                    //product name
@@ -62,7 +62,7 @@ class ProcedureConfigurations
     ];
 
     /**
-     * ProcedureConfigurations constructor.
+     * ProcedureMap constructor.
      */
     public function __construct()
     {

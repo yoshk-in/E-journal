@@ -4,15 +4,16 @@
 namespace App\console;
 
 
-use Doctrine\Common\Collections\Collection;
+use App\domain\ISubscriber;
+use App\domain\TSubscriber;
 
-class Render
+class Render implements ISubscriber
 {
+    use TSubscriber;
+
     private $commandMap = [
         'информация по несданным блокам:'
     ];
-
-
 
     public function renderCommand(array $info)
     {
@@ -24,13 +25,8 @@ class Render
                 [$name, $start, $end, $finished, $inners] = $proc;
             }
         }
-        var_dump($title, $block_name, $number, $name, $start, $end, $finished ? 'завершено' : "завершится", $inners ?? null);
+        var_dump($title, $block_name, $number, $name, $start , $end, $finished ? 'завершено' : "завершится", $inners ?? null);
     }
-
-
-
-
-
 
     private function string(?string $string = null)
     {

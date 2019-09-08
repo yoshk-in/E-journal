@@ -9,12 +9,22 @@ class CommandResolver
 {
     private $baseCmd = 'Command';
     private $defaultCmd = 'App\command\DefaultCommand';
+    private $request;
+
+    /**
+     * CommandResolver constructor.
+     * @param $request
+     */
+    public function __construct(AbstractRequest $request)
+    {
+        $this->request = $request;
+    }
 
 
-    public function getCommand(AbstractRequest $request)
+    public function getCommand() : array
     {
         $result_cmd_array = [];
-        $commands = $request->getCommands();
+        $commands = $this->request->getCommands();
         if ($commands) {
             foreach ($commands as $command) {
                 $command = ucfirst($command) . $this->baseCmd;
@@ -30,7 +40,7 @@ class CommandResolver
                 }
 
                 if (class_exists($class)) {
-                    $result_cmd_array[] = new $class;
+                    $result_cmd_array[] = $class;
                 } else {
                     throw new AppException(
                         "The command class not found: $class is given"

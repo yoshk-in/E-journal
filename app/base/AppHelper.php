@@ -8,7 +8,7 @@ use App\domain\ProductRepository;
 use App\cache\Cache;
 use \App\console\Render;
 use App\base\ConsoleRequest;
-use App\domain\ProcedureConfigurations;
+use App\domain\ProcedureMap;
 
 class AppHelper
 {
@@ -57,9 +57,9 @@ class AppHelper
         return $this->getSingleTone(CommandResolver::class);
     }
 
-    public function getProcedureMap(): ProcedureConfigurations
+    public function getProcedureMap(): ProcedureMap
     {
-        return $this->getSingleTone($this->domain . 'ProcedureConfigurations');
+        return $this->getSingleTone($this->domain . 'ProcedureMap');
     }
 
 

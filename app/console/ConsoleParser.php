@@ -7,7 +7,7 @@ use \App\base\AppHelper;
 use App\base\exceptions\AppException;
 use App\base\ConsoleRequest;
 use App\cache\Cache;
-use App\domain\ProcedureConfigurations;
+use App\domain\ProcedureMap;
 use App\domain\Product;
 
 
@@ -50,25 +50,37 @@ class ConsoleParser
         self::PART_NUMBER => '#^\d{3}$#s'
     ];
 
-    public function parseAndFillRequest(ConsoleRequest $request, ProcedureConfigurations $procCfg, Cache $cache)
+    protected $request;
+    protected $procedureMap;
+    protected $cache;
+
+    public function __construct(ConsoleRequest $request, ProcedureMap $procedureMap, Cache $cache)
     {
-        $params = array_pad($request->getConsoleArgs(), 4, null);
+        $this->request = $request;
+        $this->procedureMap = $procedureMap;
+        $this->cache = $cache;
+    }
+
+    public function parseAndFillRequest()
+    {
+        $params = array_pad($this->request->getConsoleArgs(), 4, null);
         [, $product_name, $command_or_numbers, $raw_numbers] = $params;
-        $correct_names = $procCfg->getProductNames();
+        $correct_names = $this->procedureMap->getProductNames();
         $this->validateProductName($product_name = mb_strtoupper($product_name), $correct_names);
-        $this->setPartialToCommandMap($procCfg->getAllDoublePartialNames($product_name), $command_or_numbers);
+        $this->setPartialToCommandMap($this->procedureMap
+            ->getAllDoublePartialNames($product_name), $command_or_numbers);
         [$command, $numbers, $part_number, $partial_proc_command] =
             $this->parse(
                 $this->commandMap,
-                $cache->getPartNumber($product_name),
+                $this->cache->getPartNumber($product_name),
                 $command_or_numbers,
                 $raw_numbers
             );
-        $request->setProductName($product_name);
-        $request->addCommand($command);
-        $request->setBlockNumbers($numbers);
-        $request->setPartNumber($part_number);
-        $request->addPartialProcName($partial_proc_command);
+        $this->request->setProductName($product_name);
+        $this->request->addCommand($command);
+        $this->request->setBlockNumbers($numbers);
+        $this->request->setPartNumber($part_number);
+        $this->request->addPartialProcName($partial_proc_command);
     }
 
     protected function parse(

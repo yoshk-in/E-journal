@@ -10,9 +10,10 @@ use Doctrine\Common\Collections\Collection;
 /**
  * @Entity @Table(name="`Procedure`") @HasLifecycleCallbacks
  */
-class Procedure extends AbstractProcedure
+class Procedure extends AbstractProcedure implements IObservable
 {
-    use DoctrineProcedureLifeCycleCallbacks;
+    use DoctrineProcedureLifeCycleCallbacks,
+        TObservable;
     /**
      * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist", fetch="EAGER")
      */

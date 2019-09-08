@@ -7,24 +7,9 @@ namespace App\cache;
 class Cache
 {
     private $_cacheData = [];
-    private static $_instance;
     private $_modifyTimes = [];
-    private $_path = 'data/';
+    private $_path = 'cache/';
 
-
-    private function __construct()
-    {
-
-    }
-
-    public static function init()
-    {
-        if (is_null(self::$_instance)) {
-            self::$_instance = new Cache();
-        }
-
-        return self::$_instance;
-    }
 
     public function setProp($name, $value)
     {

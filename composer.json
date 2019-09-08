@@ -3,7 +3,8 @@
   "type": "project",
   "require": {
     "ext-mbstring": "7.*",
-    "doctrine/orm": "^2.6"
+    "doctrine/orm": "^2.6",
+    "php-di/php-di": "^6.0"
   },
   "authors": [
     {
@@ -15,8 +16,9 @@
     "psr-4": {
       "App\\": "app/",
       "pub\\": "public/",
-      "data\\": "data/",
-      "tests\\": "tests/"
+      "data\\": "cache/",
+      "tests\\": "tests/",
+      "bootstrap\\": "bootstrap/"
     }
   },
   "require-dev": {
