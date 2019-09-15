@@ -3,10 +3,9 @@
 
 namespace App\domain;
 
-
 interface IObservable
 {
+    static function attachToEventChannel(IEventChannel $channel);
 
-    static function addEventChannel($channel);
-
+    public function notifySubscribers();
 }

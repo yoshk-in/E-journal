@@ -8,6 +8,7 @@ return [
     'app.domain_path' => ['app/domain'],
     'app.domain_class' => Product::class,
     'app.dev_mode' => true,
-    'app.procedure_subscribers' => [Render::class],
-    'app.observables' => [Procedure::class]
+    'app.subscribers' => [Render::class],
+    'app.observables' => [Procedure::class, Product::class],
+    'app.procedure_map' => require_once 'bootstrap/cfg/procedure_map.php'
 ];

@@ -7,7 +7,7 @@ use \App\base\AppHelper;
 use App\base\exceptions\AppException;
 use App\base\ConsoleRequest;
 use App\cache\Cache;
-use App\domain\ProcedureMap;
+use App\domain\ProcedureMapManager;
 use App\domain\Product;
 
 
@@ -19,6 +19,7 @@ class ConsoleParser
     protected const NEXT_ARG = 'next_argument';
     protected const COMMAND = 'command';
     protected const PARTIAL_PROC = 'partial_procedure';
+    protected const DEFAULT_CMD = 'fullInfo';
 
     protected $commandMap = [
         '#^\+$#s' => [
@@ -30,7 +31,8 @@ class ConsoleParser
             self::NEXT_ARG => self::BLOCK_NUMBERS
         ],
         '#^очистка$#isu' => [
-            self::COMMAND => 'clearJournal'
+            self::COMMAND => 'clearJournal',
+            self::NEXT_ARG => null
         ],
         '#^партия$#isu' => [
             self::COMMAND => 'setPartNumber',
@@ -39,9 +41,6 @@ class ConsoleParser
         self::NUMBERS[self::BLOCK_NUMBERS] => [
             self::COMMAND => 'RangeInfo',
             self::NEXT_ARG => self::BLOCK_NUMBERS
-        ],
-        '#^инфо$#isu' => [
-            self::COMMAND => 'FullInfo'
         ]
     ];
 
@@ -54,21 +53,20 @@ class ConsoleParser
     protected $procedureMap;
     protected $cache;
 
-    public function __construct(ConsoleRequest $request, ProcedureMap $procedureMap, Cache $cache)
+    public function __construct(ConsoleRequest $request, ProcedureMapManager $procedureMap, Cache $cache)
     {
         $this->request = $request;
         $this->procedureMap = $procedureMap;
         $this->cache = $cache;
     }
 
-    public function parseAndFillRequest()
+    public function parseAndFillRequestWithCommands()
     {
         $params = array_pad($this->request->getConsoleArgs(), 4, null);
         [, $product_name, $command_or_numbers, $raw_numbers] = $params;
         $correct_names = $this->procedureMap->getProductNames();
         $this->validateProductName($product_name = mb_strtoupper($product_name), $correct_names);
-        $this->setPartialToCommandMap($this->procedureMap
-            ->getAllDoublePartialNames($product_name), $command_or_numbers);
+        $this->setPartialToCommandMap($this->procedureMap->getAllDoublePartialNames($product_name));
         [$command, $numbers, $part_number, $partial_proc_command] =
             $this->parse(
                 $this->commandMap,
@@ -88,23 +86,29 @@ class ConsoleParser
         ?int $cachePartNumber,
         ?string $commandOrNumbersArg,
         ?string $rawNumbers
-    ): array
-    {
-        foreach ($commandMap as $pattern => $command_cfg) {
-            if (is_null($commandOrNumbersArg) || preg_match($pattern, $commandOrNumbersArg)) {
-                $command = $command_cfg[self::COMMAND];
-                $next_arg_type = $command_cfg[self::NEXT_ARG] ?? null;
-                $partial = $command_cfg[self::PARTIAL_PROC] ?? null;
-                if ($pattern === self::NUMBERS[self::BLOCK_NUMBERS]) $rawNumbers = $commandOrNumbersArg;
-                break;
+    ): array {
+
+        if (is_null($commandOrNumbersArg)) $command = self::DEFAULT_CMD;
+        else {
+            foreach ($commandMap as $pattern => $command_cfg) {
+
+                if (preg_match($pattern, $commandOrNumbersArg)) {
+                    $command = $command_cfg[self::COMMAND];
+                    $next_arg_type = $command_cfg[self::NEXT_ARG] ?? null;
+                    $partial = $command_cfg[self::PARTIAL_PROC] ?? null;
+                    if ($pattern === self::NUMBERS[self::BLOCK_NUMBERS]) $rawNumbers = $commandOrNumbersArg;
+                    break;
+                }
             }
         }
         $this->ensure(isset($command), ' не соблюдён формат ввода');
-        if ($next_arg_type) {
+
+        if ($next_arg_type ?? null) {
             [$numbers, $block_number] = $this->parseNumbersOrPartNumber($next_arg_type, $cachePartNumber, $rawNumbers);
         }
-        return [$command, $numbers, $block_number, $partial];
+        return [$command, $numbers ?? null, $block_number ?? null, $partial ?? null];
     }
+
 
 
     protected function parseNumbersOrPartNumber(string $typeNumber, ?int $cachePartNumber, ?string $rawNumbers): array
@@ -120,7 +124,7 @@ class ConsoleParser
         $this->ensure(self::ERROR, $typeNumber . 'введен(ы) в неверном формате');
     }
 
-    protected function setPartialToCommandMap(array $partials, string $commandOrNumbers): void
+    protected function setPartialToCommandMap(array $partials): void
     {
         foreach ($partials as [$short_name, $partial]) {
             $this->commandMap["#(^$short_name$)|(^$partial$)#is"] = [

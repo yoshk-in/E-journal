@@ -2,47 +2,42 @@
 
 namespace App\command;
 
-use App\base\exceptions\IncorrectInputException;
+use App\base\exceptions\WrongInputException;
 use App\base\ConsoleRequest;
-use App\domain\ProcedureMap;
+use App\domain\ProcedureMapManager;
 use App\domain\ProductRepository;
 use \ArrayAccess;
 
 abstract class Command
 {
     protected $request;
-    protected $repository;
+    protected $productRepository;
     protected $productMap;
+    const ERR = ['not_arrived' => 'данные блоки еше не поступали на настройку:'];
 
     final public function __construct(
         ConsoleRequest $request,
         ProductRepository $repository,
-        ProcedureMap $productMap
+        ProcedureMapManager $productMap
     )  {
         $this->request = $request;
-        $this->repository = $repository;
+        $this->productRepository = $repository;
         $this->productMap = $productMap;
     }
 
-    public function execute(string $domainClass): array
+    public function execute()
     {
         $product_name = $this->request->getProductName();
         $numbers = $this->request->getBlockNumbers();
-        $procedure_map = $this->productMap->getProcedures($product_name);
-        [$found_collection, $not_found_array] =
-            $this->repository->findByNumbers($domainClass, $product_name, count($procedure_map), $numbers);
-        $command = $this->request()->getPartialProcCommand();
-        $output = $this->doExecute(
-            $found_collection,
-            $this->repository,
-            $domainClass,
+        $special_command = $this->request()->getPartialProcCommand();
+        $this->doExecute(
+            $this->productRepository,
             $product_name,
-            $not_found_array,
-            $command
+            $numbers,
+            $special_command
         );
-        $this->repository->save();
+        $this->productRepository->save();
         echo static::class . "\n";
-        return $output;
     }
 
 
@@ -55,22 +50,16 @@ abstract class Command
     {
         $numb_str = '';
         if ($numbers) foreach ($numbers as $number) $numb_str .= $number . "\n";
-        if (!$condition) throw new IncorrectInputException("неверно заданы параметры запроса: $msg\n $numb_str");
+        if (!$condition) throw new WrongInputException("неверно заданы параметры запроса: $msg\n $numb_str");
     }
 
-    protected function getCommonInfo($output): array
-    {
-        return ['отмечены следующие события: ', $output ?? null];
-    }
 
     abstract protected function doExecute(
-        ArrayAccess $collection,
         ProductRepository $repository,
-        string $domainClass,
         string $productName,
-        array $not_found_numbers,
+        array $numbers,
         ?string $procedure
-    ): array;
+    );
 
 }
 

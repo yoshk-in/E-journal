@@ -4,20 +4,20 @@ namespace App\command;
 
 use App\base\AbstractRequest;
 use App\base\exceptions\AppException;
+use Psr\Container\ContainerInterface;
 
 class CommandResolver
 {
     private $baseCmd = 'Command';
-    private $defaultCmd = 'App\command\DefaultCommand';
+    private $defaultCmd = FullInfoCommand::class;
     private $request;
+    private $container;
 
-    /**
-     * CommandResolver constructor.
-     * @param $request
-     */
-    public function __construct(AbstractRequest $request)
+
+    public function __construct(AbstractRequest $request, ContainerInterface $container)
     {
         $this->request = $request;
+        $this->container = $container;
     }
 
 
@@ -40,7 +40,7 @@ class CommandResolver
                 }
 
                 if (class_exists($class)) {
-                    $result_cmd_array[] = $class;
+                    $result_cmd_array[] = $this->container->get($class);
                 } else {
                     throw new AppException(
                         "The command class not found: $class is given"
@@ -49,7 +49,7 @@ class CommandResolver
             }
             return $result_cmd_array;
         } else {
-            return new $this->defaultCmd;
+            return $this->container->get($this->defaultCmd);
         }
     }
 }

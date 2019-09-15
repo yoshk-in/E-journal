@@ -8,5 +8,5 @@
  require_once 'bootstrap/autoload_class.php';
 
 $container = AppContainer::bootstrap();
-$controller = $container->get('App\controller\Controller');
-$controller->run();
+$controller = $container->get(Controller::class);
+$controller->handleConsoleRequest();

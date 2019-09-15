@@ -3,9 +3,10 @@
 
 namespace App\domain;
 
+use Doctrine\Common\Collections\Criteria;
 use Exception;
 use ReflectionClass;
-use Doctrine\Common\Collections\Collection;
+
 
 class ProductRepository
 {
@@ -13,41 +14,43 @@ class ProductRepository
     private $orm;
     private $domainClass = Product::class;
 
-    public function __construct(ProcedureMap $productMap, ORM $orm)
+    private const FIELDS = [
+        'nameAndNumber'     => 1,
+        'finished'          => 2,
+        'finishedAndName' => 3,
+    ];
+
+    public function __construct(ProcedureMapManager $productMap, ORM $orm)
     {
         $this->orm = $orm;
         $this->productMap = $productMap;
     }
 
-    public function createProducts(array $numbers, string $domainClass, string $productName): array
+    public function createProducts(array $numbers, string $productName): array
     {
         foreach ($numbers as $number) {
-            $object = new $domainClass($number, $productName, $this->productMap->getProcedures($productName));
+            $object = new $this->domainClass($number, $productName, $this->productMap->getProductProcedures($productName));
             $objects[] = $object;
             $this->orm->persist($object);
         }
         return $objects;
     }
 
-    public function findByNumbers(
-        string $domainClass,
-        string $productName,
-        int $maxProcedureCount,
-        ?array $numbers = null
-    ): array
+    public function findByNumbers( string $productName, array $numbers): array
     {
-        list($current_proc_id_field, $id_field, $name_field) = $this->getProductTableData($domainClass);
-        $product_name_criteria = $this->orm->andCriteria($name_field, $productName);
-        return $result = !is_null($numbers) ?
-            $this->orm->findConcreteProducts($product_name_criteria, $id_field, $numbers) :
-            [
-                $found_collection = $this->orm->findNotFinishedProducts(
-                    $product_name_criteria,
-                    $current_proc_id_field,
-                    $maxProcedureCount
-                ),
-                $not_found = null
-            ];
+        [$number, $name] = $this->getProductTableFields(self::FIELDS['nameAndNumber']);
+        $found = $this->orm->findWhereEach($this->orm->whereCriteria($name, $productName), $number, $numbers, 'or');
+        $not_found = array_filter($numbers, function ($number) use ($found) {
+            foreach ($found as $product) if ($product->getNumber() === $number) return false;
+            return true;
+        });
+        return [$found, $not_found];
+    }
+
+    public function findNotFinished(string $productName) : \ArrayAccess
+    {
+        [$finished, $name] = $this->getProductTableFields(self::FIELDS['finishedAndName']);
+        return $this->orm->findWhereEach($this->orm->whereCriteria($name, $productName), $finished, [false], 'and');
     }
 
     public function save()
@@ -55,18 +58,22 @@ class ProductRepository
         $this->orm->save();
     }
 
-    protected function getProductTableData(string $product): array
+    protected function getProductTableFields(?string $field = null): array
     {
-        $reflection = new ReflectionClass($product);
+        $reflection = new ReflectionClass($this->domainClass);
         $props = array_keys($reflection->getDefaultProperties());
-        $required_props = ['currentProc', 'number', 'name'];
+        $required_props = ['finished', 'number', 'name'];
 
         array_map(function ($prop) use ($props) {
             if (array_search($prop, $props) === false)
                 throw new Exception('table cache and class properties must be same');
         }, $required_props);
 
-        return $required_props;
+        switch ($field) {
+            case self::FIELDS['nameAndNumber']:     return [$required_props[1],$required_props[2]];
+            case self::FIELDS['finished']:          return [$required_props[0]];
+            case self::FIELDS['finishedAndName']:   return [$required_props[0], $required_props[2]];
+            default :                               return $required_props;
+        }
     }
-
 }

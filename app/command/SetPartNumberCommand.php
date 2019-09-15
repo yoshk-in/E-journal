@@ -15,11 +15,11 @@ class SetPartNumberCommand extends Command
         $productName,
         ?array $not_found = null,
         ?string $procedure = null
-    ) : array
+    )
     {
         $partNumber = $this->request()->getPartNumber();
         $cache = AppHelper::init()->getCacheObject();
         $cache->setPartNumber($productName, $partNumber);
-        return [$productName, 'установлен номер партии ' . $partNumber];
+        $info =  [$productName, 'установлен номер партии ' . $partNumber];
     }
 }

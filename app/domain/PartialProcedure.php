@@ -3,7 +3,6 @@
 
 namespace App\domain;
 
-
 use DateInterval;
 
 /**
@@ -23,11 +22,11 @@ class PartialProcedure extends AbstractProcedure
         $this->interval = $interval;
     }
 
-    public function setStart(?string  $partial = null): array
+    public function setStart(?string  $partial = null)
     {
         parent::setStart();
         $this->setEnd();
-        return $this->getInfo();
+        $this->notifySubscribers();
     }
 
     protected function setEnd() : \DateTimeImmutable
@@ -36,9 +35,9 @@ class PartialProcedure extends AbstractProcedure
         return $this->end = $start->add(new DateInterval($this->interval));
     }
 
-    public function getProduct()
+    public function getProduct(): Product
     {
-        return $this->getOwner()->getOwner();
+        return $this->getOwner()->getProduct();
     }
 
 }

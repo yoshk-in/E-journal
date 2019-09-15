@@ -6,5 +6,5 @@ namespace App\domain;
 
 interface ISubscriber
 {
-    public function notify($object);
+    public function notify(Informer $observable);
 }

@@ -2,7 +2,7 @@
 
 namespace tests;
 
-use App\base\exceptions\IncorrectInputException;
+use App\base\exceptions\WrongInputException;
 use App\base\exceptions\WrongModelException;
 use App\domain\GNine;
 use PHPUnit\Framework\TestCase;
@@ -60,7 +60,7 @@ class GNineTest extends TestCase
     {
         $gnine = $this->snapshot['after']['start']['technicalTraining'];
         $gnine->startTTProcedure('vibro');
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnine->startTTProcedure('progon');
     }
 
@@ -108,7 +108,7 @@ class GNineTest extends TestCase
     /** @dataProvider ttAfterEndsWithCompletedProcNamesProvider */
     public function testDoublingStartTT(GNine $gnine, $stageName)
     {
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnine->startTTProcedure($stageName);
     }
 
@@ -125,7 +125,7 @@ class GNineTest extends TestCase
     /** @dataProvider afterStartsProvider */
     public function testExceptionDoubleStart(GNine $gnine)
     {
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnine->startProcedure();
     }
 
@@ -150,7 +150,7 @@ class GNineTest extends TestCase
     /** @dataProvider afterEndsProvider */
     public function testExceptionDoubleEnd(GNine $gnine)
     {
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnine->endProcedure();
     }
 
@@ -167,7 +167,7 @@ class GNineTest extends TestCase
     /** @dataProvider beforeEndProvider */
     public function testDoubleStartAfterPauseProduct($gnine)
     {
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnine->startProcedure();
     }
 
@@ -175,7 +175,7 @@ class GNineTest extends TestCase
     public function testEarlyEndException($miss, GNine $gnine)
     {
         $gnine->startProcedure();
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnine->endProcedure();
     }
 
@@ -184,7 +184,7 @@ class GNineTest extends TestCase
         $this->prepareProductLife();
         $gnineAfterTT = $this->snapshot['after']['start']['technicalTraining'];
         $this->sleep();
-        $this->expectException(IncorrectInputException::class);
+        $this->expectException(WrongInputException::class);
         $gnineAfterTT->endProcedure();
 
     }

@@ -8,8 +8,18 @@ trait TObservable
 {
     static private $eventChannel;
 
-    static function addEventChannel($channel)
+    static function attachToEventChannel(IEventChannel $channel)
     {
-        self::$eventChannel = $channel;
+        if (!empty($channel)) {
+            self::$eventChannel = $channel;
+            return;
+        }
+        throw new \Exception('event channel is empty');
     }
+
+    public function notifySubscribers()
+    {
+        self::$eventChannel->notify($this);
+    }
+
 }

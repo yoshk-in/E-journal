@@ -9,7 +9,7 @@ class ExceptionGenerator
     public function ensureRighInput(bool $condition, $msg = null)
     {
         if (!$condition) {
-            throw new IncorrectInputException(
+            throw new WrongInputException(
                 'ошибка: операция не выполнена ' . $msg
             );
         }

@@ -7,43 +7,34 @@ use App\command\CommandResolver;
 use App\console\ConsoleParser;
 use App\console\Render;
 use App\domain\EventChannel;
-use Psr\Container\ContainerInterface;
-
 
 class Controller
 {
     private $consoleParser;
     private $render;
     private $commandResolver;
-    private $container;
+    private $eventChannel;
 
     public function __construct(
-        ContainerInterface $container,
         ConsoleParser $consoleParser,
         CommandResolver $commandResolver,
-        Render $render
+        Render $render,
+        EventChannel $eventChannel
     ) {
         $this->consoleParser = $consoleParser;
         $this->commandResolver = $commandResolver;
         $this->render = $render;
-        $this->container = $container;
+        $this->eventChannel = $eventChannel;
     }
 
     public function handleConsoleRequest()
     {
-        $this->consoleParser->parseAndFillRequest();
+        $this->consoleParser->parseAndFillRequestWithCommands();
         $commands = $this->commandResolver->getCommand();
-        $domain_class = $this->container->get('app.domain_class');
-        $this->container->get(EventChannel::class);
         foreach ($commands as $command) {
-            $command = $this->container->get($command);
-            $output[] = $command->execute($domain_class);
+            $output[] = $command->execute();
         }
-        $this->render->renderCommand(...$output);
+        $this->render->flush();
     }
 
-    public function run()
-    {
-        $this->handleConsoleRequest();
-    }
 }

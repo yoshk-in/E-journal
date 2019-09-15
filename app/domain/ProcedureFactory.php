@@ -9,7 +9,7 @@ class ProcedureFactory
     public static function createProcedures(array $procedures, Product $product): array
     {
         foreach ($procedures as $idState => $procedure) {
-            $array[] = new Procedure($procedure['name'], $idState, $product, $procedure['composite']);
+            $array[] = new Procedure($procedure['name'], $idState, $product, $procedure['inners'] ?? null);
         }
         return $array;
     }

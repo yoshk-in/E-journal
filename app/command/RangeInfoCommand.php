@@ -16,7 +16,7 @@ class RangeInfoCommand extends Command
         $productName,
         ?array $not_found = null,
         ?string $procedure = null
-    ): array
+    )
     {
         foreach ($collection as $product) {
             $output[$productName] = $product->getInfo();

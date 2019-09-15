@@ -10,12 +10,10 @@ use Doctrine\Common\Collections\Collection;
 /**
  * @Entity @Table(name="`Procedure`") @HasLifecycleCallbacks
  */
-class Procedure extends AbstractProcedure implements IObservable
+class Procedure extends AbstractProcedure
 {
-    use DoctrineProcedureLifeCycleCallbacks,
-        TObservable;
     /**
-     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist", fetch="EAGER")
+     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist")
      */
     protected $innerProcs;
 
@@ -24,79 +22,80 @@ class Procedure extends AbstractProcedure implements IObservable
      **/
     protected $owner;
 
+
     public function __construct(string $name, int $idState, Product $product, ?array $innerProcs = null)
     {
         parent::__construct($name, $idState, $product);
         if ($innerProcs) $this->innerProcs = new ArrayCollection(ProcedureFactory::createPartials($innerProcs, $this));
     }
 
-    public function setEnd(): array
+    public function setEnd()
     {
-        $this->ensureRightInput((bool)$this->getStart(), 'нет отметки о начале данной процедуры');
-        $this->ensureRightInput(!$end = $this->getEnd(), "данное событие уже отмечено в журнале: вынос {$this->format($end)}");
-        $is_composite_proc = (bool)$this->innerProcs;
-        $this->ensureRightInput(
-            !$is_composite_proc || $this->innerProcsIsFinished(),
-            'нет отметки о завершении внутренних процедур: ',
-            $is_composite_proc ? $this->getInnerProcs() : null
+        $this->checkInput((bool)$this->getStart(), $this->errorStr('early_end_casual'));
+        $this->checkInput(!$end = $this->getEnd(), $this->errorStr('repeat'));
+        !$this->isComposite() ?: $this->checkInput(
+            $this->innersAreFinished(),
+            $this->errorStr('early_end_composite'),
+            array_filter($this->innerProcs->toArray(), function ($inner) {
+                if (!$inner->isFinished()) return true;
+            })
         );
         $this->end = new DateTimeImmutable('now');
-        return $this->getInfo();
+        $this->notifySubscribers();
     }
 
 
-    public function setStart(?string $partial = null): array
+    public function setStart(?string $partial = null)
     {
-        return $info = is_null($partial) ? parent::setStart() : $this->startInner($partial);
+        if(is_null($partial)) {
+            if ($this->isFinished()) $this->getProduct()->nextProc($this);
+            else {
+                parent::setStart();
+                $this->notifySubscribers();
+            }
+        } else $this->startInner($partial);
     }
 
     public function getInfo(): array
     {
         $self_info = parent::getInfo();
-        $inner_proc_info = $this->innerProcs ? $this->getInnerProcs()->map(function ($partial) {
+        $self_info[] = $this->isComposite() ? array_map(function ($partial) {
             return $partial->getInfo();
-        })->toArray() : null;
-        $self_info[] = $inner_proc_info;
+        }, $this->innerProcs->toArray()) : null;
         return $self_info;
     }
 
-    protected function getInnerProcs(): Collection
+
+    protected function innersAreFinished(): bool
     {
-        $this->ensureRightInput((bool)$this->innerProcs, "{$this->getName()} не имеет вложенных процедур");
-        return $this->innerProcs;
+        foreach ($this->innerProcs as $inner) {
+            if (!$inner->isFinished()) return false;
+        }
+        return true;
     }
 
-
-    protected function innerProcsIsFinished(): bool
+    protected function isComposite(): bool
     {
-        $inners = $this->getInnerProcs();
-        return $inners->forAll(function ($key) use ($inners) {
-            return $inners[$key]->isFinished();
-        });
+        return (bool)$this->innerProcs;
     }
 
-    protected function startInner(string $partial_name): array
+    protected function startInner(string $partial_name)
     {
-        foreach ($this->getInnerProcs() as $partial) {
-            if ($partial->getName() === $partial_name) {
-                $found = $partial;
+        foreach ($this->innerProcs as $inner) {
+            if ($inner->getName() === $partial_name) {
+                $found = $inner;
                 break;
             }
         }
-        $this->ensureRightInput(
-            (bool)($found ?? false),
-            "у процедуры {$this->getName()} вложенной процедуры под именем $partial_name не найдено"
-        );
-        return $info = $found->setStart();
+        $this->checkInput((bool) ($found ?? false),  $this->errorStr('inner_not_fount') . $partial_name);
+        $found->setStart();
     }
 
-    protected function ensureRightInput(bool $condition, $msg = '', ?Collection $inners = null): void
+    protected function checkInput(bool $condition, $msg = '', ?array $inners = []): ?\Exception
     {
-        $product = $this->getOwner()->getName();
-        $number = $this->getOwner()->getNumber();
-        !(bool)$inners || $inners_info = array_reduce($inners->toArray(), function ($buffer, $inner) use ($inners) {
-            return $buffer .= implode($inner->getInfo(), ', ');
-        }, $buffer = '');
-        parent::ensureRightInput($condition, " $msg " . ($inners_info ?? ''));
+        $inners_info_string = '';
+        foreach ($inners as $inner) $inners_info_string .= implode(', ',$inner->getInfoToExcept());
+
+        return parent::checkInput($condition, "$msg $inners_info_string  \n");
     }
 }
