@@ -12,10 +12,10 @@ class AppContainer
     static public function bootstrap(): ContainerInterface
     {
         $builder = new ContainerBuilder();
-        $builder->addDefinitions('bootstrap/cfg/database.php');
-        $builder->addDefinitions('bootstrap/cfg/procedure_map.php');
-        $builder->addDefinitions('bootstrap/cfg/app.php');
-        $builder->addDefinitions('bootstrap/cfg/object_injections.php');
+        $builder->addDefinitions('cfg/database.php');
+        $builder->addDefinitions('cfg/procedure_map.php');
+        $builder->addDefinitions('cfg/app.php');
+        $builder->addDefinitions('cfg/object_injections.php');
 
         $container = $builder->build();
         return $container;

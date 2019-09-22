@@ -29,7 +29,7 @@ abstract class Command
     {
         $product_name = $this->request->getProductName();
         $numbers = $this->request->getBlockNumbers();
-        $special_command = $this->request()->getPartialProcCommand();
+        $special_command = $this->request->getPartialProcCommand();
         $this->doExecute(
             $this->productRepository,
             $product_name,
@@ -37,7 +37,6 @@ abstract class Command
             $special_command
         );
         $this->productRepository->save();
-        echo static::class . "\n";
     }
 
 

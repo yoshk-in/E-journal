@@ -41,7 +41,7 @@ class Procedure extends AbstractProcedure
             })
         );
         $this->end = new DateTimeImmutable('now');
-        $this->notifySubscribers();
+        $this->notify();
     }
 
 
@@ -51,7 +51,7 @@ class Procedure extends AbstractProcedure
             if ($this->isFinished()) $this->getProduct()->nextProc($this);
             else {
                 parent::setStart();
-                $this->notifySubscribers();
+                $this->notify();
             }
         } else $this->startInner($partial);
     }

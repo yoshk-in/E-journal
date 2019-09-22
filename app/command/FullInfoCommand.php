@@ -14,7 +14,7 @@ class FullInfoCommand extends Command
         $collection = $repository->findNotFinished($productName);
         if (!$collection->isEmpty()) {
             foreach ($collection as $product) {
-                $product->notifySubscribers();
+                $product->notify();
             }
         }
     }

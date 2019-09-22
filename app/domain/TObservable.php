@@ -17,7 +17,7 @@ trait TObservable
         throw new \Exception('event channel is empty');
     }
 
-    public function notifySubscribers()
+    public function notify()
     {
         self::$eventChannel->notify($this);
     }

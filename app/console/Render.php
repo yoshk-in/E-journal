@@ -4,76 +4,196 @@
 namespace App\console;
 
 
+use App\command\Command;
+use App\command\FullInfoCommand;
 use App\domain\AbstractProcedure;
-use App\domain\Informer;
 use App\domain\ISubscriber;
 use App\domain\Product;
 
 class Render implements ISubscriber
 {
-    const TITLES = [
-        'информация по несданным блокам:',
-        'отмечены следующие события:',
+    const THEME = [
+        FullInfoCommand::class => 'найдена следующая информация:',
+        Command::class => 'отмечены следующие события:',
     ];
 
     const TIME_FORMAT = 'd-m-Y H:i';
-    const NAME = 0;
-    const NUMBER = 1;
 
-    protected $products = [];
-    protected $procedures = [];
-    private $title = '';
 
+    const MODE = [
+        'short' => 1,
+        'long' => 2,
+        'shortest' => 3
+    ];
+
+    protected $output;
+
+    private $theme = '';
+    private $renderMode;
+    private $end = [
+        'did' => 'завершена',
+        'will' => 'завершится'
+    ];
+    private $start = 'начата';
+    private $procPatternInfo = [
+        Render::MODE['long'] => "> %-22s  - процедура %s %s %s",
+        Render::MODE['short'] => '[ %-22s ] - процедура %s'
+    ];
+    private $partialsPatternInfo = '       * завершенные подпроцедуры: ';
+
+    private $number = ' Номер %s';
+    private $product = ' Блок %s';
+    private $stat_string = '%s - %s штук: ';
+    private $stat;
+
+    public function __construct()
+    {
+        $this->renderMode = Render::MODE['long'];
+    }
 
     public function flush()
     {
-        $flush = $this->products[0][self::NAME];
-        foreach ($this->procedures as $key => $procedure) {
-            $flush .= $this->string("Блок номер {$this->products[$key][self::NUMBER]}  {$this->string($procedure)}");
+        $this->printHeader();
+        if (is_null($this->output)) return;
+        foreach ($this->output as $product => $numbers) {
+            $this->printProductName($product);
+            foreach ($numbers as $number => $procedures) {
+                $this->printProductNumber($number);
+                $this->printProcedures($procedures);
+                print PHP_EOL;
+            }
+
         }
-        echo $flush;
+      $this->printStat();
     }
 
-    public function notify($object)
+    private function printHeader()
     {
-        switch (get_class($object)) {
-            case Product::class:
-                $this->products[] = $object->getNameAndNumber();
-                $this->title = self::TITLES[0];
-                $this->renderProductInfo($object->getInfo());
-                break;
-            case AbstractProcedure::class:
-                $this->products[] = $object->getProduct()->getNameAndNumber();
-                $this->title = self::TITLES[1];
-                $this->renderProcedure(...$object->getInfo());
-        }
-
+        print $this->theme . PHP_EOL . PHP_EOL;
     }
 
-    protected function renderProductInfo(array $procedures)
+    private function printStat()
     {
-        foreach ($procedures as $procedure) {
-            $this->renderProcedure(...$procedure);
-        }
-    }
+        if ($this->theme !== Render::THEME[FullInfoCommand::class]) return;
 
-    protected function renderProcedure(string $name, \DateTimeInterface $start = null, ?\DateTimeInterface $end = null, ?bool $finished = null, ?array $inners = null)
-    {
-        if (is_null($start)) return;
-        $finish = $finished ? 'завершена' : 'завершится';
-        $finish_string = $end ? ", $finish " . $this->timeToStr($end) : '';
-        $block_info = "$name - процедура начата {$this->timeToStr($start)} $finish_string";
-        if (!is_null($inners)) {
-            foreach ($inners as $inner) {
-                $block_info .= $this->renderProcedure(...$inner);
+        print 'Итого:' . PHP_EOL ;
+        $total = 0;
+        foreach ($this->stat as $product => $procedures) {
+            foreach ($procedures as $name => $product_numbers) {
+                printf($this->stat_string, $name, $part = count($product_numbers));
+                $total += $part;
+                foreach ($product_numbers as $key => $number) {
+                    print $number . $this->getConjuntion($product_numbers, $key, [PHP_EOL, ', ']);
+                }
             }
         }
-        $this->procedures[] = $block_info;
+        printf( 'Всего %s штук' . PHP_EOL, $total);
     }
 
-    private function string(?string $string = null)
+    private function getConjuntion(array $array, int $currentKey, array $conjuctions)
     {
-        return $string . "\n";
+        if (array_key_last($array) === $currentKey) return $conjuctions[0];
+        else return $conjuctions[1];
+    }
+
+    private function printProductName(string $product): void
+    {
+        printf($this->product . PHP_EOL . PHP_EOL, $product);
+    }
+
+    private function printProductNumber(string $number): void
+    {
+        printf($this->number . PHP_EOL, $number);
+    }
+
+    private function printProcedures(?array $procedures = null, array $conjunction = [PHP_EOL, PHP_EOL]): void
+    {
+        if (is_null($procedures)) return;
+
+        foreach ($procedures as $key => $procOrPartials) {
+            if (is_array($procOrPartials)) {
+                printf($this->partialsPatternInfo);
+                $this->printProcedures($procOrPartials, [PHP_EOL, ', ']);
+            } else {
+                printf($procOrPartials . $this->getConjuntion($procedures, $key, $conjunction));
+            }
+        }
+    }
+
+
+    public function update($object)
+    {
+        switch ($object) {
+            case $object instanceof Product:
+                $product = $object;
+                $this->theme = self::THEME[FullInfoCommand::class];
+                foreach ($product->getInfo() as $procedure) {
+                    $this->handleProcedureInfo($product, ...$procedure);
+                }
+                $this->makeStat($product);
+                break;
+            case $object instanceof AbstractProcedure:
+                $this->theme = self::THEME[Command::class];
+                $this->handleProcedureInfo($object->getProduct(),...$object->getInfo());
+        }
+    }
+
+    protected function handleProcedureInfo(
+        Product $product,
+        string $name,
+        ?\DateTimeInterface $start,
+        ?\DateTimeInterface $end,
+        ?bool $finished,
+        ?array $inners = null
+    ): void  {
+
+        if (is_null($start)) return;
+
+        [$prod_name, $prod_number] = $product->getNameAndNumber();
+        $this->output[$prod_name][$prod_number][] = $this->renderProcInfo(Render::MODE['long'], $name, $start, $end, $finished);
+
+        if (!is_null($inners)) {
+            $partials_key = array_key_last($this->output[$prod_name][$prod_number]) + 1;
+            $this->renderMode = self::MODE['shortest'];
+            foreach ($inners as $inner_proc) {
+                $this->output[$prod_name][$prod_number][$partials_key][] = $this->renderProcInfo(Render::MODE['shortest'], ...$inner_proc);
+            }
+        }
+    }
+
+    private function renderProcInfo($renderMode, $name, $start, $end, $finished)
+    {
+        switch ($renderMode) {
+            case $mode = Render::MODE['long']:
+                return sprintf(
+                    $this->procPatternInfo[$mode],
+                    $name,
+                    $this->start,
+                    $this->timeToStr($start),
+                    $this->getEndPart($finished, $end),
+                );
+            case $mode = Render::MODE['short']:
+                return sprintf(
+                    $this->procPatternInfo[$mode],
+                    $name,
+                    ($this->getEndPart($finished, $end) ?: $this->start . $this->timeToStr($start))
+                );
+            case $mode = Render::MODE['shortest']:
+                if (!$finished) return '';
+                return $name;
+        }
+    }
+
+    private function makeStat(Product $product)
+    {
+        $this->stat[$product->getName()][$product->getCurrentProc()->getName()][] = $product->getNumber();
+    }
+
+
+    private function getEndPart(bool $finished, $end)
+    {
+        $end_part = $finished ? $this->end['did'] : $this->end['will'];
+        return $end ? sprintf($end_part . '  %s', $this->timeToStr($end)) : '';
     }
 
     private function timeToStr(\DateTimeInterface $time)

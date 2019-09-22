@@ -10,6 +10,7 @@ use ReflectionClass;
 
 class ProductRepository
 {
+
     private $productMap;
     private $orm;
     private $domainClass = Product::class;
@@ -39,11 +40,14 @@ class ProductRepository
     public function findByNumbers( string $productName, array $numbers): array
     {
         [$number, $name] = $this->getProductTableFields(self::FIELDS['nameAndNumber']);
-        $found = $this->orm->findWhereEach($this->orm->whereCriteria($name, $productName), $number, $numbers, 'or');
+        $found = $this->orm->findWhereEach($this->orm->whereCriteria($name, $productName), $number, $numbers);
         $not_found = array_filter($numbers, function ($number) use ($found) {
-            foreach ($found as $product) if ($product->getNumber() === $number) return false;
-            return true;
+            foreach ($found as $product) {
+                if ($product->getNumber() == $number) return false;
+            }
+            return  true;
         });
+
         return [$found, $not_found];
     }
 

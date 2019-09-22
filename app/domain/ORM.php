@@ -22,16 +22,18 @@ class ORM
         $this->doctrineCriteria = Criteria::class;
     }
 
-    public function findWhereEach(Criteria $prevCriteria, string $fieldName, array $values, string $option): Collection
+    public function findWhereEach(Criteria $prevCriteria, string $fieldName, array $values, ?string $optionForEach = null): Collection
     {
-        switch ($option) {
+        switch ($optionForEach) {
             case 'or': $where = 'orWhere'; break;
-            case 'and': $where = 'andWhere';
+            case 'and': $where = 'andWhere'; break;
+            default : $where = 'where';
         }
 
         foreach ($values as $value) {
             $prevCriteria->$where(Criteria::create()->expr()->eq($fieldName, $value));
         }
+
         return $this->doctrineRepository->matching($prevCriteria);
     }
 
@@ -48,7 +50,7 @@ class ORM
 
     public function whereCriteria(string $fieldName, string $fieldValue): Criteria
     {
-        return $this->doctrineCriteria::create()->where(Criteria::create()->expr()
+        return $this->doctrineCriteria::create()->andWhere(Criteria::create()->expr()
             ->eq($fieldName, $fieldValue));
     }
 

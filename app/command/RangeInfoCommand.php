@@ -3,28 +3,27 @@
 namespace App\command;
 
 
-
-use App\domain\Procedure;
 use Doctrine\Common\Collections\Collection;
 
 class RangeInfoCommand extends Command
 {
     protected function doExecute(
-        \ArrayAccess $collection,
         $repository,
-        $domainClass,
         $productName,
-        ?array $not_found = null,
+        ?array $numbers = null,
         ?string $procedure = null
     )
     {
-        foreach ($collection as $product) {
-            $output[$productName] = $product->getInfo();
+        [$collection, $not_found] = $repository->findByNumbers($productName, $numbers);
+        if (!$collection->isEmpty()) {
+            foreach ($collection as $product) {
+                $product->notify();
+            }
         }
-        return [
-            "информация по найденным блокам: \n" => $output,
-            "о данных номерах нет записей в журнале:\n" => $not_found
-        ];
+        if (!empty($not_found)) {
+            echo 'по данным номерам информации не найдено: ';
+            foreach ($not_found as $number) echo $number . ', ';
+        }
 
     }
 

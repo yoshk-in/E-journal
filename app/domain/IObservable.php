@@ -7,5 +7,5 @@ interface IObservable
 {
     static function attachToEventChannel(IEventChannel $channel);
 
-    public function notifySubscribers();
+    public function notify();
 }

@@ -2,13 +2,11 @@
 
 namespace App\console;
 
-use App\base\AbstractRequest;
-use \App\base\AppHelper;
+
 use App\base\exceptions\AppException;
 use App\base\ConsoleRequest;
-use App\cache\Cache;
 use App\domain\ProcedureMapManager;
-use App\domain\Product;
+
 
 
 class ConsoleParser
@@ -52,75 +50,74 @@ class ConsoleParser
     protected $request;
     protected $procedureMap;
     protected $cache;
+    protected $numbersParser;
 
-    public function __construct(ConsoleRequest $request, ProcedureMapManager $procedureMap, Cache $cache)
+    protected $product;
+    protected $commandOrNumbersArg;
+    protected $rawNumbersArg;
+    protected $command;
+    protected $numbers;
+    protected $partial;
+    protected $partNumber;
+
+    protected $nextArgToParse;
+
+
+    public function __construct(ConsoleRequest $request, ProcedureMapManager $procedureMap, NumbersParser $numbersParser)
     {
         $this->request = $request;
         $this->procedureMap = $procedureMap;
-        $this->cache = $cache;
+        $this->numbersParser = $numbersParser;
     }
 
     public function parseAndFillRequestWithCommands()
     {
         $params = array_pad($this->request->getConsoleArgs(), 4, null);
-        [, $product_name, $command_or_numbers, $raw_numbers] = $params;
+        [, $product_name, $this->commandOrNumbersArg, $this->rawNumbersArg] = $params;
         $correct_names = $this->procedureMap->getProductNames();
-        $this->validateProductName($product_name = mb_strtoupper($product_name), $correct_names);
-        $this->setPartialToCommandMap($this->procedureMap->getAllDoublePartialNames($product_name));
-        [$command, $numbers, $part_number, $partial_proc_command] =
-            $this->parse(
-                $this->commandMap,
-                $this->cache->getPartNumber($product_name),
-                $command_or_numbers,
-                $raw_numbers
-            );
-        $this->request->setProductName($product_name);
-        $this->request->addCommand($command);
-        $this->request->setBlockNumbers($numbers);
-        $this->request->setPartNumber($part_number);
-        $this->request->addPartialProcName($partial_proc_command);
+        $this->product = mb_strtoupper($product_name);
+        $this->checkProductName($this->product, $correct_names);
+        $this->setPartialToCommandMap($this->procedureMap->getAllDoublePartialNames($this->product));
+        is_null($this->commandOrNumbersArg) ? $this->command = self::DEFAULT_CMD : $this->parseCmd();
+        $this->request->setProductName($this->product);
+        $this->request->addCommand($this->command);
+        $this->request->setBlockNumbers($this->numbers);
+        $this->request->setPartNumber($this->partNumber);
+        $this->request->addPartialProcName($this->partial);
     }
 
-    protected function parse(
-        array $commandMap,
-        ?int $cachePartNumber,
-        ?string $commandOrNumbersArg,
-        ?string $rawNumbers
-    ): array {
+    protected function parseCmd()
+    {
+        foreach ($this->commandMap as $pattern => $command_cfg) {
 
-        if (is_null($commandOrNumbersArg)) $command = self::DEFAULT_CMD;
-        else {
-            foreach ($commandMap as $pattern => $command_cfg) {
-
-                if (preg_match($pattern, $commandOrNumbersArg)) {
-                    $command = $command_cfg[self::COMMAND];
-                    $next_arg_type = $command_cfg[self::NEXT_ARG] ?? null;
-                    $partial = $command_cfg[self::PARTIAL_PROC] ?? null;
-                    if ($pattern === self::NUMBERS[self::BLOCK_NUMBERS]) $rawNumbers = $commandOrNumbersArg;
-                    break;
-                }
+            if (preg_match($pattern, $this->commandOrNumbersArg)) {
+                $this->command = $command_cfg[self::COMMAND];
+                $this->nextArgToParse = $command_cfg[self::NEXT_ARG] ?? null;
+                $this->partial = $command_cfg[self::PARTIAL_PROC] ?? null;
+                if ($pattern === self::NUMBERS[self::BLOCK_NUMBERS]) $this->rawNumbersArg = $this->commandOrNumbersArg;
+                break;
             }
         }
-        $this->ensure(isset($command), ' не соблюдён формат ввода');
 
-        if ($next_arg_type ?? null) {
-            [$numbers, $block_number] = $this->parseNumbersOrPartNumber($next_arg_type, $cachePartNumber, $rawNumbers);
-        }
-        return [$command, $numbers ?? null, $block_number ?? null, $partial ?? null];
+        $this->ensure($this->command, ' не соблюдён формат ввода');
+
+        if ($this->nextArgToParse) $this->parseNumbersOrPartNumber($this->nextArgToParse);
     }
 
 
-
-    protected function parseNumbersOrPartNumber(string $typeNumber, ?int $cachePartNumber, ?string $rawNumbers): array
+    protected function parseNumbersOrPartNumber(string $typeNumber)
     {
-        $this->ensure((bool)$rawNumbers, ' введите ' . $typeNumber);
-        $right_format = preg_match(self::NUMBERS[$typeNumber], $rawNumbers);
-        $this->ensure($right_format,$typeNumber . ' введен(ы) в неверном формате');
+        $this->ensure((bool)$this->rawNumbersArg, ' введите ' . $typeNumber);
+        $right_format = preg_match(self::NUMBERS[$typeNumber], $this->rawNumbersArg);
+        $this->ensure($right_format, $typeNumber . ' введен(ы) в неверном формате');
         if ($typeNumber === self::BLOCK_NUMBERS) {
-            return [$numbers = $this->getValidatedNumbers($rawNumbers, $cachePartNumber), null];
+            $this->numbers = $this->numbersParser->parse($this->rawNumbersArg, $this->product);
+            return ;
         } elseif ($typeNumber === self::PART_NUMBER) {
-            return [null, $rawNumbers];
+            $this->partNumber = $typeNumber;
+            return;
         }
+
         $this->ensure(self::ERROR, $typeNumber . 'введен(ы) в неверном формате');
     }
 
@@ -135,50 +132,13 @@ class ConsoleParser
         }
     }
 
-    private function getValidatedNumbers(?string $numbers_string, ?int $cachePartNumber = null)
-    {
-        $short_numbers = [];
-        $number_range = [];
-        $array_exploded_by_comma = explode(',', $numbers_string);
-        foreach ($array_exploded_by_comma as $elem) {
-            $array_exploded_by_hyphen = explode('-', $elem);
-
-            if (count($array_exploded_by_hyphen) == 2) {
-                [$first, $last] = $this->getFullNumbers($array_exploded_by_hyphen, $cachePartNumber);
-                var_dump($first, $last);
-                $this->ensure($first < $last, 'диапазон номеров должен задаваться по возврастающей');
-                $number_range[] = range($first, $last);
-            } else {
-                $short_numbers = array_merge($short_numbers, $array_exploded_by_hyphen);
-            }
-        }
-        $numbers = array_merge($this->getFullNumbers($short_numbers, $cachePartNumber), ...$number_range);
-        $all_number_are_unique = count($numbers) == count(array_unique($numbers));
-        $this->ensure($all_number_are_unique, 'переданы повторяющиеся номера');
-        sort($numbers, SORT_NUMERIC);
-        return $numbers;
-    }
-
-    protected function getFullNumbers(array $numbers, ?int $cachePartNumber): array
-    {
-        foreach ($numbers as $number) {
-            $full_numbers[] = (strlen($number) === 6) ?  $number :
-                ($cachePartNumber ?? $this->ensure(
-                    self::ERROR,
-        'не задан номер партии - его можно сохранить единожды, ' .
-        'чтобы не вводить каждый раз, командой вида "партия \'120\'""'
-                    )) . $number;
-        }
-
-        return $full_numbers ?? [];
-    }
 
     protected function ensure(bool $condition, ?string $msg = null)
     {
         if (!$condition) throw new AppException('неверно заданы параметры запроса: ' . $msg);
     }
 
-    protected function validateProductName(?string $name, array $rightNames)
+    protected function checkProductName(?string $name, array $rightNames)
     {
         $this->ensure($name, ' укажите название блока');
         foreach ($rightNames as $right_name) {

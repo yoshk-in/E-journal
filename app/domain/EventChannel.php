@@ -22,7 +22,7 @@ class EventChannel implements IEventChannel
     public function notify($object)
     {
         foreach ($this->subscribers as $subscriber) {
-            $subscriber->notify($object);
+            $subscriber->update($object);
         }
     }
 

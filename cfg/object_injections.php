@@ -2,11 +2,13 @@
 
 use App\base\AbstractRequest;
 use App\base\ConsoleRequest;
+use App\cache\Cache;
+use App\console\NumbersParser;
 use Doctrine\ORM\Tools\Setup;
 use App\domain\{EventChannel, ORM, ProcedureMapManager, Product, ProductRepository};
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityManager;
-use function DI\{autowire, get, create};
+use function DI\{autowire, factory, get, create};
 
 return [
 
@@ -15,6 +17,7 @@ return [
     EntityManagerInterface::class => get(EntityManager::class),
     ORM::class => autowire()->constructorParameter('domainClass', get('app.domain_class')),
     AbstractRequest::class => get(ConsoleRequest::class),
+
 
 
     //factories

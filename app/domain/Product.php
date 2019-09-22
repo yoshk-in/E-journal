@@ -34,7 +34,7 @@ class Product implements Informer, IObservable
      */
     protected $currentProc;
 
-    /** @Column(type="boolean")  */
+    /** @Column(type="boolean") */
     protected $finished = false;
 
     private $initProcList;
@@ -51,6 +51,11 @@ class Product implements Informer, IObservable
     public function getNameAndNumber(): array
     {
         return [$this->name, $this->number];
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
 
@@ -83,12 +88,19 @@ class Product implements Informer, IObservable
         if ($this->currentProc === $this->procCollection->last()) $this->finished = true;
     }
 
+    public function getCurrentProc(): Procedure
+    {
+        return $this->currentProc;
+    }
 
     public function getInfo(): array
     {
-        return $this->procCollection->map(function ($proc) {
-            return $proc->getInfo();
-        })->toArray();
+        foreach ($this->procCollection as $proc) {
+            if ($proc->getStart()) {
+                $info[] = $proc->getInfo();
+            } else break;
+        }
+        return $info ?? [];
     }
 
 

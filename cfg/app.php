@@ -10,5 +10,5 @@ return [
     'app.dev_mode' => true,
     'app.subscribers' => [Render::class],
     'app.observables' => [Procedure::class, Product::class],
-    'app.procedure_map' => require_once 'bootstrap/cfg/procedure_map.php'
+    'app.procedure_map' => require_once 'cfg/procedure_map.php'
 ];
