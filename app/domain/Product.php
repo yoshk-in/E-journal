@@ -2,17 +2,18 @@
 
 namespace App\domain;
 
-use App\base\exceptions\AppException;
 use App\base\exceptions\WrongInputException;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use App\events\{IObservable, TObservable};
 
 
 /**
- * @Entity @HasLifeCycleCallbacks
+ * @Entity
  */
-class Product implements Informer, IObservable
+class Product implements IObservable
 {
-    use ProcedureCollectionValidator,
+    use /*ProcedureCollectionValidator,*/
         TObservable;
 
     /** @Id @Column(type="integer") @GeneratedValue */
@@ -37,14 +38,12 @@ class Product implements Informer, IObservable
     /** @Column(type="boolean") */
     protected $finished = false;
 
-    private $initProcList;
 
-    public function __construct(int $number, string $name, array $procedureList)
+    public function __construct(int $number, string $name, ProcedureFactory $factory)
     {
         $this->number = $number;
         $this->name = $name;
-        $this->initProcList = $procedureList;
-        $this->procCollection = new ArrayCollection($this->initProcedures($procedureList));
+        $this->procCollection = new ArrayCollection($factory->createProcedures($this));
     }
 
 
@@ -57,7 +56,6 @@ class Product implements Informer, IObservable
     {
         return $this->name;
     }
-
 
     public function getNumber(): int
     {
@@ -76,8 +74,14 @@ class Product implements Informer, IObservable
 
     public function nextProc(Procedure $proc)
     {
-        $this->currentProc = $this->procCollection[$proc->getIdState() + 1];
+        $this->currentProc = $this->procCollection[$next_id = $proc->getIdState() + 1];
+        if ($this->currentProc->getIdState() !== $next_id) {
+            foreach ($this->procCollection as $proc) {
+                if ($proc->getIdState() === $next_id) $this->currentProc = $proc;
+            }
+        }
         $this->startProcedure();
+
     }
 
 
@@ -93,32 +97,23 @@ class Product implements Informer, IObservable
         return $this->currentProc;
     }
 
-    public function getInfo(): array
+
+    public function getProcedures(): Collection
+    {
+        return $this->procCollection;
+    }
+
+    public function report()
     {
         foreach ($this->procCollection as $proc) {
-            if ($proc->getStart()) {
-                $info[] = $proc->getInfo();
-            } else break;
+            $proc->notify();
         }
-        return $info ?? [];
-    }
-
-
-    protected function ensureRightInput($condition, string $msg = null): void
-    {
-        if (!$condition) throw new WrongInputException('ошибка: операция не выполнена: ' . $msg);
-    }
-
-
-    protected function initProcedures(array $procedureList): array
-    {
-        return ProcedureFactory::createProcedures($procedureList, $this);
     }
 
 
     protected function isNotFinishedCheck()
     {
-        $this->ensureRightInput(!$this->finished, ' блок уже сдан на склад');
+        if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe' . $this->number);
     }
 
 }

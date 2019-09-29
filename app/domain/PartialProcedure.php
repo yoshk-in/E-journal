@@ -4,6 +4,7 @@
 namespace App\domain;
 
 use DateInterval;
+use App\events\{Event};
 
 /**
  * @Entity
@@ -26,7 +27,7 @@ class PartialProcedure extends AbstractProcedure
     {
         parent::setStart();
         $this->setEnd();
-        $this->notify();
+        $this->notify(Event::START_THEN_END);
     }
 
     protected function setEnd() : \DateTimeImmutable
@@ -39,5 +40,6 @@ class PartialProcedure extends AbstractProcedure
     {
         return $this->getOwner()->getProduct();
     }
+
 
 }

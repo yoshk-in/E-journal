@@ -4,62 +4,92 @@ namespace App\base;
 
 class ConsoleRequest extends AbstractRequest
 {
+    protected $commands = [];
+    protected $blockNumbers = [];
+    protected $partNumber;
+    protected $partialProcName;
+    protected $consoleArgs = [];
+    protected $productName;
+
+
     public function __construct()
     {
         $this->setConsoleArgs();
-        parent::__construct();
-    }
-
-
-    public function addPartialProcName($name)
-    {
-        $this->data['partial'] = $name;
-    }
-    public function getPartialProcCommand()
-    {
-        return $this->data['partial'] ?? $this->data['partial'];
 
     }
 
-    public function setPartNumber($name)
-    {
-        $this->setProperty('partNumber', $name);
-    }
 
-    public function getPartNumber()
-    {
-        return $this->getProperty('partNumber');
-    }
-
-    public function setBlockNumbers($name)
-    {
-        $this->setProperty('blockNumbers', $name);
-    }
-
-    public function getBlockNumbers()
-    {
-        return $this->getProperty('blockNumbers');
-    }
-
-
-    protected function setConsoleArgs()
-    {
-        $this->data['console_args'] = $_SERVER['argv'];
-    }
-
-    public function getConsoleArgs()
-    {
-        return $this->data['console_args'];
-    }
-
-    public function setProductName(string $name)
-    {
-        $this->data['product_name'] = $name;
-    }
 
     public function getProductName()
     {
-        return $this->data['product_name'];
+        return $this->productName;
     }
+
+
+    public function setProductName($productName): void
+    {
+        $this->productName = $productName;
+    }
+
+    public function getCommands(): array
+    {
+        return $this->commands;
+    }
+
+
+    public function addCommand(string $command): void
+    {
+        $this->commands[] = $command;
+    }
+
+
+    public function getBlockNumbers()
+    {
+        return $this->blockNumbers;
+    }
+
+
+    public function setBlockNumbers(array $blockNumbers): void
+    {
+        $this->blockNumbers = $blockNumbers;
+    }
+
+
+    public function getPartNumber()
+    {
+        return $this->partNumber;
+    }
+
+
+    public function setPartNumber($partNumber): void
+    {
+        $this->partNumber = $partNumber;
+    }
+
+
+    public function getPartialProcName()
+    {
+        return $this->partialProcName;
+    }
+
+
+    public function setPartialProcName(string $partialProcName): void
+    {
+        $this->partialProcName = $partialProcName;
+    }
+
+
+    public function getConsoleArgs(): array
+    {
+        return $this->consoleArgs;
+    }
+
+    public function setConsoleArgs(): void
+    {
+        $this->consoleArgs = $_SERVER['argv'];
+    }
+
+
+
 }
 

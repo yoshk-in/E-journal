@@ -21,6 +21,7 @@ class ProcedureMapManager
 
     public function getProductProcedures(string $product): array
     {
+        if (!isset($this->procedureMap[$product])) throw new \Exception('ошибка файла конфигурации: не отмеченны процедуры');
         return $this->procedureMap[$product];
     }
 

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\console;
+namespace App\console\parser;
 
 
 use App\base\exceptions\AppException;
@@ -26,7 +26,7 @@ class NumbersParser
     }
 
 
-    public function parse(?string $numbers_string, string $product)
+    public function parse(?string $numbers_string, string $product): array
     {
         $this->product = $product;
         $array_by_comma = $this->stringToArrayByComma($numbers_string);

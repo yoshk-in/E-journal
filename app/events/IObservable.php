@@ -1,11 +1,11 @@
 <?php
 
 
-namespace App\domain;
+namespace App\events;
 
 interface IObservable
 {
     static function attachToEventChannel(IEventChannel $channel);
 
-    public function notify();
+    public function notify(string $event);
 }

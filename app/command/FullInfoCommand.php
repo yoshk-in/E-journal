@@ -3,18 +3,19 @@
 namespace App\command;
 
 
+use App\events\Event;
+
 class FullInfoCommand extends Command
 {
     protected function doExecute(
-        $repository,
         $productName,
-        ?array $numbers = null,
-        ?string $procedure = null
+        $numbers,
+        $procedure
     ) {
-        $collection = $repository->findNotFinished($productName);
+        $collection = $this->productRepository->findNotFinished($productName);
         if (!$collection->isEmpty()) {
             foreach ($collection as $product) {
-                $product->notify();
+                $product->report(Event::UNFINISHED_PRODUCTS_INFO);
             }
         }
     }

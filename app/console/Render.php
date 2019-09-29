@@ -7,182 +7,125 @@ namespace App\console;
 use App\command\Command;
 use App\command\FullInfoCommand;
 use App\domain\AbstractProcedure;
+use App\domain\Event;
 use App\domain\ISubscriber;
 use App\domain\Product;
 
-class Render implements ISubscriber
+class Render implements ISubscriber, Format, Event
 {
     const THEME = [
         FullInfoCommand::class => 'найдена следующая информация:',
         Command::class => 'отмечены следующие события:',
-    ];
-
-    const TIME_FORMAT = 'd-m-Y H:i';
-
-
-    const MODE = [
-        'short' => 1,
-        'long' => 2,
-        'shortest' => 3
+        Event::START => 'начаты следующие процедуры:',
+        Event::END => 'завершены следующие процедуры',
+        Event::START_THEN_END => 'начаты следующие процедуры:'
     ];
 
     protected $output;
 
     private $theme = '';
-    private $renderMode;
-    private $end = [
-        'did' => 'завершена',
-        'will' => 'завершится'
-    ];
-    private $start = 'начата';
-    private $procPatternInfo = [
-        Render::MODE['long'] => "> %-22s  - процедура %s %s %s",
-        Render::MODE['short'] => '[ %-22s ] - процедура %s'
-    ];
+
     private $partialsPatternInfo = '       * завершенные подпроцедуры: ';
 
-    private $number = ' Номер %s';
-    private $product = ' Блок %s';
-    private $stat_string = '%s - %s штук: ';
+    private $stat_string = ' %s - %s штук: ';
     private $stat;
+    private $formatter;
+    const MARKS = [
+        'enter' => [PHP_EOL, PHP_EOL],
+        'comma' => [', ', PHP_EOL]
+    ];
 
-    public function __construct()
+    private $product;
+
+    public function __construct(ProcFormatter $stringFormatter)
     {
-        $this->renderMode = Render::MODE['long'];
+        $this->formatter = $stringFormatter;
     }
 
     public function flush()
     {
-        $this->printHeader();
+        $this->formatter->printHeader($this->theme);
         if (is_null($this->output)) return;
         foreach ($this->output as $product => $numbers) {
-            $this->printProductName($product);
+            $this->formatter->printProductName($product);
             foreach ($numbers as $number => $procedures) {
-                $this->printProductNumber($number);
+                $this->formatter->printProductNumber($number);
                 $this->printProcedures($procedures);
-                print PHP_EOL;
+
             }
 
         }
-      $this->printStat();
-    }
-
-    private function printHeader()
-    {
-        print $this->theme . PHP_EOL . PHP_EOL;
+        $this->printStat();
     }
 
     private function printStat()
     {
         if ($this->theme !== Render::THEME[FullInfoCommand::class]) return;
 
-        print 'Итого:' . PHP_EOL ;
         $total = 0;
+
         foreach ($this->stat as $product => $procedures) {
             foreach ($procedures as $name => $product_numbers) {
-                printf($this->stat_string, $name, $part = count($product_numbers));
+                $stat_block = sprintf($this->stat_string, $name, $part = count($product_numbers));
                 $total += $part;
                 foreach ($product_numbers as $key => $number) {
-                    print $number . $this->getConjuntion($product_numbers, $key, [PHP_EOL, ', ']);
+                    $stat_block .= $number . $this->getConjuntion($product_numbers, $key, self::MARKS['enter']);
                 }
             }
         }
-        printf( 'Всего %s штук' . PHP_EOL, $total);
+        printf('Итого:' . PHP_EOL . ($stat_block ?? ''). 'Всего %s штук' . PHP_EOL, $total);
     }
 
-    private function getConjuntion(array $array, int $currentKey, array $conjuctions)
+    private function printProcedures(?array $procedures = null, array $marks = self::MARKS['enter']): void
     {
-        if (array_key_last($array) === $currentKey) return $conjuctions[0];
-        else return $conjuctions[1];
-    }
-
-    private function printProductName(string $product): void
-    {
-        printf($this->product . PHP_EOL . PHP_EOL, $product);
-    }
-
-    private function printProductNumber(string $number): void
-    {
-        printf($this->number . PHP_EOL, $number);
-    }
-
-    private function printProcedures(?array $procedures = null, array $conjunction = [PHP_EOL, PHP_EOL]): void
-    {
-        if (is_null($procedures)) return;
+        if (empty($procedures)) return;
 
         foreach ($procedures as $key => $procOrPartials) {
             if (is_array($procOrPartials)) {
                 printf($this->partialsPatternInfo);
-                $this->printProcedures($procOrPartials, [PHP_EOL, ', ']);
+                $this->printProcedures($procOrPartials,self::MARKS['comma']);
             } else {
-                printf($procOrPartials . $this->getConjuntion($procedures, $key, $conjunction));
+                printf($procOrPartials . $this->getConjuntion($procedures, $key, $marks));
             }
         }
+        print PHP_EOL;
     }
 
-
-    public function update($object)
+    public function update($object, string $event)
     {
+        $this->theme = self::THEME[$event];
         switch ($object) {
             case $object instanceof Product:
-                $product = $object;
-                $this->theme = self::THEME[FullInfoCommand::class];
-                foreach ($product->getInfo() as $procedure) {
-                    $this->handleProcedureInfo($product, ...$procedure);
+                foreach ($object->getProcedures() as $procedure) {
+                    $this->handleProcedureInfo($object, $procedure);
                 }
-                $this->makeStat($product);
+                $this->makeStat($object);
                 break;
             case $object instanceof AbstractProcedure:
-                $this->theme = self::THEME[Command::class];
-                $this->handleProcedureInfo($object->getProduct(),...$object->getInfo());
+                $this->handleProcedureInfo($object->getProduct(), $object);
         }
     }
 
-    protected function handleProcedureInfo(
-        Product $product,
-        string $name,
-        ?\DateTimeInterface $start,
-        ?\DateTimeInterface $end,
-        ?bool $finished,
-        ?array $inners = null
-    ): void  {
 
-        if (is_null($start)) return;
+    protected function handleProcedureInfo(Product $product, AbstractProcedure $procedure): void
+    {
+        if (!$procedure->getStart()) return;
 
         [$prod_name, $prod_number] = $product->getNameAndNumber();
-        $this->output[$prod_name][$prod_number][] = $this->renderProcInfo(Render::MODE['long'], $name, $start, $end, $finished);
+        $this->output[$prod_name][$prod_number][] = $this->formatter->getProcInString(Format::LONG, $procedure);
 
-        if (!is_null($inners)) {
-            $partials_key = array_key_last($this->output[$prod_name][$prod_number]) + 1;
-            $this->renderMode = self::MODE['shortest'];
-            foreach ($inners as $inner_proc) {
-                $this->output[$prod_name][$prod_number][$partials_key][] = $this->renderProcInfo(Render::MODE['shortest'], ...$inner_proc);
-            }
+        if (!$procedure->isComposite()) return;
+
+        $partials_key = array_key_last($this->output[$prod_name][$prod_number]) + 1;
+
+        foreach ($procedure->getInners() as $inner_proc) {
+            $partial_info = $this->formatter->getProcInString(Format::SHORTEST, $inner_proc);
+            if (!$partial_info) continue;
+            $this->output[$prod_name][$prod_number][$partials_key][] = $partial_info;
         }
+
     }
 
-    private function renderProcInfo($renderMode, $name, $start, $end, $finished)
-    {
-        switch ($renderMode) {
-            case $mode = Render::MODE['long']:
-                return sprintf(
-                    $this->procPatternInfo[$mode],
-                    $name,
-                    $this->start,
-                    $this->timeToStr($start),
-                    $this->getEndPart($finished, $end),
-                );
-            case $mode = Render::MODE['short']:
-                return sprintf(
-                    $this->procPatternInfo[$mode],
-                    $name,
-                    ($this->getEndPart($finished, $end) ?: $this->start . $this->timeToStr($start))
-                );
-            case $mode = Render::MODE['shortest']:
-                if (!$finished) return '';
-                return $name;
-        }
-    }
 
     private function makeStat(Product $product)
     {
@@ -190,14 +133,10 @@ class Render implements ISubscriber
     }
 
 
-    private function getEndPart(bool $finished, $end)
+    private function getConjuntion(array &$array, int $currentKey, array $type) : string
     {
-        $end_part = $finished ? $this->end['did'] : $this->end['will'];
-        return $end ? sprintf($end_part . '  %s', $this->timeToStr($end)) : '';
+        if (array_key_last($array) === $currentKey) return $type[1];
+        else return $type[0];
     }
 
-    private function timeToStr(\DateTimeInterface $time)
-    {
-        return $time->format(self::TIME_FORMAT);
-    }
 }

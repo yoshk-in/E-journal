@@ -1,11 +1,12 @@
-<?php 
- 
- namespace pub;
+<?php
 
- use bootstrap\AppContainer;
- use \App\controller\Controller;
+namespace pub;
 
- require_once 'bootstrap/autoload_class.php';
+use bootstrap\AppContainer;
+use \App\controller\Controller;
+
+require_once 'bootstrap/autoload_class.php';
+
 
 $container = AppContainer::bootstrap();
 $controller = $container->get(Controller::class);

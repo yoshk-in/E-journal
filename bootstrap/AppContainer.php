@@ -16,8 +16,11 @@ class AppContainer
         $builder->addDefinitions('cfg/procedure_map.php');
         $builder->addDefinitions('cfg/app.php');
         $builder->addDefinitions('cfg/object_injections.php');
-
         $container = $builder->build();
+        if (!$container->get('app.dev_mode') && function_exists('xdebug_disable')) {
+            xdebug_disable();
+        }
+
         return $container;
     }
 

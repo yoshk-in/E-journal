@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\domain;
+namespace App\events;
 
 class EventChannel implements IEventChannel
 {
@@ -19,10 +19,10 @@ class EventChannel implements IEventChannel
         }
     }
 
-    public function notify($object)
+    public function notify($object, string $event)
     {
         foreach ($this->subscribers as $subscriber) {
-            $subscriber->update($object);
+            $subscriber->update($object, $event);
         }
     }
 

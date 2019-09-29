@@ -6,11 +6,12 @@ namespace App\domain;
 
 use App\base\exceptions\WrongInputException;
 use DateTimeImmutable;
+use App\events\{TObservable, IObservable};
 
 /**
  * @MappedSuperClass
  */
-class AbstractProcedure implements IObservable, Informer
+abstract class AbstractProcedure implements IObservable
 {
     use TObservable;
 
@@ -32,13 +33,6 @@ class AbstractProcedure implements IObservable, Informer
 
     protected $owner;
 
-    const ERRORS = [
-        'early_end_casual' => ['нет отметки о начале данной процедуры', true],
-        'early_end_composite' => ['нет отметки о завершении внутренних процедур: ', false],
-        'repeat' => ['данное событие уже отмечено в журнале ', true],
-        'inner_not_fount' => ['не найдено вложенной процедуры под именем ', false]
-    ];
-
 
     public function __construct(string $name, int $idState, object $owner)
     {
@@ -49,7 +43,7 @@ class AbstractProcedure implements IObservable, Informer
 
     public function setStart()
     {
-        $this->checkInput(is_null($this->start), $this->errorStr('repeat'));
+        $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
         $this->start = new DateTimeImmutable('now');
     }
 
@@ -84,16 +78,6 @@ class AbstractProcedure implements IObservable, Informer
         return $this->end;
     }
 
-    public function getInfo(): array
-    {
-        return [$this->name, $this->start, $this->end, $this->isFinished()];
-    }
-
-    protected function getInfoToExcept(): array
-    {
-        return [$this->name, $this->format($this->start), $this->format($this->start)];
-    }
-
     protected function getOwner()
     {
         return $this->owner;
@@ -101,8 +85,15 @@ class AbstractProcedure implements IObservable, Informer
 
     protected function checkInput(bool $condition, $msg = null): ?\Exception
     {
-        [$product, $number] = $this->getProduct()->getNameAndNumber();
-        if (!$condition) throw new WrongInputException("ошибка, операция не выполнена: блок $product, номер $number, процедура '{$this->getName()}': $msg");
+        try {
+            [$product, $number] = $this->getProduct()->getNameAndNumber();
+            if (!$condition) throw new WrongInputException(
+                printf("ошибка, операция не выполнена: блок %s, номер %s, процедура '%s': %s", $product, $number, $this->getName(), $msg)
+            );
+        } catch (\Exception $e) {
+            exit;
+        }
+
         return null;
     }
 
@@ -111,14 +102,4 @@ class AbstractProcedure implements IObservable, Informer
         return is_null($time) ? '' : $time->format('Y-m-d H:i:s');
     }
 
-    protected function errorStr(string $type_error): string
-    {
-        $main = self::ERRORS[$type_error][0];
-        $advance = self::ERRORS[$type_error][1] ?
-            "начато " . $this->format($this->start) .
-            ($this->end ? ", завершено " . $this->format($this->end) : '')
-        : '';
-        return "\n$main\n$advance\n";
-
-    }
 }

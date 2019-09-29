@@ -14,6 +14,7 @@ class CommandResolver
     private $container;
 
 
+
     public function __construct(AbstractRequest $request, ContainerInterface $container)
     {
         $this->request = $request;
@@ -25,15 +26,13 @@ class CommandResolver
     {
         $result_cmd_array = [];
         $commands = $this->request->getCommands();
-        if ($commands) {
+        if (!empty($commands)) {
             foreach ($commands as $command) {
-                $command = ucfirst($command) . $this->baseCmd;
+                $command = $command . $this->baseCmd;
                 $file_of_command = __DIR__ . '/' . $command . '.php';
                 $class = '\\' . __NAMESPACE__ . '\\' . $command;
 
-                if (file_exists($file_of_command)) {
-                    require_once $file_of_command;
-                } else {
+                if (!file_exists($file_of_command)) {
                     throw new AppException(
                         "The command file not found: $file_of_command is given"
                     );

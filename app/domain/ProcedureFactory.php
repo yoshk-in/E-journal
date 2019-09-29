@@ -6,10 +6,22 @@ namespace App\domain;
 
 class ProcedureFactory
 {
-    public static function createProcedures(array $procedures, Product $product): array
+    private $creationMap;
+
+    public function __construct(ProcedureMapManager $creationMap)
     {
-        foreach ($procedures as $idState => $procedure) {
-            $array[] = new Procedure($procedure['name'], $idState, $product, $procedure['inners'] ?? null);
+        $this->creationMap = $creationMap;
+    }
+
+    public function createProcedures(Product $product): array
+    {
+        foreach ($this->creationMap[$product->getName()] as $idState => $procedure) {
+            switch (isset($procedure['inners'])) {
+                case true :
+                    $array[] = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);
+                case false:
+                    $array[] = new CasualProcedure($procedure['name'], $idState, $product);
+            }
         }
         return $array;
     }

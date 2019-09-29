@@ -4,25 +4,33 @@ namespace App\command;
 
 use App\base\exceptions\WrongInputException;
 use App\base\ConsoleRequest;
+use App\cache\Cache;
 use App\domain\ProcedureMapManager;
-use App\domain\ProductRepository;
-use \ArrayAccess;
+use App\repository\DoctrineORMAdapter;
+use App\repository\ProductRepository;
+
 
 abstract class Command
 {
     protected $request;
     protected $productRepository;
     protected $productMap;
+    protected $cache;
+    protected $orm;
+
     const ERR = ['not_arrived' => 'данные блоки еше не поступали на настройку:'];
 
-    final public function __construct(
+    public function __construct(
         ConsoleRequest $request,
         ProductRepository $repository,
-        ProcedureMapManager $productMap
-    )  {
+        ProcedureMapManager $productMap,
+        Cache $cache
+    )
+    {
         $this->request = $request;
         $this->productRepository = $repository;
         $this->productMap = $productMap;
+        $this->cache = $cache;
     }
 
     public function execute()
@@ -30,12 +38,17 @@ abstract class Command
         $product_name = $this->request->getProductName();
         $numbers = $this->request->getBlockNumbers();
         $special_command = $this->request->getPartialProcCommand();
-        $this->doExecute(
-            $this->productRepository,
-            $product_name,
-            $numbers,
-            $special_command
-        );
+        try {
+            $this->doExecute(
+                $product_name,
+                $numbers,
+                $special_command
+            );
+        } catch (\Exception $e) {
+            $e->getMessage();
+            exit;
+        }
+
         $this->productRepository->save();
     }
 
@@ -54,7 +67,6 @@ abstract class Command
 
 
     abstract protected function doExecute(
-        ProductRepository $repository,
         string $productName,
         array $numbers,
         ?string $procedure
