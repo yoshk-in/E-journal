@@ -5,7 +5,7 @@ namespace App\console\parser;
 
 
 
-interface Arg
+interface ArgMap
 {
 
     const BLOCKS_ARE_ARRIVED = BlocksAreArrivedParser::class;
@@ -14,7 +14,9 @@ interface Arg
 
     const DEFAULT_CMD = FullInfoParser::class;
 
-    const BLOCK_ARE_DISPATCHED = BlocksAreDispatchedParser::class;
+    const BLOCK_NUMBERS_COMMAND = self::RANGE_INFO;
+
+    const BLOCKS_ARE_DISPATCHED = BlocksAreDispatchedParser::class;
 
     const CLEAR_JOURNAL = ClearJournalParser::class;
 

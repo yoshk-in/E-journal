@@ -5,7 +5,7 @@ namespace App\command;
 
 use App\events\Event;
 
-class FullInfoCommand extends Command
+class FullInfoCommand extends RepositoryCommand
 {
     protected function doExecute(
         $productName,

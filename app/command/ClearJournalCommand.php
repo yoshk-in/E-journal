@@ -3,30 +3,20 @@
 
 namespace App\command;
 
-
-use App\base\ConsoleRequest;
-use App\cache\Cache;
-use App\domain\ProcedureMapManager;
 use App\repository\DBSchemaManager;
-use App\repository\ProductRepository;
 
-class ClearJournalCommand extends Command
+
+class ClearJournalCommand
 {
     protected $dbManager;
 
-    public function __construct(ConsoleRequest $request, ProductRepository $repository, ProcedureMapManager $productMap, Cache $cache, DBSchemaManager $dbManager)
+    public function __construct(DBSchemaManager $dbManager)
     {
-        parent::__construct($request, $repository, $productMap, $cache);
         $this->dbManager = $dbManager;
     }
 
-    protected function doExecute(
-         $productName,
-         $numbers,
-         $procedure
-    ) {
+    public function execute() {
          $this->dbManager->updateTableSchema();
-
      }
 
 }

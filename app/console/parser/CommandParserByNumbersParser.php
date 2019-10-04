@@ -10,7 +10,7 @@ abstract class CommandParserByNumbersParser extends CommandParser
 {
     private $numbersParser;
     private $numbers;
-    private $nextArg = NextArgIndex::NUMBERS;
+    private $nextArg = NextArgIndexMap::NUMBERS;
 
     public function __construct(ConsoleRequest $request, NumbersParser $numbersParser)
     {

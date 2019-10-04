@@ -4,7 +4,7 @@
 namespace App\console;
 
 
-use App\command\Command;
+use App\command\RepositoryCommand;
 use App\command\FullInfoCommand;
 use App\domain\AbstractProcedure;
 use App\domain\Event;
@@ -15,7 +15,7 @@ class Render implements ISubscriber, Format, Event
 {
     const THEME = [
         FullInfoCommand::class => 'найдена следующая информация:',
-        Command::class => 'отмечены следующие события:',
+        RepositoryCommand::class => 'отмечены следующие события:',
         Event::START => 'начаты следующие процедуры:',
         Event::END => 'завершены следующие процедуры',
         Event::START_THEN_END => 'начаты следующие процедуры:'

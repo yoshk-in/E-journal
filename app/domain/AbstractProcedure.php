@@ -8,31 +8,33 @@ use App\base\exceptions\WrongInputException;
 use DateTimeImmutable;
 use App\events\{TObservable, IObservable};
 
-/**
- * @MappedSuperClass
- */
+
 abstract class AbstractProcedure implements IObservable
 {
     use TObservable;
 
-    /** @Column(type="datetime_immutable", nullable=true) */
+    /** @Column(type="datetime_immutable", nullable=true)    */
     protected $start;
 
-    /** @Column(type="datetime_immutable", nullable=true) */
+    /** @Column(type="datetime_immutable", nullable=true)   */
 
     protected $end;
 
-    /** @Column(type="string") */
+    /** @Column(type="string")                              */
     protected $name;
 
-    /** @Column(type="integer") */
+    /** @Column(type="integer")                             */
     protected $idState;
 
-    /** @Id @Column(type="integer") @GeneratedValue */
+    /**
+     * @Id @Column(type="integer")
+     * @GeneratedValue
+     */
     protected $id;
 
-    protected $owner;
+//    protected $state;
 
+    protected $owner;
 
     public function __construct(string $name, int $idState, object $owner)
     {
@@ -97,9 +99,8 @@ abstract class AbstractProcedure implements IObservable
         return null;
     }
 
-    protected function format(?\DateTimeInterface $time): string
-    {
-        return is_null($time) ? '' : $time->format('Y-m-d H:i:s');
-    }
+//    abstract public function getCurrentState(): string;
+
+
 
 }

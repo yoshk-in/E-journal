@@ -21,7 +21,7 @@ class ProcedureMapManager
 
     public function getProductProcedures(string $product): array
     {
-        if (!isset($this->procedureMap[$product])) throw new \Exception('ошибка файла конфигурации: не отмеченны процедуры');
+        if (!isset($this->procedureMap[$product])) throw new \Exception('ошибка чтения файла конфигурации: отсутсвуют процедуры');
         return $this->procedureMap[$product];
     }
 
@@ -71,6 +71,14 @@ class ProcedureMapManager
             $result[] = [$name, $fullNames[$key]];
         }
         return $result;
+    }
+
+    public function getAllDoubleProcNames(string $product)
+    {
+        foreach ($this->getProductProcedures($product) as $proc) {
+            $names[] = [$proc['short'], $proc['name']];
+        }
+        return $names;
     }
 }
 

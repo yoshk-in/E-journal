@@ -4,7 +4,7 @@
 namespace App\console\parser;
 
 
-interface NextArgIndex
+interface NextArgIndexMap
 {
     //keys for args from console request;
 

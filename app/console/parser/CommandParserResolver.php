@@ -6,7 +6,7 @@ namespace App\console\parser;
 
 use Psr\Container\ContainerInterface;
 
-class CommandParserResolver implements Arg
+class CommandParserResolver implements ArgMap
 {
     private $appContainer;
 
@@ -26,9 +26,9 @@ class CommandParserResolver implements Arg
     private function findParserName(?string $commandArg, $commandMap): string
     {
         if (isset($commandMap[$commandArg])) return $commandMap[$commandArg];
-        if (preg_match(Arg::BLOCK_NUMBERS, $commandArg))
-            return Arg::RANGE_INFO;
-        if (is_null($commandArg)) return Arg::DEFAULT_CMD;
+        if (preg_match(ArgMap::BLOCK_NUMBERS, $commandArg))
+            return ArgMap::BLOCK_NUMBERS_COMMAND;
+        if (is_null($commandArg)) return ArgMap::DEFAULT_CMD;
         throw new \Exception(' не соблюдён формат ввода');
     }
 

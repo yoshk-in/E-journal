@@ -13,7 +13,7 @@ class SetPartNumberParser extends CommandParser
 
     public function parse()
     {
-        $arg = $this->request->getConsoleArgs()[NextArgIndex::PART_NUMBER];
+        $arg = $this->request->getConsoleArgs()[NextArgIndexMap::PART_NUMBER];
         $this->validatePartNumber($arg);
         $this->partNumber = $arg;
     }

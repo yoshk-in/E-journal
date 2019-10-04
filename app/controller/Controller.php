@@ -4,7 +4,7 @@ namespace App\controller;
 
 
 use App\command\CommandResolver;
-use App\console\parser\ConsoleParser;
+use App\console\parser\ConsoleProcMapParser;
 use App\console\Render;
 use App\domain\EventChannel;
 
@@ -18,7 +18,7 @@ class Controller
     private $eventChannel;
 
     public function __construct(
-        ConsoleParser $consoleParser,
+        ConsoleProcMapParser $consoleParser,
         CommandResolver $commandResolver,
         Render $render,
         EventChannel $eventChannel

@@ -13,29 +13,30 @@ use App\events\{IObservable, TObservable};
  */
 class Product implements IObservable
 {
-    use /*ProcedureCollectionValidator,*/
-        TObservable;
+    use TObservable;
 
-    /** @Id @Column(type="integer") @GeneratedValue */
+    /**
+     * @Id @Column(type="integer")
+     * @GeneratedValue
+     */
     protected $id;
 
-    /** @Column(type="integer") */
-    protected $number;
-
-    /** @OneToMany(targetEntity="Procedure", mappedBy="owner", cascade="persist", fetch="EAGER")
-     * @OrderBy({"idState" = "desc"})
+    /**
+     * @OneToMany(targetEntity="Procedure", mappedBy="owner", cascade="persist")
+     * @OrderBy({"idState" = "ASC"})
      */
     protected $procCollection;
 
-    /** @Column(type="string") */
+    /**     @Column(type="integer")                 */
+    protected $number;
+
+    /**     @Column(type="string")                  */
     protected $name;
 
-    /** @OneToOne(targetEntity="Procedure", fetch="EAGER")
-     * @JoinColumn(name="current_proc_id", referencedColumnName="id")
-     */
+    /**     @OneToOne(targetEntity="Procedure")     */
     protected $currentProc;
 
-    /** @Column(type="boolean") */
+    /**     @Column(type="boolean")                 */
     protected $finished = false;
 
 
@@ -44,6 +45,7 @@ class Product implements IObservable
         $this->number = $number;
         $this->name = $name;
         $this->procCollection = new ArrayCollection($factory->createProcedures($this));
+        $this->completeCollection = new ArrayCollection();
     }
 
 
@@ -75,13 +77,21 @@ class Product implements IObservable
     public function nextProc(Procedure $proc)
     {
         $this->currentProc = $this->procCollection[$next_id = $proc->getIdState() + 1];
-        if ($this->currentProc->getIdState() !== $next_id) {
-            foreach ($this->procCollection as $proc) {
-                if ($proc->getIdState() === $next_id) $this->currentProc = $proc;
-            }
-        }
         $this->startProcedure();
+    }
 
+    public function getCompleteProcedures(): Collection
+    {
+        return $this->procCollection->filter(function ($el) {
+            return $el->isFinished();
+        });
+    }
+
+    public function getUncompletedProcedures(): Collection
+    {
+        return $this->procCollection->filter(function ($el) {
+            return !$el->isFinished();
+        });
     }
 
 
@@ -103,11 +113,9 @@ class Product implements IObservable
         return $this->procCollection;
     }
 
-    public function report()
+    public function report(string $typeReport)
     {
-        foreach ($this->procCollection as $proc) {
-            $proc->notify();
-        }
+        $this->notify($typeReport);
     }
 
 

@@ -27,7 +27,7 @@ class PartialProcedure extends AbstractProcedure
     {
         parent::setStart();
         $this->setEnd();
-        $this->notify(Event::START_THEN_END);
+        $this->notify(Event::PARTIAL_START);
     }
 
     protected function setEnd() : \DateTimeImmutable

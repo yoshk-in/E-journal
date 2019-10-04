@@ -6,14 +6,14 @@ use App\base\ConsoleRequest;
 use App\base\exceptions\WrongInputException;
 use App\domain\ProcedureMapManager;
 
-class ConsoleParser implements Arg, NextArgIndex
+class ConsoleProcMapParser implements ArgMap, NextArgIndexMap
 {
 
     protected $commandMap = [
-        '+' =>  Arg::BLOCKS_ARE_ARRIVED,
-        '-' => Arg::BLOCK_ARE_DISPATCHED,
-        'очистка$' => Arg::CLEAR_JOURNAL,
-        'партия' => Arg::SET_PART_NUMBER
+        '+' =>  ArgMap::BLOCKS_ARE_ARRIVED,
+        '-' => ArgMap::BLOCKS_ARE_DISPATCHED,
+        'очистка$' => ArgMap::CLEAR_JOURNAL,
+        'партия' => ArgMap::SET_PART_NUMBER
         ];
 
     protected $request;
@@ -34,7 +34,7 @@ class ConsoleParser implements Arg, NextArgIndex
     {
         $this->parseProductName();
         $this->request->setProductName($this->product);
-        $this->setPartialToCommandMap($this->procedureMap->getAllDoublePartialNames($this->product));
+        $this->setPartialToCommandMap();
         $parser = $this->parseCmd();
         $this->request->addCommand($parser->getCommand());
         $this->request->setBlockNumbers($parser->getBlockNumbers());
@@ -51,21 +51,37 @@ class ConsoleParser implements Arg, NextArgIndex
     }
 
 
-    protected function setPartialToCommandMap(array $partials): void
+    protected function setPartialToCommandMap(): void
     {
+        $partials = $this->procedureMap->getAllDoublePartialNames($this->product);
+//        $casuals = $this->procedureMap->getAllDoubleProcNames($this->product);
         foreach ($partials as [$short_name, $partial]) {
             $this->commandMap[$short_name] = [
-                Arg::BLOCKS_ARE_ARRIVED
+                ArgMap::BLOCKS_ARE_ARRIVED
             ];
             $this->commandMap[$partial] = [
-                Arg::BLOCKS_ARE_ARRIVED
+                ArgMap::BLOCKS_ARE_ARRIVED
             ];
         }
+//        foreach ($casuals as [$short_name, $casual]) {
+//            $this->commandMap[$short_name . '+'] = [
+//                ArgMap::BLOCKS_ARE_ARRIVED
+//            ];
+//            $this->commandMap[$casual . '+'] = [
+//                ArgMap::BLOCKS_ARE_ARRIVED
+//            ];
+//            $this->commandMap[$short_name . '-'] = [
+//                ArgMap::BLOCKS_ARE_DISPATCHED
+//            ];
+//            $this->commandMap[$casual . '-'] = [
+//                ArgMap::BLOCKS_ARE_DISPATCHED
+//            ];
+//        }
     }
 
     protected function parseProductName()
     {
-        $product_name = $this->request->getConsoleArgs()[NextArgIndex::PRODUCT_NAME] ?? null;
+        $product_name = $this->request->getConsoleArgs()[NextArgIndexMap::PRODUCT_NAME] ?? null;
         $this->checkProductName($this->product = mb_strtoupper($product_name), $this->procedureMap->getProductNames());
     }
 

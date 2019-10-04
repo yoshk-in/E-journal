@@ -29,7 +29,7 @@ class CommandResolver
         if (!empty($commands)) {
             foreach ($commands as $command) {
                 $command = $command . $this->baseCmd;
-                $file_of_command = __DIR__ . '/' . $command . '.php';
+                $file_of_command = __DIR__ . DIRECTORY_SEPARATOR . $command . '.php';
                 $class = '\\' . __NAMESPACE__ . '\\' . $command;
 
                 if (!file_exists($file_of_command)) {

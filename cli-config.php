@@ -1,7 +1,18 @@
 <?php
 
-namespace doctrine\cli_config;
 
-require_once 'bootstrap/bootstrap.php';
+use bootstrap\AppContainer;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Console\ConsoleRunner;
 
-return \Doctrine\ORM\Tools\Console\ConsoleRunner::createHelperSet(\App\domain\ProductRepository::_getEntityManager());
+
+require_once 'bootstrap/autoload_class.php';
+
+$app_container = AppContainer::bootstrap();
+$em = $app_container->get(EntityManager::class);
+return ConsoleRunner::createHelperSet($em);
+
+
+
+
+

@@ -6,7 +6,7 @@ namespace App\console\parser;
 
 class BlocksAreArrivedParser extends CommandParserByNumbersParser
 {
-    private $nextArg = NextArgIndex::PARTIAL;
+    private $nextArg = NextArgIndexMap::PARTIAL;
 
     public function parse()
     {

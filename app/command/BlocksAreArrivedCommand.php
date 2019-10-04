@@ -4,7 +4,7 @@
 namespace App\command;
 
 
-class BlocksAreArrivedCommand extends Command
+class BlocksAreArrivedCommand extends RepositoryCommand
 {
     protected function doExecute(
         $productName,
@@ -13,7 +13,7 @@ class BlocksAreArrivedCommand extends Command
     )  {
         [$found_products, $not_found] = $this->productRepository->findByNumbers($productName, $numbers);
         if (!empty($not_found)) {
-            $this->ensureRightInput(is_null($procedure), self::ERR['not_arrived'], $not_found);
+            $this->ensureRightInput(is_null($procedure), self::ERR_NOT_ARRIVED, $not_found);
             $new = $this->productRepository->createProducts($not_found, $productName);
         }
         $all = array_merge($found_products->toArray(), $new ?? []);
