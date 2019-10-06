@@ -7,7 +7,7 @@ namespace App\console\parser;
 use App\base\exceptions\WrongInputException;
 
 
-class SetPartNumberParser extends CommandParser
+class SetPartNumberParser extends CommandMapParser
 {
     private $partNumber;
 

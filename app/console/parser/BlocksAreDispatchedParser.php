@@ -4,7 +4,7 @@
 namespace App\console\parser;
 
 
-class BlocksAreDispatchedParser extends CommandParserByNumbersParser
+class BlocksAreDispatchedParser extends CommandParserByNumbersMapParser
 {
 
 }

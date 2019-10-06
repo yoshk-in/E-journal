@@ -4,7 +4,7 @@
 namespace App\console\parser;
 
 
-class ClearJournalParser extends CommandParser
+class ClearJournalMapParser extends CommandMapParser
 {
 
     public function parse()

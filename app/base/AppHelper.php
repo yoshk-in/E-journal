@@ -6,7 +6,7 @@ use App\command\CommandResolver;
 use App\console\ConsoleParser;
 use App\domain\ProductRepository;
 use App\cache\Cache;
-use \App\console\Render;
+use \App\console\WrongRender;
 use App\base\ConsoleRequest;
 use App\domain\ProcedureMapManager;
 
@@ -63,7 +63,7 @@ class AppHelper
     }
 
 
-    public function getRender(): Render
+    public function getRender(): WrongRender
     {
         return $this->getSingleTone($this->console . 'Render');
     }

@@ -29,11 +29,8 @@ class CompositeProcedure extends Procedure
 
     public function setEnd()
     {
-        $this->checkInput((bool) $this->innersNotFinished(), 'внутренние процедуры данного события не завершены:' );
-        $this->checkInput((bool)$this->getStart(), ' событие еще не начато');
-        $this->checkInput(!$end = $this->getEnd(), 'coбытие уже отмечено');
-        $this->end = new DateTimeImmutable('now');
-        $this->notify(Event::COMPOSITE_END);
+        $this->checkInput((bool) $this->innersFinished(), 'внутренние процедуры данного события не завершены:' );
+        parent::setEnd();
     }
 
     public function setStart(?string $partial = null)
@@ -42,12 +39,7 @@ class CompositeProcedure extends Procedure
             $this->startInner($partial);
             return;
         }
-        if ($this->isFinished()) {
-            $this->getProduct()->nextProc($this);
-            return;
-        }
         parent::setStart();
-        $this->notify(Event::COMPOSITE_START);
     }
 
     public function getInners(): ?\ArrayAccess
@@ -70,12 +62,12 @@ class CompositeProcedure extends Procedure
     }
 
 
-    protected function innersNotFinished()
+    protected function innersFinished()
     {
         foreach ($this->inners as $inner) {
-            if (!$inner->isFinished()) return true;
+            if (!$inner->isFinished()) return false;
         }
-        return false;
+        return true;
     }
 
     protected function startInner(string $partial_name)

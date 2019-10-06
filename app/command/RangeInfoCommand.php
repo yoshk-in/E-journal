@@ -3,9 +3,7 @@
 namespace App\command;
 
 
-use App\events\Event;
-
-class RangeInfoCommand extends RepositoryCommand
+class RangeInfoCommand extends InfoCommand
 {
     protected function doExecute(
         $productName,
@@ -15,15 +13,12 @@ class RangeInfoCommand extends RepositoryCommand
     {
         [$collection, $not_found] = $this->productRepository->findByNumbers($productName, $numbers);
         if (!$collection->isEmpty()) {
-            foreach ($collection as $product) {
-                $product->report(Event::RANGE_PRODUCTS_INFO);
-            }
+            $this->render->update($collection, __CLASS__);
         }
         if (!empty($not_found)) {
-            echo 'по данным номерам информации не найдено: ';
-            foreach ($not_found as $number) echo $number . ', ';
+            $this->render->update($not_found, __CLASS__);
         }
-        echo PHP_EOL;
+
 
     }
 

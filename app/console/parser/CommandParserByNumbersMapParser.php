@@ -6,11 +6,11 @@ namespace App\console\parser;
 
 use App\base\ConsoleRequest;
 
-abstract class CommandParserByNumbersParser extends CommandParser
+abstract class CommandParserByNumbersMapParser extends CommandMapParser
 {
-    private $numbersParser;
-    private $numbers;
-    private $nextArg = NextArgIndexMap::NUMBERS;
+    protected $numbersParser;
+    protected $numbers;
+    protected $nextArg = NextArgIndexMap::NUMBERS;
 
     public function __construct(ConsoleRequest $request, NumbersParser $numbersParser)
     {

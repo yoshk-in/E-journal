@@ -5,8 +5,8 @@ namespace App\controller;
 
 use App\command\CommandResolver;
 use App\console\parser\ConsoleProcMapParser;
-use App\console\Render;
-use App\domain\EventChannel;
+use App\console\render\Render;
+use App\events\EventChannel;
 
 class Controller
 {

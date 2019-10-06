@@ -15,7 +15,7 @@ class ProcedureFactory
 
     public function createProcedures(Product $product): array
     {
-        foreach ($this->creationMap[$product->getName()] as $idState => $procedure) {
+        foreach ($this->creationMap->getProductProcedures($product->getName()) as $idState => $procedure) {
             switch (isset($procedure['inners'])) {
                 case true :
                     $array[] = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);

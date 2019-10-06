@@ -15,9 +15,7 @@ class ConsoleRequest extends AbstractRequest
     public function __construct()
     {
         $this->setConsoleArgs();
-
     }
-
 
 
     public function getProductName()
@@ -49,7 +47,7 @@ class ConsoleRequest extends AbstractRequest
     }
 
 
-    public function setBlockNumbers(array $blockNumbers): void
+    public function setBlockNumbers(?array $blockNumbers): void
     {
         $this->blockNumbers = $blockNumbers;
     }
@@ -73,7 +71,7 @@ class ConsoleRequest extends AbstractRequest
     }
 
 
-    public function setPartialProcName(string $partialProcName): void
+    public function setPartialProcName(?string $partialProcName): void
     {
         $this->partialProcName = $partialProcName;
     }

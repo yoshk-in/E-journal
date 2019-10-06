@@ -16,7 +16,7 @@ class CommandParserResolver implements ArgMap
         $this->appContainer = $appContainer;
     }
 
-    public function getCommandParser(?string $commandArg, array $commandMap): CommandParser
+    public function getCommandParser(?string $commandArg, array $commandMap): CommandMapParser
     {
         $commandParserName = $this->findParserName($commandArg, $commandMap);
         $commandParser = $this->appContainer->get($commandParserName);

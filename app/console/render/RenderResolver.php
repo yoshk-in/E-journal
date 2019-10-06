@@ -3,13 +3,23 @@
 
 namespace App\console\render;
 
-
-use App\domain\AbstractProcedure;
+use App\command\FullInfoCommand;
+use App\command\RangeInfoCommand;
+use App\console\render\event\BlocksMoveRender;
+use App\console\render\event\FullInfoRender;
+use App\console\render\event\RangeInfoRender;
 use Psr\Container\ContainerInterface;
 
-class RenderResolver implements RenderProp, Mode
+class RenderResolver
 {
     private $appContainer;
+    private $eventMap = [
+        'setStart' => BlocksMoveRender::class,
+        'setEnd' => BlocksMoveRender::class,
+        FullInfoCommand::class => FullInfoRender::class,
+        RangeInfoCommand::class => RangeInfoRender::class
+    ];
+
 
 
     public function __construct(ContainerInterface $appContainer)
@@ -17,14 +27,10 @@ class RenderResolver implements RenderProp, Mode
         $this->appContainer = $appContainer;
     }
 
-    public function getEventRender(string $render)
+    public function getEventRender(string $event)
     {
-        return $this->appContainer->get($render);
+        return $this->appContainer->get($this->eventMap[$event]);
     }
 
-    public function getProcRender(AbstractProcedure $procedure)
-    {
-        return $this->appContainer->get(Mode::ALIAS[get_class($procedure)]);
-    }
 
 }

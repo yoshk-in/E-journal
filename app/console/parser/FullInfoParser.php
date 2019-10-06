@@ -4,7 +4,7 @@
 namespace App\console\parser;
 
 
-class FullInfoParser extends CommandParser
+class FullInfoParser extends CommandMapParser
 {
 
     public function parse()

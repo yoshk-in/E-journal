@@ -3,9 +3,9 @@
 namespace App\domain;
 
 use App\base\exceptions\WrongInputException;
+use App\events\{IObservable, TObservable};
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use App\events\{IObservable, TObservable};
 
 
 /**
@@ -45,7 +45,6 @@ class Product implements IObservable
         $this->number = $number;
         $this->name = $name;
         $this->procCollection = new ArrayCollection($factory->createProcedures($this));
-        $this->completeCollection = new ArrayCollection();
     }
 
 

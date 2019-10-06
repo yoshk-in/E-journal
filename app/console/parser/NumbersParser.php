@@ -11,10 +11,18 @@ class NumbersParser
 {
     const ERROR = false;
     const ERR_MSG = 'не задан номер партии - его можно сохранить единожды, чтобы не вводить каждый раз, командой вида "партия \'120\'""';
+    const ERR_REPEAT = 'переданы повторяющиеся номера';
+    const MAIN_ERROR = 'неверно заданы параметры запроса: ';
+    const ERR_NUMBERS_DESC = 'диапазон номеров должен задаваться по возврастающей';
 
     private $shortNumbers = [];
     private $numberRange = [];
+    private $startString;
+    private $arrayByComma = [];
+    private $result = [];
     private $product;
+    const COMMA = ',';
+    const HYPHEN = '-';
 
 
 
@@ -29,11 +37,12 @@ class NumbersParser
     public function parse(?string $numbers_string, string $product): array
     {
         $this->product = $product;
-        $array_by_comma = $this->stringToArrayByComma($numbers_string);
-        $numbers = $this->parseEachNumberOrRangeNumbers($array_by_comma);
-        $this->ensure(count($numbers) == count(array_unique($numbers)), 'переданы повторяющиеся номера');
-        sort($numbers, SORT_NUMERIC);
-        return $numbers;
+        $this->startString = $numbers_string;
+        $this->stringToArrayByComma();
+        $this->parseEachNumberOrRangeNumbers();
+        $this->ensure(count($this->result) == count(array_unique($this->result)), self::ERR_REPEAT);
+        sort($this->result, SORT_NUMERIC);
+        return $this->result;
     }
 
     protected function getFullNumbers(array $numbers): array
@@ -47,35 +56,35 @@ class NumbersParser
         return $full_numbers ?? [];
     }
 
-    protected function stringToArrayByComma(string $numbersString)
+    protected function stringToArrayByComma()
     {
-        return explode(',', $numbersString);
+        $this->arrayByComma = explode(self::COMMA, $this->startString);
 
     }
 
     protected function explodeByHyphen($part)
     {
-        return explode('-', $part);
+        return explode(self::HYPHEN, $part);
     }
 
-    protected function parseEachNumberOrRangeNumbers(array $arrayByComma) : array
+    protected function parseEachNumberOrRangeNumbers()
     {
-        foreach ($arrayByComma as $part) {
+        foreach ($this->arrayByComma as $part) {
             $arrayByHyphen = $this->explodeByHyphen($part);
             if (count($arrayByHyphen) == 2) {
                 [$first, $last] = $this->getFullNumbers($arrayByHyphen);
-                $this->ensure($first < $last, 'диапазон номеров должен задаваться по возврастающей');
+                $this->ensure($first < $last, self::ERR_NUMBERS_DESC);
                 $this->numberRange[] = range($first, $last);
             } else {
                 $this->shortNumbers = array_merge($this->shortNumbers, $arrayByHyphen);
             }
         }
-        return array_merge($this->getFullNumbers($this->shortNumbers), ...$this->numberRange);
+        $this->result = array_merge($this->getFullNumbers($this->shortNumbers), ...$this->numberRange);
     }
 
 
     protected function ensure(bool $condition, ?string $msg = null)
     {
-        if (!$condition) throw new AppException('неверно заданы параметры запроса: ' . $msg);
+        if (!$condition) throw new AppException(self::MAIN_ERROR . $msg);
     }
 }

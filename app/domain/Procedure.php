@@ -5,8 +5,6 @@ namespace App\domain;
 
 use DateTimeImmutable;
 
-use App\events\Event;
-
 /**
  * @Entity
  * @Table(name="`Procedure`")
@@ -23,13 +21,21 @@ class Procedure extends AbstractProcedure
      **/
     protected $owner;
 
+    public function setStart()
+    {
+        if ($this->isFinished()) {
+            $this->getProduct()->nextProc($this);
+            return;
+        }
+        parent::setStart();
+    }
 
     public function setEnd()
     {
         $this->checkInput((bool)$this->getStart(), ' событие еще не начато');
         $this->checkInput(!$end = $this->getEnd(), 'coбытие уже отмечено');
         $this->end = new DateTimeImmutable('now');
-        $this->notify(Event::END);
+        $this->notify(__FUNCTION__);
     }
 
 

@@ -20,6 +20,7 @@ class ConsoleProcMapParser implements ArgMap, NextArgIndexMap
     protected $procedureMap;
     protected $product;
     private $commandParserResolver;
+    const NEXT_ARG = 2;
 
 
     public function __construct(ConsoleRequest $request, ProcedureMapManager $procedureMap, CommandParserResolver $commandParserResolver)
@@ -43,9 +44,9 @@ class ConsoleProcMapParser implements ArgMap, NextArgIndexMap
     }
 
 
-    protected function parseCmd(): CommandParser
+    protected function parseCmd(): CommandMapParser
     {
-        $parser = $this->commandParserResolver->getCommandParser($this->request->getConsoleArgs()[2] ?? null, $this->commandMap);
+        $parser = $this->commandParserResolver->getCommandParser($this->request->getConsoleArgs()[self::NEXT_ARG] ?? null, $this->commandMap);
         $parser->parse();
         return $parser;
     }
@@ -57,10 +58,10 @@ class ConsoleProcMapParser implements ArgMap, NextArgIndexMap
 //        $casuals = $this->procedureMap->getAllDoubleProcNames($this->product);
         foreach ($partials as [$short_name, $partial]) {
             $this->commandMap[$short_name] = [
-                ArgMap::BLOCKS_ARE_ARRIVED
+                ArgMap::BLOCKS_ARE_ARRIVED_WITH_PARTIAL
             ];
             $this->commandMap[$partial] = [
-                ArgMap::BLOCKS_ARE_ARRIVED
+                ArgMap::BLOCKS_ARE_ARRIVED_WITH_PARTIAL
             ];
         }
 //        foreach ($casuals as [$short_name, $casual]) {

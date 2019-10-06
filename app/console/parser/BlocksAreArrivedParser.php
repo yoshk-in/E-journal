@@ -4,13 +4,8 @@
 namespace App\console\parser;
 
 
-class BlocksAreArrivedParser extends CommandParserByNumbersParser
+class BlocksAreArrivedParser extends CommandParserByNumbersMapParser
 {
-    private $nextArg = NextArgIndexMap::PARTIAL;
 
-    public function parse()
-    {
-        parent::parse();
-        $this->partial = $this->request->getCommands()[$this->nextArg];
-    }
+
 }

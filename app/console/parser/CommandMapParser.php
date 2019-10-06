@@ -6,7 +6,7 @@ namespace App\console\parser;
 
 use App\base\ConsoleRequest;
 
-abstract class CommandParser implements NextArgIndexMap
+abstract class CommandMapParser implements NextArgIndexMap
 {
     protected $command;
     protected $partial;
@@ -14,7 +14,7 @@ abstract class CommandParser implements NextArgIndexMap
     protected $partNumber;
     protected $numbers;
     protected $nextArg;
-
+    const REMOVE_PARSER_WORD = 'Parser';
 
     public function __construct(ConsoleRequest $request)
     {
@@ -26,7 +26,7 @@ abstract class CommandParser implements NextArgIndexMap
     {
         $class_name = static::class;
         $concrete_command = str_replace(__NAMESPACE__ . '\\', '', $class_name);
-        $concrete_command = strstr($concrete_command, ArgMap::REMOVE_PARSER, $before_remove = true);
+        $concrete_command = strstr($concrete_command, self::REMOVE_PARSER_WORD, $before_remove = true);
         return $concrete_command;
     }
 

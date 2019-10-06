@@ -1,6 +1,6 @@
 <?php
 
-use App\console\Render;
+use App\console\render\Render;
 use App\domain\{Product, Procedure};
 use App\parallel\ParallelExecution;
 

@@ -12,5 +12,6 @@ interface NextArgIndexMap
     const PARTIAL = 2;
     const NUMBERS = 3;
     const PART_NUMBER = 3;
+    const NUMBERS_IN_RANGE_INFO_COMMAND = 2;
 
 }
