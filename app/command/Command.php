@@ -3,28 +3,15 @@
 namespace App\command;
 
 use App\base\exceptions\WrongInputException;
-use App\base\ConsoleRequest;
+use App\base\CLIRequest;
 use App\cache\Cache;
-use App\domain\ProcedureMapManager;
+use App\domain\ProcedureMap;
 use App\repository\ProductRepository;
 
 
 abstract class Command
 {
-    protected $request;
 
-
-
-    public function __construct(ConsoleRequest $request)
-    {
-        $this->request = $request;
-    }
-
-
-    protected function request(): ConsoleRequest
-    {
-        return $this->request;
-    }
 
     protected function ensureRightInput(bool $condition, string $msg = '', ?array $numbers = null)
     {

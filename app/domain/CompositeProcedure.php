@@ -4,7 +4,6 @@
 namespace App\domain;
 
 
-use App\events\Event;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -19,6 +18,7 @@ class CompositeProcedure extends Procedure
      * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist")
      */
     protected $inners;
+
 
 
     public function __construct(string $name, int $idState, Product $product, array $inners)

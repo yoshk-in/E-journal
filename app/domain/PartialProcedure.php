@@ -12,9 +12,10 @@ class PartialProcedure extends AbstractProcedure
 {
     /** @ManyToOne(targetEntity="Procedure") */
     protected $owner;
-
     /** @Column(type="string", name="`interval`") */
     protected $interval;
+
+
 
     public function __construct(string $name, int $idState, Procedure $ownerProc, string $interval)
     {

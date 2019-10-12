@@ -4,6 +4,7 @@
 namespace App\domain;
 
 
+use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
 use App\events\{IObservable, TObservable};
 use DateTimeImmutable;
@@ -46,7 +47,7 @@ abstract class AbstractProcedure implements IObservable
     {
         $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
         $this->start = new DateTimeImmutable('now');
-        $this->notify(__FUNCTION__);
+        $this->notify(AppMsg::ARRIVE);
     }
 
     public function getProduct(): Product

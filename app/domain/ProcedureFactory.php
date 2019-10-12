@@ -8,14 +8,14 @@ class ProcedureFactory
 {
     private $creationMap;
 
-    public function __construct(ProcedureMapManager $creationMap)
+    public function __construct(ProcedureMap $creationMap)
     {
         $this->creationMap = $creationMap;
     }
 
     public function createProcedures(Product $product): array
     {
-        foreach ($this->creationMap->getProductProcedures($product->getName()) as $idState => $procedure) {
+        foreach ($this->creationMap->getProdProcArr($product->getName()) as $idState => $procedure) {
             switch (isset($procedure['inners'])) {
                 case true :
                     $array[] = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);

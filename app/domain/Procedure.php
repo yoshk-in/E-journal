@@ -3,6 +3,7 @@
 
 namespace App\domain;
 
+use App\base\AppMsg;
 use DateTimeImmutable;
 
 /**
@@ -35,7 +36,7 @@ class Procedure extends AbstractProcedure
         $this->checkInput((bool)$this->getStart(), ' событие еще не начато');
         $this->checkInput(!$end = $this->getEnd(), 'coбытие уже отмечено');
         $this->end = new DateTimeImmutable('now');
-        $this->notify(__FUNCTION__);
+        $this->notify(AppMsg::DISPATCH);
     }
 
 

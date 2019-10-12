@@ -1,12 +1,12 @@
 <?php
 
-use App\base\{AbstractRequest, ConsoleRequest};
+use App\base\{AbstractRequest, CLIRequest};
 
 use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\ORM\Tools\Setup;
 use App\events\EventChannel;
 use App\repository\{DoctrineORMAdapter,  ProductRepository};
-use App\domain\{ProcedureMapManager, Product};
+use App\domain\{ProcedureMap, Product};
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityManager;
 use function DI\{autowire, factory, get, create};
@@ -14,9 +14,9 @@ use function DI\{autowire, factory, get, create};
 return [
 
     //injections from app.cfg
-    ProcedureMapManager::class => create()->constructor(get('app.procedure_map')),
+    ProcedureMap::class => create()->constructor(get('app.procedure_map')),
     EntityManagerInterface::class => get(EntityManager::class),
-    AbstractRequest::class => get(ConsoleRequest::class),
+    AbstractRequest::class => get(CLIRequest::class),
 
 
 

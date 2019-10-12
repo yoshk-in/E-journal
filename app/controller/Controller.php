@@ -1,42 +1,41 @@
 <?php
 
+
 namespace App\controller;
 
 
-use App\command\CommandResolver;
-use App\console\parser\ConsoleProcMapParser;
-use App\console\render\Render;
+use App\base\AbstractRequest;
+use App\command\CmdResolver;
+use App\CLI\render\InfoManager;
 use App\events\EventChannel;
 
 class Controller
 {
-    private $consoleParser;
-    private $render;
-    private $commandResolver;
+    protected $infoDispatcher;
+    protected $commandResolver;
+    protected $request;
 
     //needs only to init for tracking products and procedures by render
     private $eventChannel;
 
     public function __construct(
-        ConsoleProcMapParser $consoleParser,
-        CommandResolver $commandResolver,
-        Render $render,
+        CmdResolver $commandResolver,
+        InfoManager $infoDispatcher,
         EventChannel $eventChannel
     ) {
-        $this->consoleParser = $consoleParser;
         $this->commandResolver = $commandResolver;
-        $this->render = $render;
+        $this->infoDispatcher = $infoDispatcher;
         $this->eventChannel = $eventChannel;
     }
 
-    public function handleConsoleRequest()
+    public function run(AbstractRequest $request)
     {
-        $this->consoleParser->parseAndFillRequestWithCommands();
-        $commands = $this->commandResolver->getCommand();
+        $this->request = $request;
+        $commands = $this->commandResolver->getCommand($request);
         foreach ($commands as $command) {
-            $output[] = $command->execute();
+            $output[] = $command->execute($request);
         }
-        $this->render->flush();
+        $this->infoDispatcher->flush($request);
     }
 
 }

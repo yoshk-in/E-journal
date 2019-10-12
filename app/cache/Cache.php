@@ -44,7 +44,7 @@ class Cache
         }
     }
 
-    public function getPartNumber(string $product) : ?int
+    public function getParty(string $product) : ?int
     {
         return $this->getProp($product . 'partNumber') ?? null;
     }
