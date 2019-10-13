@@ -15,16 +15,15 @@ class CmdResolver
 
 
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerInterface $container, AbstractRequest $request)
     {
-
         $this->container = $container;
+        $this->request = $request;
     }
 
 
-    public function getCommand(AbstractRequest $request) : array
+    public function getCommand() : array
     {
-        $this->request = $request;
         $result_cmd_array = [];
         $commands = $this->request->getCmd();
         if (!empty($commands)) {

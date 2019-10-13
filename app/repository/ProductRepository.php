@@ -5,9 +5,9 @@ namespace App\repository;
 
 
 use App\domain\ProcedureFactory;
+use App\domain\Product;
 use Exception;
 use ReflectionClass;
-use App\domain\Product;
 
 class ProductRepository
 {

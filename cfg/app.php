@@ -1,7 +1,7 @@
 <?php
 
 use App\CLI\render\InfoManager;
-use App\domain\{Product, Procedure};
+use App\domain\{Procedure, Product};
 use App\parallel\ParallelExecution;
 
 

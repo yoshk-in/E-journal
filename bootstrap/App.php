@@ -3,6 +3,9 @@
 namespace bootstrap;
 
 
+use App\base\AbstractRequest;
+use App\base\CLIRequest;
+use App\base\GUIRequest;
 use App\controller\CLIController;
 use App\controller\Controller;
 use App\controller\GUIController;
@@ -14,7 +17,7 @@ class App
 {
     const ENV = [0 => 'production', 1 => 'dev'];
 
-    private static function bootstrap(): ContainerInterface
+    public static function bootstrap(): ContainerInterface
     {
         $builder = new ContainerBuilder();
         $builder->addDefinitions('cfg/database.php');
@@ -29,6 +32,7 @@ class App
     static public function runCLI()
     {
         $container = self::bootstrap();
+        $container->set(AbstractRequest::class, $container->get(CLIRequest::class));
         $cli = $container->get(CLIController::class);
         $app = $container->get(Controller::class);
         $cli->setNextHandler($app);
@@ -38,6 +42,7 @@ class App
     static public function runGUI()
     {
         $container = self::bootstrap();
+        $container->set(AbstractRequest::class, $container->get(GUIRequest::class));
         $gui = $container->get(GUIController::class);
         $app = $container->get(Controller::class);
         $gui->setNextHandler($app);

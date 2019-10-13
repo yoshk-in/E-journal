@@ -12,7 +12,13 @@ abstract class AbstractRequest
     protected $partNumber;
     protected $partialProcName;
     protected $productName;
+    protected $env;
 
+
+    public function getEnv(): string
+    {
+        return $this->env;
+    }
 
     public function getProduct(): string
     {

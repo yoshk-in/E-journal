@@ -1,23 +1,18 @@
 <?php
 
 use App\base\{AbstractRequest, CLIRequest};
-
-use Doctrine\ORM\Tools\SchemaTool;
-use Doctrine\ORM\Tools\Setup;
+use App\domain\{ProcedureMap};
 use App\events\EventChannel;
-use App\repository\{DoctrineORMAdapter,  ProductRepository};
-use App\domain\{ProcedureMap, Product};
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityManager;
-use function DI\{autowire, factory, get, create};
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Setup;
+use function DI\{create, get};
 
 return [
 
     //injections from app.cfg
     ProcedureMap::class => create()->constructor(get('app.procedure_map')),
     EntityManagerInterface::class => get(EntityManager::class),
-    AbstractRequest::class => get(CLIRequest::class),
-
 
 
     //factories

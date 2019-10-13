@@ -10,23 +10,22 @@ use App\repository\ProductRepository;
 
 abstract class Move extends Command
 {
-    protected $request;
+
     protected $productRepository;
     protected $productMap;
     protected $orm;
     const ERR_NOT_ARRIVED = 'данные блоки еше не поступали на настройку:';
 
 
-    public function __construct(ProductRepository $repository, ProcedureMap $productMap)
+    public function __construct(ProductRepository $repository, ProcedureMap $productMap, AbstractRequest $request)
     {
         $this->productRepository = $repository;
         $this->productMap = $productMap;
-
+        parent::__construct($request);
     }
 
-    public function execute(AbstractRequest $request)
+    public function execute()
     {
-        $this->request = $request;
         $product_name = $this->request->getProduct();
         $numbers = $this->request->getBlockNumbers();
         $special_command = $this->request->getPartial();
@@ -44,10 +43,6 @@ abstract class Move extends Command
         $this->productRepository->save();
     }
 
-    public function request()
-    {
-        return $this->request;
-    }
 
     abstract protected function doExecute(
         string $productName,

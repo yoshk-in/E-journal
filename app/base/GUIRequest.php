@@ -6,5 +6,5 @@ namespace App\base;
 
 class GUIRequest extends AbstractRequest
 {
-
+    protected $env = AppMsg::GUI;
 }

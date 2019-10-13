@@ -6,9 +6,8 @@ namespace App\repository;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Expr\Comparison;
 use Doctrine\ORM\EntityManagerInterface;
-use \Doctrine\Common\Collections\Expr\Comparison;
-use Doctrine\ORM\Tools\SchemaTool;
 
 
 class DoctrineORMAdapter

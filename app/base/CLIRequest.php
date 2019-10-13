@@ -4,11 +4,12 @@ namespace App\base;
 
 class CLIRequest extends AbstractRequest
 {
+    protected $env = AppMsg::CLI;
+
     public function __construct()
     {
         $this->setCLIArgs();
     }
-
 
     protected $consoleArgs = [];
 

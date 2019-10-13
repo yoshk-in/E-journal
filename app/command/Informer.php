@@ -4,22 +4,23 @@
 namespace App\command;
 
 
+use App\base\AbstractRequest;
 use App\CLI\render\InfoManager;
 use App\domain\ProcedureMap;
 use App\repository\ProductRepository;
 
 abstract class Informer extends Move
 {
-    protected $render;
+    protected $dispatcher;
 
     public function __construct(
         ProductRepository $repository,
         ProcedureMap $productMap,
-        InfoManager $render
+        InfoManager $render,
+        AbstractRequest $request
     )  {
-        parent::__construct($repository, $productMap);
-        $this->render = $render;
-
+        parent::__construct($repository, $productMap, $request);
+        $this->dispatcher = $render;
     }
 
     abstract protected function doExecute(

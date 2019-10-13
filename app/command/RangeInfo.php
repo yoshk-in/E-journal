@@ -15,10 +15,10 @@ class RangeInfo extends Informer
     {
         [$collection, $not_found] = $this->productRepository->findByNumbers($productName, $numbers);
         if (!$collection->isEmpty()) {
-            $this->render->update($collection, AppMsg::RANGE_INFO);
+            $this->dispatcher->update($collection, AppMsg::RANGE_INFO);
         }
         if (!empty($not_found)) {
-            $this->render->update($not_found, AppMsg::RANGE_INFO);
+            $this->dispatcher->update($not_found, AppMsg::RANGE_INFO);
         }
 
 

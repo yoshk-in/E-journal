@@ -12,4 +12,6 @@ interface AppMsg
     const RANGE_INFO = 'RangeInfo';
     const PARTY = 'Party';
     const CLEAR_JOURNAL = 'ClearJournal';
+    const CLI = 'CLI';
+    const GUI = 'GUI';
 }

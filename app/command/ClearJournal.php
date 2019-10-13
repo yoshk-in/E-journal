@@ -6,7 +6,7 @@ namespace App\command;
 use App\repository\DBSchemaManager;
 
 
-class ClearJournal
+class ClearJournal extends Command
 {
     protected $dbManager;
 

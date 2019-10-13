@@ -3,7 +3,6 @@
 namespace tests;
 
 use App\base\exceptions\WrongInputException;
-use App\base\exceptions\WrongModelException;
 use App\domain\GNine;
 use PHPUnit\Framework\TestCase;
 

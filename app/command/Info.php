@@ -15,7 +15,7 @@ class Info extends Informer
     ) {
         $collection = $this->productRepository->findNotFinished($productName);
         if (!$collection->isEmpty()) {
-            $this->render->update($collection, AppMsg::INFO);
+            $this->dispatcher->update($collection, AppMsg::INFO);
         }
     }
 }

@@ -3,10 +3,9 @@
 
 namespace App\controller;
 
-
-use App\base\AbstractRequest;
-use App\command\CmdResolver;
+;
 use App\CLI\render\InfoManager;
+use App\command\CmdResolver;
 use App\events\EventChannel;
 
 class Controller
@@ -28,14 +27,13 @@ class Controller
         $this->eventChannel = $eventChannel;
     }
 
-    public function run(AbstractRequest $request)
+    public function run()
     {
-        $this->request = $request;
-        $commands = $this->commandResolver->getCommand($request);
+        $commands = $this->commandResolver->getCommand();
         foreach ($commands as $command) {
-            $output[] = $command->execute($request);
+            $output[] = $command->execute();
         }
-        $this->infoDispatcher->flush($request);
+        $this->infoDispatcher->flush();
     }
 
 }

@@ -5,8 +5,6 @@ namespace App\command;
 
 use App\base\CLIRequest;
 use App\cache\Cache;
-use App\domain\ProcedureMap;
-use App\repository\ProductRepository;
 
 class Party extends Command
 {

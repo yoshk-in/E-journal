@@ -2,16 +2,18 @@
 
 namespace App\command;
 
+use App\base\AbstractRequest;
 use App\base\exceptions\WrongInputException;
-use App\base\CLIRequest;
-use App\cache\Cache;
-use App\domain\ProcedureMap;
-use App\repository\ProductRepository;
 
 
 abstract class Command
 {
+    protected $request;
 
+    public function __construct(AbstractRequest $request)
+    {
+        $this->request = $request;
+    }
 
     protected function ensureRightInput(bool $condition, string $msg = '', ?array $numbers = null)
     {

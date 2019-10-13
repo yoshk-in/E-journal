@@ -22,7 +22,7 @@ class ArriveAtPartial extends Parser
         $request->addCmd(AppMsg::ARRIVE);
         $request->setPartial(
             $test = $this->mainParser->getFullPartial(
-            $request->getConsoleArgs()[self::$argN] ?? $this->exception(self::EMPTY_PARTIAL)
+            $request->getCLIArgs()[self::$argN] ?? $this->exception(self::EMPTY_PARTIAL)
             )
         );
     }

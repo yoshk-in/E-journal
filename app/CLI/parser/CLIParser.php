@@ -4,7 +4,6 @@ namespace App\CLI\parser;
 
 use App\base\CLIRequest;
 use App\domain\ProcedureMap;
-use mysql_xdevapi\Exception;
 
 class CLIParser implements ParseMap
 {

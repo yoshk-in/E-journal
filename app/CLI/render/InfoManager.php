@@ -4,34 +4,34 @@
 namespace App\CLI\render;
 
 
-use App\base\AbstractRequest;
 use App\events\ISubscriber;
 
 
 class InfoManager implements ISubscriber
 {
-    private $renderCommandResolver;
-    private $eventRender = [];
+    private $dispatchResolver;
+    private $infoDispatchers = [];
 
 
-    public function __construct(RenderResolver $renderCommandResolver)
+    public function __construct(DispatchResolver $dispatchResolver)
     {
-        $this->renderCommandResolver = $renderCommandResolver;
+        $this->dispatchResolver = $dispatchResolver;
     }
 
     public function update(Object $observable, string $event)
     {
-        $concrete_render = $this->renderCommandResolver->getEventRender($event);
-        $concrete_render->render($observable);
-        $this->eventRender[] = $concrete_render;
+        $dispatcher = $this->dispatchResolver->getDispatcher($event);
+        $dispatcher->handle($observable);
+        $this->infoDispatchers[] = $dispatcher;
     }
 
-    public function flush(AbstractRequest $request)
+    public function flush()
     {
-        foreach ($this->eventRender as $render) {
-            $render->flush($request);
+        foreach ($this->infoDispatchers as $dispatcher) {
+            $dispatcher->flush();
         }
     }
+
 
 
 }

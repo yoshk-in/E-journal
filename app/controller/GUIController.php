@@ -5,9 +5,6 @@ namespace App\controller;
 
 
 use App\base\GUIRequest;
-use App\command\CmdResolver;
-use App\CLI\render\InfoManager;
-use App\events\EventChannel;
 use App\GUI\GUIManager;
 
 class GUIController implements IController
@@ -29,8 +26,8 @@ class GUIController implements IController
 
     public function run()
     {
-        $this->GUIManager->run();
-        $this->next->run($this->request);
+        $this->GUIManager->run($this->next);
+        //$this->next->run($this->request);
     }
 
 }

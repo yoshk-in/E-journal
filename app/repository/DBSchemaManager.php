@@ -7,7 +7,6 @@ namespace App\repository;
 use App\domain\PartialProcedure;
 use App\domain\Procedure;
 use App\domain\Product;
-
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 
