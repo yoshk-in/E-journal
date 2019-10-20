@@ -40,5 +40,14 @@ class PartialProcedure extends AbstractProcedure
         return $this->getOwner()->getProduct();
     }
 
+    public function isFinished(): bool
+    {
+        if ($this->state === self::STAGE['end']) return true;
+        if ($this->end && (new DateTimeImmutable('now') > $this->end)){
+            $this->state = self::STAGE['end'];
+            return true;
+        };
+        return false;
+    }
 
 }

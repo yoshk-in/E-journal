@@ -36,6 +36,7 @@ class Procedure extends AbstractProcedure
         $this->checkInput((bool)$this->getStart(), ' событие еще не начато');
         $this->checkInput(!$end = $this->getEnd(), 'coбытие уже отмечено');
         $this->end = new DateTimeImmutable('now');
+        $this->state = self::STAGE['end'];
         $this->notify(AppMsg::DISPATCH);
     }
 

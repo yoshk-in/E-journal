@@ -27,12 +27,20 @@ abstract class AbstractProcedure implements IObservable
     /** @Column(type="integer")                             */
     protected $idState;
 
+    /** @Column(name="state", type="integer")               */
+    protected $state = 0;
+
     /**
      * @Id @Column(type="integer")
      * @GeneratedValue
      */
     protected $id;
 
+    const STAGE = [
+        'not_start' => 0,
+        'start' => 1,
+        'end' => 2
+    ];
 
     protected $owner;
 
@@ -47,6 +55,7 @@ abstract class AbstractProcedure implements IObservable
     {
         $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
         $this->start = new DateTimeImmutable('now');
+        $this->state = self::STAGE['start'];
         $this->notify(AppMsg::ARRIVE);
     }
 
@@ -62,7 +71,7 @@ abstract class AbstractProcedure implements IObservable
 
     public function isFinished(): bool
     {
-        return ($this->end ? ((new DateTimeImmutable('now') > $this->end) ?: false) : false);
+        return $this->state === self::STAGE['end'];
     }
 
 
@@ -79,6 +88,11 @@ abstract class AbstractProcedure implements IObservable
     public function getEnd(): ?\DateTimeInterface
     {
         return $this->end;
+    }
+
+    public function getState() : int
+    {
+        return $this->state;
     }
 
     protected function getOwner()

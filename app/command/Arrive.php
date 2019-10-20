@@ -17,7 +17,7 @@ class Arrive extends Move
             $new = $this->productRepository->createProducts($not_found, $productName);
         }
         $all = array_merge($found_products->toArray(), $new ?? []);
-
         foreach ($all as $product) $product->startProcedure($procedure);
+
     }
 }
