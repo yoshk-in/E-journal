@@ -8,7 +8,7 @@ use Gui\Components\Label;
 
 class Debug
 {
-    static function debug($text)
+    static function print($text)
     {
         switch (gettype($text)) {
             case 'string':

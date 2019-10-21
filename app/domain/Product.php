@@ -22,7 +22,7 @@ class Product implements IObservable
     protected $id;
 
     /**
-     * @OneToMany(targetEntity="Procedure", mappedBy="owner", cascade="persist")
+     * @OneToMany(targetEntity="Procedure", mappedBy="owner", cascade="persist", fetch="EAGER")
      * @OrderBy({"idState" = "ASC"})
      */
     protected $procCollection;

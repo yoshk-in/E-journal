@@ -11,8 +11,8 @@ use Gui\Components\VisualObjectInterface;
 
 class InLineShapeFactory
 {
-    private  $rowHeight = 50;
-    private  $cellWidth = 100;
+    private $rowHeight = 50;
+    private $cellWidth = 100;
     private $startTop = 20;
     private $top;
     private $startLeft = 20;
@@ -30,32 +30,28 @@ class InLineShapeFactory
         $this->cellWidth = $cellWidth;
     }
 
-    public function addInRow(string $color = Color::WHITE)
+    public function addInRow(string $color)
     {
-        $shape = (new Shape())
-            ->setLeft($this->offset)
-            ->setTop($this->top)
-            ->setWidth($this->cellWidth)
-            ->setHeight($this->rowHeight)
-            ->setBackgroundColor($color);
-        $this->offset += $this->cellWidth;
+        $shape = $this->addWithWidth($this->cellWidth, $color);
         return $shape;
     }
 
-    public function addWithWidth(string $color, int $width)
+    public function addWithWidth($width, string $color)
     {
-        $shape = (new Shape())
-            ->setLeft($this->offset)
-            ->setTop($this->top)
-            ->setWidth($width)
-            ->setHeight($this->rowHeight)
-            ->setBackgroundColor($color);
+        $shape = (new Shape([
+            'left' => $this->offset,
+            'top' => $this->top,
+            'width' => $width,
+            'height' => $this->rowHeight,
+            'backgroundColor' => $color
+        ]));
+
         $this->offset += $width;
         return $shape;
     }
 
 
-    public function newLine()
+    public function newRow()
     {
         $this->offset = $this->startLeft;
         $this->top += $this->rowHeight;

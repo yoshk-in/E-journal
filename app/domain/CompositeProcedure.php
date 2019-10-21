@@ -15,7 +15,7 @@ use Doctrine\Common\Collections\Collection;
 class CompositeProcedure extends Procedure
 {
     /**
-     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist")
+     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist", fetch="EAGER")
      */
     protected $inners;
 

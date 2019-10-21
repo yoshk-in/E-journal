@@ -8,27 +8,24 @@ use Gui\Components\VisualObjectInterface;
 
 class ClickTransmit
 {
-    private $clickStrategy;
+    static private $clickMng = MouseManger::class;
 
-    public function fromTo(VisualObjectInterface $from, VisualObjectInterface $to)
+    public static function fromTo(VisualObjectInterface $from, VisualObjectInterface $to)
     {
-        $from->on('mousedown', $this->clickStrategy->getClickHandler($to));
-        $to->on('mousedown', $this->clickStrategy->getClickHandler($to));
+        $from->on('mousedown', self::clickHandler($to));
+        $to->on('mousedown', self::clickHandler($to));
     }
 
     public static function clickHandler($emitter)
     {
         return function () use ($emitter) {
-            static $i = 0;
-            $i++;
-            if ($i % 2 === 0) {
-                $emitter->setBackgroundColor(Color::GREEN);
-            } else $emitter->setBackgroundColor(Color::YELLOW);
+            self::$clickMng::getHandler()::handle($emitter);
         };
     }
 
-    public function setClickStrategy(ClickStrategy $strategy)
+    public static function on(VisualObjectInterface $object)
     {
-        $this->clickStrategy = $strategy;
+        $object->on('mousedown', self::clickHandler($object));
     }
+
 }

@@ -21,6 +21,7 @@ class GUIManager
     private $procedureMap;
 
 
+
     public function __construct(GUIRequest $request, Response $response, ProcedureMap $procedureMap)
     {
         $this->request = $request;
@@ -41,72 +42,55 @@ class GUIManager
             'width' => 1024,
             'height' => 600,
         ]);
-        $this->gui->on('start', function () use ($product) {
 
-            $composite_width = 600;
-            $click = new ClickTransmit();
-            $click->setClickStrategy(new ClickStrategy());
+        $response = $this->doRequest();
+
+        $this->gui->on('start', function () use ($product, $response) {
+
+            $wide_cell = 600;
 
             //xy header
-            $shapeFact = new InLineShapeFactory(20, 20, 50, 100);
-            $shape = $shapeFact->addInRow();
-            $text = TextFactory::inMiddle($shape, 'номера');
-
+            $table = new Table(20, 20, 50, 100, $wide_cell);
+             $table->addTextShape('номера');
 
             //x header
             foreach ($this->procedureMap->getProdProcArr($product) as $proc) {
-
                 if (isset($proc['inners'])) {
-                    $shape = $shapeFact->addWithWidth(Color::WHITE, $composite_width);
-                    TextFactory::inMiddle($shape, $proc['name']);
-
+                   $table->addWideTextShape($proc['name']);
                 } else {
-                    $shape = $shapeFact->addInRow();
-                    TextFactory::inMiddle($shape, $proc['name']);
-
+                    $table->addTextShape($proc['name']);
                 }
             }
 
-            $shapeFact->newLine();
-            $response = $this->doRequest();
+            $table->newLine();
 
             foreach ($response->getInfo() as $product) {
 
                 //y header
-
-                $shape = $shapeFact->addInRow();
-                $text = TextFactory::inMiddle($shape, $product->getNumber());
-                $click->fromTo($text, $shape);
+                $table->addClickTextShape($product->getNumber());
 
                 foreach ($product->getProcedures() as $procedure) {
 
                     switch (get_class($procedure)) {
                         case CompositeProcedure::class:
-
-                            $parts = $procedure->getInners();
-
-                            $top = $shapeFact->getTop() + 10;
-                            $left = $shapeFact->getOffset() + 20;
-                            $height = $shapeFact->getRowHeight() - 20;
-                            $width = $composite_width / $parts->count() - 10;
-
-                            $shapeFact->addWithWidth(State::COLOR[$procedure->getState()], $composite_width);
-
-                            $partFact = new InLineShapeFactory($top, $left, $height, $width);
-                            foreach ($parts as $part) {
-                                $shape = $partFact->addInRow();
-                                $text = TextFactory::inMiddle($shape, $part->getName());
-                                $click->fromTo($text, $shape);
-                            }
+                            $table->addCompositeShape(
+                                $parts = $procedure->getInners(),
+                                $parts->count(),
+                                function ($part) {
+                                    return $part->getName();
+                                },
+                                function ($proc) {
+                                    return State::COLOR[$proc->getState()];
+                                });
                             break;
-
                         default :
-                            $shapeFact->addInRow(State::COLOR[$procedure->getState()]);
+                            $table->addClickShape(State::COLOR[$procedure->getState()]);
+
                     }
                 }
-                $shapeFact->newLine();
+                $table->newLine();
             }
-
+            MouseManger::changeHandler(NewClickHandler::class);
         });
         $this->gui->run();
     }
