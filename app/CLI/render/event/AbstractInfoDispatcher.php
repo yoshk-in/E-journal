@@ -30,8 +30,7 @@ abstract class AbstractInfoDispatcher
     {
         echo $this->title . PHP_EOL . PHP_EOL;
         printf($this->mainTitle, $this->request->getProduct());
-        echo $this->output;
-        $this->output = '';
+        echo $this->output . PHP_EOL;
     }
 
     abstract protected function doRender($reporter);

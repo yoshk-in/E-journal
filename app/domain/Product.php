@@ -3,13 +3,14 @@
 namespace App\domain;
 
 use App\base\exceptions\WrongInputException;
-use App\events\{IObservable, TObservable};
+use App\events\{Event, IObservable, TObservable};
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 
 /**
  * @Entity
+ *
  */
 class Product implements IObservable
 {
@@ -22,7 +23,7 @@ class Product implements IObservable
     protected $id;
 
     /**
-     * @OneToMany(targetEntity="Procedure", mappedBy="owner", cascade="persist", fetch="EAGER")
+     * @OneToMany(targetEntity="CasualProcedure", mappedBy="owner", fetch="EAGER")
      * @OrderBy({"idState" = "ASC"})
      */
     protected $procCollection;
@@ -33,7 +34,7 @@ class Product implements IObservable
     /**     @Column(type="string")                  */
     protected $name;
 
-    /**     @OneToOne(targetEntity="Procedure")     */
+    /**     @OneToOne(targetEntity="CasualProcedure")     */
     protected $currentProc;
 
     /**     @Column(type="boolean")                 */
@@ -66,14 +67,16 @@ class Product implements IObservable
 
     public function startProcedure(?string $partial = null)
     {
-        $this->isNotFinishedCheck();
-        if (is_null($this->currentProc)) {
-            $this->currentProc = $this->procCollection->first();
-        }
-        $this->currentProc->setStart($partial);
+        $this->move(function ($partial) {
+            if (is_null($this->currentProc)) {
+                $this->currentProc = $this->procCollection->first();
+            }
+            $this->currentProc->setStart($partial);
+        }, $partial);
+
     }
 
-    public function nextProc(Procedure $proc)
+    public function nextProc(CasualProcedure $proc)
     {
         $this->currentProc = $this->procCollection[$next_id = $proc->getIdState() + 1];
         $this->startProcedure();
@@ -93,15 +96,25 @@ class Product implements IObservable
         });
     }
 
+    protected function move(\Closure $move, ?string $partial = null)
+    {
+        $this->isNotFinishedCheck();
+        $move($partial);
+        $this->notify(Event::PRODUCT_MOVE);
+    }
+
 
     public function endProcedure()
     {
-        $this->isNotFinishedCheck();
-        $this->currentProc->setEnd();
-        if ($this->currentProc === $this->procCollection->last()) $this->finished = true;
+        $this->move(function () {
+            $this->currentProc->setEnd();
+            if ($this->currentProc === $this->procCollection->last()) {
+                $this->finished = true;
+            }
+        });
     }
 
-    public function getCurrentProc(): Procedure
+    public function getCurrentProc(): CasualProcedure
     {
         return $this->currentProc;
     }

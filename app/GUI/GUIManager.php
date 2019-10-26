@@ -10,6 +10,9 @@ use App\controller\Controller;
 use App\domain\CompositeProcedure;
 use App\domain\ProcedureMap;
 use Gui\Application;
+use Gui\Components\Button;
+use Gui\Components\Label;
+use function DI\string;
 
 
 class GUIManager
@@ -19,23 +22,27 @@ class GUIManager
     private $response;
     private $app;
     private $procedureMap;
-
+    private static $deb;
+    /**
+     * @var RequestMng
+     */
+    private static $buffer;
 
 
     public function __construct(GUIRequest $request, Response $response, ProcedureMap $procedureMap)
     {
-        $this->request = $request;
+        $this->request = self::$buffer = $request;
         $this->response = $response;
         $this->procedureMap = $procedureMap;
+
     }
 
     public function run(Controller $app)
     {
         $this->app = $app;
         $product = 'Г9';
-        $this->request->addCmd(AppMsg::INFO);
-        $this->request->setProduct($product);
-        $this->gui = new Application([
+
+        $this->gui = self::$deb = new Application([
             'title' => 'ЖУРНАЛ УЧЕТА',
             'left' => 248,
             'top' => 50,
@@ -43,36 +50,38 @@ class GUIManager
             'height' => 600,
         ]);
 
-        $response = $this->doRequest();
+        $response = $this->doRequest(AppMsg::INFO);
 
         $this->gui->on('start', function () use ($product, $response) {
 
             $wide_cell = 600;
 
             //xy header
-            $table = new Table(20, 20, 50, 100, $wide_cell);
-             $table->addTextShape('номера');
+            $table = new TableFactory(20, 20, 50, 100, $wide_cell);
+             $table->addTextCell('номера');
 
             //x header
             foreach ($this->procedureMap->getProdProcArr($product) as $proc) {
                 if (isset($proc['inners'])) {
-                   $table->addWideTextShape($proc['name']);
+                   $table->addWideTextCell($proc['name']);
                 } else {
-                    $table->addTextShape($proc['name']);
+                    $table->addTextCell($proc['name']);
                 }
             }
 
-            $table->newLine();
+            $table->newRow();
 
             foreach ($response->getInfo() as $product) {
 
                 //y header
-                $table->addClickTextShape($product->getNumber());
+                $table->setDataOnRow($product);
+                $table->addClickTextCell($product->getNumber(), State::COLOR[$product->getCurrentProc()->getState()]);
 
                 foreach ($product->getProcedures() as $procedure) {
 
                     switch (get_class($procedure)) {
                         case CompositeProcedure::class:
+
                             $table->addCompositeShape(
                                 $parts = $procedure->getInners(),
                                 $parts->count(),
@@ -81,25 +90,67 @@ class GUIManager
                                 },
                                 function ($proc) {
                                     return State::COLOR[$proc->getState()];
-                                });
+                                },
+                                State::COLOR[$procedure->getState()]);
+
                             break;
                         default :
-                            $table->addClickShape(State::COLOR[$procedure->getState()]);
-
+                            $table->addClickCell(State::COLOR[$procedure->getState()]);
                     }
                 }
-                $table->newLine();
+                $table->newRow();
             }
+
+            $button = new Button([
+                'value' => 'отправить',
+                'top' => 300,
+                'left' => 300,
+                'width' => 400,
+                'height' => 200
+            ]);
+            $app = $this;
+            $button->on('mousedown', function () use ($app) {
+                $app->doRequest(AppMsg::FORWARD);
+            });
+
+
             MouseManger::changeHandler(NewClickHandler::class);
         });
         $this->gui->run();
     }
 
 
-    private function doRequest()
+    private function doRequest($cmd)
     {
+        $this->request->setCmd($cmd);
+        $this->request->setProduct('Г9');
+        $this->request->setPartial(null);
         $this->app->run();
         return $this->response;
+    }
+
+    public static function alert($text)
+    {
+
+        switch (gettype($text)) {
+            case 'string':
+                break;
+            case 'array':
+                $text = implode("\n", $text);
+                break;
+            default:
+                $text = (string) $text;
+        }
+        (self::$deb)->alert($text);
+
+    }
+
+    /**
+     * @return RequestMng
+     */
+    public static function getBuffer()
+    {
+        return self::$buffer;
     }
 
 }

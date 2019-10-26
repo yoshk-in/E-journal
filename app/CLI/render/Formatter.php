@@ -10,12 +10,12 @@ abstract class Formatter implements IFormatter
 {
     use TChainOfResponsibility;
 
-    protected $buffer = '';
+    protected $result = '';
 
     public function handle($processed): string
     {
         $next = $this->doHandle($processed);
-        return $this->buffer . $this->next->handle($next);
+        return $this->result . $this->next->handle($next);
     }
 
     protected function exception()

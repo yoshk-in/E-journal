@@ -4,7 +4,7 @@
 namespace App\CLI\render\event;
 
 
-use App\CLI\render\CasualFormatter;
+use App\CLI\render\CasualProcFormatter;
 
 class Move extends AbstractInfoDispatcher
 {
@@ -18,7 +18,7 @@ class Move extends AbstractInfoDispatcher
     protected function initFormatter(): void
     {
         if (is_null($this->formatter)) {
-            $this->formatter = new CasualFormatter();
+            $this->formatter = new CasualProcFormatter();
         }
     }
 }

@@ -26,21 +26,20 @@ abstract class Move extends Command
 
     public function execute()
     {
-        $product_name = $this->request->getProduct();
-        $numbers = $this->request->getBlockNumbers();
-        $special_command = $this->request->getPartial();
         try {
-            $this->doExecute(
-                $product_name,
-                $numbers,
-                $special_command
-            );
+            $this->doExecute(...$this->getRequestProps());
         } catch (\Exception $e) {
             $e->getMessage();
             exit;
         }
+    }
 
-        $this->productRepository->save();
+    protected function getRequestProps(): array
+    {
+        $product_name = $this->request->getProduct();
+        $numbers = $this->request->getBlockNumbers();
+        $special_command = $this->request->getPartial();
+        return [$product_name, $numbers, $special_command];
     }
 
 

@@ -8,13 +8,13 @@ use DateTimeImmutable;
 
 /**
  * @Entity
- * @Table(name="`Procedure`")
+ *
  * @InheritanceType("SINGLE_TABLE")
  * @DiscriminatorColumn(name="class", type="string")
- * @DiscriminatorMap({"casual" = "Procedure", "composite" = "CompositeProcedure"})
+ * @DiscriminatorMap({"casual" = "CasualProcedure", "composite" = "CompositeProcedure"})
  *
  */
-class Procedure extends AbstractProcedure
+class CasualProcedure extends AbstractProcedure
 {
 
     /**

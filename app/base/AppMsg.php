@@ -14,4 +14,6 @@ interface AppMsg
     const CLEAR_JOURNAL = 'ClearJournal';
     const CLI = 'CLI';
     const GUI = 'GUI';
+    const FORWARD = 'arrive or dispatch - no matter';
+
 }

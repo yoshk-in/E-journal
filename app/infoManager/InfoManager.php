@@ -1,16 +1,24 @@
 <?php
 
 
-namespace App\CLI\render;
+namespace App\infoManager;
 
 
+use App\base\AppMsg;
 use App\events\ISubscriber;
 
 
 class InfoManager implements ISubscriber
 {
     private $dispatchResolver;
-    private $infoDispatchers = [];
+    private $events = [];
+
+    const SUBSCRIBE_ON = [
+        AppMsg::DISPATCH,
+        AppMsg::ARRIVE,
+        AppMsg::INFO,
+        AppMsg::RANGE_INFO
+    ];
 
 
     public function __construct(DispatchResolver $dispatchResolver)
@@ -22,16 +30,19 @@ class InfoManager implements ISubscriber
     {
         $dispatcher = $this->dispatchResolver->getDispatcher($event);
         $dispatcher->handle($observable);
-        $this->infoDispatchers[] = $dispatcher;
+        $this->events[$event] = $dispatcher;
     }
 
-    public function flush()
+    public function dispatch()
     {
-        foreach ($this->infoDispatchers as $dispatcher) {
+        foreach ($this->events as $dispatcher) {
             $dispatcher->flush();
         }
     }
 
 
-
+    public function subscribeOn(): array
+    {
+        return self::SUBSCRIBE_ON;
+    }
 }

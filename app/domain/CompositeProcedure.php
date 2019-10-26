@@ -10,12 +10,13 @@ use Doctrine\Common\Collections\Collection;
 
 /**
  * @Entity
+ *
  */
 
-class CompositeProcedure extends Procedure
+class CompositeProcedure extends CasualProcedure
 {
     /**
-     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", cascade="persist", fetch="EAGER")
+     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", fetch="EAGER")
      */
     protected $inners;
 

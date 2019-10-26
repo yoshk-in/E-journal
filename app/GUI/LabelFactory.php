@@ -7,11 +7,11 @@ namespace App\GUI;
 use Gui\Components\Label;
 
 
-class TextFactory
+class LabelFactory
 {
-    static private $color = Color::BLACK;
+    static private $color = Color::WHITE;
 
-    public static function inMiddle( string $text, string $fontSize, int $width, int $height, $top, $left): Label
+    public static function create(string $text, string $fontSize, int $width, int $height, $top, $left): Label
     {
         return new Label(
             [

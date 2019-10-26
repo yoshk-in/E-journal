@@ -7,8 +7,9 @@ namespace App\GUI;
 interface State
 {
     const COLOR = [
-        Color::WHITE,
-        Color::YELLOW,
+        Color::BLACK,
+        Color::ORANGE,
         Color::GREEN
         ];
+
 }

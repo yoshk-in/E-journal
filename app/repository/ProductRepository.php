@@ -4,12 +4,16 @@
 namespace App\repository;
 
 
+use App\base\AppMsg;
+use App\domain\CompositeProcedure;
 use App\domain\ProcedureFactory;
 use App\domain\Product;
+use App\events\Event;
+use App\events\ISubscriber;
 use Exception;
 use ReflectionClass;
 
-class ProductRepository
+class ProductRepository implements ISubscriber
 {
 
     private $orm;
@@ -19,6 +23,12 @@ class ProductRepository
         'name' => 'name',
         'number' => 'number',
         'finished' => 'finished'
+    ];
+
+    const SUBSCRIBE_ON = [
+        AppMsg::ARRIVE,
+        AppMsg::DISPATCH,
+        Event::PRODUCT_MOVE
     ];
 
     private $procedureFactory;
@@ -46,7 +56,15 @@ class ProductRepository
         foreach ($numbers as $number) {
             $object = new $this->domainClass($number, $productName, $this->procedureFactory);
             $objects[] = $object;
-            $this->orm->persist($object);
+            foreach ($object->getProcedures() as $proc)
+            {
+                $this->orm->persist($proc);
+                if ($proc instanceof CompositeProcedure) {
+                    foreach ($proc->getInners() as $inner) {
+                        $this->orm->persist($inner);
+                    }
+                }
+            }
         }
         return $objects;
     }
@@ -77,4 +95,13 @@ class ProductRepository
         $this->orm->save();
     }
 
+    public function update(Object $observable, string $event)
+    {
+        $this->orm->persist($observable);
+    }
+
+    public function subscribeOn(): array
+    {
+        return self::SUBSCRIBE_ON;
+    }
 }

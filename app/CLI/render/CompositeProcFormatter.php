@@ -4,7 +4,7 @@
 namespace App\CLI\render;
 
 
-class CompositeFormatter extends ProcedureFormatter
+class CompositeProcFormatter extends ProcedureFormatter
 {
     private $pattern = Format::COMPOSITE;
 

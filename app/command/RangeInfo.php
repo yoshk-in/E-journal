@@ -5,7 +5,7 @@ namespace App\command;
 
 use App\base\AppMsg;
 
-class RangeInfo extends Informer
+class RangeInfo extends Move
 {
     protected function doExecute(
         $productName,
@@ -15,10 +15,13 @@ class RangeInfo extends Informer
     {
         [$collection, $not_found] = $this->productRepository->findByNumbers($productName, $numbers);
         if (!$collection->isEmpty()) {
-            $this->dispatcher->update($collection, AppMsg::RANGE_INFO);
+            foreach ($collection as $product) {
+                $product->report(AppMsg::RANGE_INFO);
+            }
         }
         if (!empty($not_found)) {
-            $this->dispatcher->update($not_found, AppMsg::RANGE_INFO);
+            (new NotFoundNumbersWrapper($not_found))->notify('NotFoundNumbers');
+
         }
 
 

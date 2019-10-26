@@ -6,15 +6,17 @@ namespace App\GUI;
 
 use Gui\Components\VisualObject;
 
-class ClickHandler
+abstract class ClickHandler
 {
-    public static function handle(VisualObject $emitter)
-    {
-        static $i = 0;
-        $i++;
-        if ($i % 2 === 0) {
-            $emitter->setBackgroundColor(Color::GREEN);
-        } else $emitter->setBackgroundColor(Color::YELLOW);
 
-    }
+    protected static $nextColor = [
+        State::COLOR[0] => State::COLOR[1],
+        State::COLOR[1] => State::COLOR[2]
+    ];
+
+
+    protected $counter;
+
+    abstract public static function handle(Shape $emitter, string $prevColor);
+
 }

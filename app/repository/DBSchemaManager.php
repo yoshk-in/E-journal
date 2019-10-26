@@ -5,7 +5,7 @@ namespace App\repository;
 
 
 use App\domain\PartialProcedure;
-use App\domain\Procedure;
+use App\domain\CasualProcedure;
 use App\domain\Product;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -16,7 +16,7 @@ class DBSchemaManager
 
     private $servicedDatabaseClasses = [
         Product::class,
-        Procedure::class,
+        CasualProcedure::class,
         PartialProcedure::class
     ];
 

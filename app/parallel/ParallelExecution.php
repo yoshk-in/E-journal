@@ -3,13 +3,16 @@
 
 namespace App\parallel;
 
+use App\domain\PartialProcedure;
 use App\events\{ISubscriber};
 
 class ParallelExecution implements ISubscriber
 {
     public function update(Object $observable, string $event)
     {
-        echo 'there is need to parallel execution' . PHP_EOL;
+        if ($observable instanceof PartialProcedure) {
+            echo 'there is need to parallel execution' . PHP_EOL;
+        }
 //        if ($observable instanceof PartialProcedure) {
 //            $php = '/usr/bin/php';
 //            $exec = '/home/dee/workspace/mmz/journal/E-journal/app/parallel/reminder.php';
@@ -21,4 +24,8 @@ class ParallelExecution implements ISubscriber
 //        throw new \Exception();
     }
 
+    public function subscribeOn(): array
+    {
+        // TODO: Implement subscribeOn() method.
+    }
 }

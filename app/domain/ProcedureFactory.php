@@ -21,7 +21,7 @@ class ProcedureFactory
                     $array[] = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);
                     break;
                 case false:
-                    $array[] = new Procedure($procedure['name'], $idState, $product);
+                    $array[] = new CasualProcedure($procedure['name'], $idState, $product);
             }
         }
         return $array;

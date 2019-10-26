@@ -4,7 +4,7 @@
 namespace App\CLI\render;
 
 
-class PartialFormatter extends ProcedureFormatter
+class PartialProcFormatter extends ProcedureFormatter
 {
     private $pattern = Format::SHORT;
 

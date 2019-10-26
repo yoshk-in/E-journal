@@ -4,7 +4,7 @@
 namespace App\CLI\render;
 
 
-class CasualFormatter extends ProcedureFormatter
+class CasualProcFormatter extends ProcedureFormatter
 {
     private $pattern = Format::FULL;
 

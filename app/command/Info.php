@@ -6,7 +6,7 @@ namespace App\command;
 
 use App\base\AppMsg;
 
-class Info extends Informer
+class Info extends Move
 {
     protected function doExecute(
         $productName,
@@ -15,7 +15,12 @@ class Info extends Informer
     ) {
         $collection = $this->productRepository->findNotFinished($productName);
         if (!$collection->isEmpty()) {
-            $this->dispatcher->update($collection, AppMsg::INFO);
+            foreach ($collection as $product) {
+                $product->report(AppMsg::INFO);
+            }
+        } else {
+            echo 'блоков в работе на текущий момент нет' . PHP_EOL;
+            exit;
         }
     }
 }

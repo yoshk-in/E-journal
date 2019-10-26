@@ -53,9 +53,7 @@ abstract class AbstractProcedure implements IObservable
 
     public function setStart()
     {
-        $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
-        $this->start = new DateTimeImmutable('now');
-        $this->state = self::STAGE['start'];
+        $this->_setStart();
         $this->notify(AppMsg::ARRIVE);
     }
 
@@ -100,13 +98,20 @@ abstract class AbstractProcedure implements IObservable
         return $this->owner;
     }
 
+    protected function _setStart()
+    {
+        $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
+        $this->start = new DateTimeImmutable('now');
+        $this->state = self::STAGE['start'];
+    }
+
 
     protected function checkInput(bool $condition, $msg = null): ?\Exception
     {
         try {
             [$product, $number] = $this->getProduct()->getNameAndNumber();
             if (!$condition) throw new WrongInputException(
-                printf("ошибка, операция не выполнена: блок %s, номер %s, процедура '%s': %s", $product, $number, $this->getName(), $msg)
+                printf("ошибка, операция не выполнена: блок %s, номер %s, процедура '%s': %s \n", $product, $number, $this->getName(), $msg)
             );
         } catch (\Exception $e) {
             exit;

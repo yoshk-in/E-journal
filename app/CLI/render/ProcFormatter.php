@@ -5,7 +5,7 @@ namespace App\CLI\render;
 
 use App\domain\AbstractProcedure;
 use App\domain\CompositeProcedure;
-use App\domain\Procedure;
+use App\domain\CasualProcedure;
 
 class ProcFormatter extends Formatter
 {
@@ -19,7 +19,7 @@ class ProcFormatter extends Formatter
         ($processed instanceOf AbstractProcedure) || $this->exception();
         $buffer = '';
         switch (get_class($processed)) {
-            case Procedure::class:
+            case CasualProcedure::class:
                 $buffer .= $this->casualFormatter->handle($processed);
                 break;
             case CompositeProcedure::class:
@@ -33,7 +33,7 @@ class ProcFormatter extends Formatter
     {
     }
 
-    public function setFormatters(CasualFormatter $casual, CompositeFormatter $composite, CollFormatter $collFormatter)
+    public function setFormatters(CasualProcFormatter $casual, CompositeProcFormatter $composite, CollFormatter $collFormatter)
     {
         $this->casualFormatter = $casual;
         $this->compositeFormatter = $composite;

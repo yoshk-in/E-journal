@@ -4,26 +4,26 @@
 namespace App\controller;
 
 ;
-use App\CLI\render\InfoManager;
+use App\infoManager\InfoManager;
 use App\command\CmdResolver;
 use App\events\EventChannel;
 
 class Controller
 {
-    protected $infoDispatcher;
+    protected $infoMng;
     protected $commandResolver;
     protected $request;
 
-    //needs only to init for tracking products and procedures by render
+    //needs only to tracking products and procedures by render
     private $eventChannel;
 
     public function __construct(
         CmdResolver $commandResolver,
-        InfoManager $infoDispatcher,
+        InfoManager $infoMng,
         EventChannel $eventChannel
     ) {
         $this->commandResolver = $commandResolver;
-        $this->infoDispatcher = $infoDispatcher;
+        $this->infoMng = $infoMng;
         $this->eventChannel = $eventChannel;
     }
 
@@ -33,7 +33,7 @@ class Controller
         foreach ($commands as $command) {
             $output[] = $command->execute();
         }
-        $this->infoDispatcher->flush();
+        $this->infoMng->dispatch();
     }
 
 }

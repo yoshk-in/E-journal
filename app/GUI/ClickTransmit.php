@@ -10,22 +10,22 @@ class ClickTransmit
 {
     static private $clickMng = MouseManger::class;
 
-    public static function fromTo(VisualObjectInterface $from, VisualObjectInterface $to)
+    public static function fromTo(string $currentColor, VisualObjectInterface $from, VisualObjectInterface $to)
     {
-        $from->on('mousedown', self::clickHandler($to));
-        $to->on('mousedown', self::clickHandler($to));
+        $from->on('mousedown', self::clickHandler($to, $currentColor));
+        $to->on('mousedown', self::clickHandler($to, $currentColor));
     }
 
-    public static function clickHandler($emitter)
+    public static function on(VisualObjectInterface $object, $currentColor)
     {
-        return function () use ($emitter) {
-            self::$clickMng::getHandler()::handle($emitter);
+        $object->on('mousedown', self::clickHandler($object, $currentColor));
+    }
+
+    public static function clickHandler($emitter, $currentColor)
+    {
+        return function () use ($emitter, $currentColor) {
+            self::$clickMng::getHandler()::handle($emitter, $currentColor);
         };
-    }
-
-    public static function on(VisualObjectInterface $object)
-    {
-        $object->on('mousedown', self::clickHandler($object));
     }
 
 }

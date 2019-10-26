@@ -17,6 +17,6 @@ class Dispatch extends Move
         foreach ($found_products as $product) {
             $product->endProcedure();
         }
-
+        $this->productRepository->save();
     }
 }

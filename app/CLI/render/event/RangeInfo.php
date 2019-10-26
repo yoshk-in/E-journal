@@ -14,4 +14,9 @@ class RangeInfo extends Info
         $this->output .= $this->formatter->handle($reporter);
     }
 
+    public function flush()
+    {
+        AbstractInfoDispatcher::flush();
+    }
+
 }

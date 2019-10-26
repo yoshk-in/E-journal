@@ -6,7 +6,7 @@ namespace App\GUI;
 
 class Response
 {
-    private $info;
+    private $info = [];
 
 
     public function getInfo()
@@ -15,8 +15,8 @@ class Response
     }
 
 
-    public function setInfo($info): void
+    public function addInfo($info): void
     {
-        $this->info = $info;
+        $this->info[] = $info;
     }
 }

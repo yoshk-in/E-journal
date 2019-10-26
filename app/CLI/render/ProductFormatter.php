@@ -13,7 +13,7 @@ class ProductFormatter extends Formatter
     function doHandle($processed)
     {
         ($processed instanceof Product) || $this->exception();
-        $this->buffer = sprintf(self::NUMBER, $processed->getNumber());
+        $this->result = sprintf(self::NUMBER, $processed->getNumber());
         return $processed->getProcedures();
     }
 }

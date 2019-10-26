@@ -17,7 +17,7 @@ class ResponseDispatcher
 
     public function handle($reporter)
     {
-        $this->response->setInfo($reporter);
+        $this->response->addInfo($reporter);
     }
 
     public function flush()
