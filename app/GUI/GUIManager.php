@@ -7,12 +7,8 @@ namespace App\GUI;
 use App\base\AppMsg;
 use App\base\GUIRequest;
 use App\controller\Controller;
-use App\domain\CompositeProcedure;
 use App\domain\ProcedureMap;
-use Gui\Application;
-use Gui\Components\Button;
-use Gui\Components\Label;
-use function DI\string;
+use Psr\Container\ContainerInterface;
 
 
 class GUIManager
@@ -20,101 +16,44 @@ class GUIManager
     private $gui;
     private $request;
     private $response;
-    private $app;
+    private $server;
     private $procedureMap;
     private static $deb;
-    /**
-     * @var RequestMng
-     */
-    private static $buffer;
+    private $container;
+    private $mouseMng;
+    private $product;
+    private $tComposer;
+    private $table;
 
 
-    public function __construct(GUIRequest $request, Response $response, ProcedureMap $procedureMap)
+    public function __construct(ProcedureMap $procedureMap, ContainerInterface $container, MouseMnger $mouseMng, ProductTableComposer $tComposer)
     {
-        $this->request = self::$buffer = $request;
-        $this->response = $response;
         $this->procedureMap = $procedureMap;
-
+        $this->container    = $container;
+        $this->request      = $container->get(GUIRequest::class);
+        $this->response     = $container->get(Response::class);
+        $this->mouseMng     = $mouseMng;
+        $this->tComposer    = $tComposer;
     }
 
     public function run(Controller $app)
     {
-        $this->app = $app;
-        $product = 'Г9';
+        $this->server   = $app;
+        $this->product  = $this->procedureMap->getProducts()[0];
+        $this->gui      = self::$deb = WindowFactory::create();
+        $response       = $this->firstRequest();
 
-        $this->gui = self::$deb = new Application([
-            'title' => 'ЖУРНАЛ УЧЕТА',
-            'left' => 248,
-            'top' => 50,
-            'width' => 1024,
-            'height' => 600,
-        ]);
+        $this->gui->on('start', function () use ($response) {
+            $this->table = new TableFactory(
+                20, 20, 50, 100, $wide_cell = 600, $this->mouseMng
+            );
+            $this->tComposer->tableByResponse($this->table, $this->product, $response);
+            $this->response->reset();
 
-        $response = $this->doRequest(AppMsg::INFO);
-
-        $this->gui->on('start', function () use ($product, $response) {
-
-            $wide_cell = 600;
-
-            //xy header
-            $table = new TableFactory(20, 20, 50, 100, $wide_cell);
-             $table->addTextCell('номера');
-
-            //x header
-            foreach ($this->procedureMap->getProdProcArr($product) as $proc) {
-                if (isset($proc['inners'])) {
-                   $table->addWideTextCell($proc['name']);
-                } else {
-                    $table->addTextCell($proc['name']);
-                }
-            }
-
-            $table->newRow();
-
-            foreach ($response->getInfo() as $product) {
-
-                //y header
-                $table->setDataOnRow($product);
-                $table->addClickTextCell($product->getNumber(), State::COLOR[$product->getCurrentProc()->getState()]);
-
-                foreach ($product->getProcedures() as $procedure) {
-
-                    switch (get_class($procedure)) {
-                        case CompositeProcedure::class:
-
-                            $table->addCompositeShape(
-                                $parts = $procedure->getInners(),
-                                $parts->count(),
-                                function ($part) {
-                                    return $part->getName();
-                                },
-                                function ($proc) {
-                                    return State::COLOR[$proc->getState()];
-                                },
-                                State::COLOR[$procedure->getState()]);
-
-                            break;
-                        default :
-                            $table->addClickCell(State::COLOR[$procedure->getState()]);
-                    }
-                }
-                $table->newRow();
-            }
-
-            $button = new Button([
-                'value' => 'отправить',
-                'top' => 300,
-                'left' => 300,
-                'width' => 400,
-                'height' => 200
-            ]);
-            $app = $this;
-            $button->on('mousedown', function () use ($app) {
-                $app->doRequest(AppMsg::FORWARD);
+            ButtonFactory::createWithOn(function () {
+                $this->updateTable();
             });
-
-
-            MouseManger::changeHandler(NewClickHandler::class);
+            $this->mouseMng->changeHandler(new NewClickHandler($this->request));
         });
         $this->gui->run();
     }
@@ -122,35 +61,56 @@ class GUIManager
 
     private function doRequest($cmd)
     {
-        $this->request->setCmd($cmd);
-        $this->request->setProduct('Г9');
+        $this->request->prepareReq($cmd);
+        $this->request->setProduct($this->product);
         $this->request->setPartial(null);
-        $this->app->run();
+//        $this->alert($this->request);
+        try {
+            $this->server->run();
+        } catch (\Exception $e) {
+            $this->alert($e->getMessage());
+        }
         return $this->response;
+    }
+
+    private function firstRequest(): Response
+    {
+        return $this->doRequest(AppMsg::INFO);
+    }
+
+    private function updateTable()
+    {
+        $this->doRequest(AppMsg::FORWARD);
+        $this->response->reset();
     }
 
     public static function alert($text)
     {
-
         switch (gettype($text)) {
             case 'string':
                 break;
-            case 'array':
-                $text = implode("\n", $text);
-                break;
             default:
-                $text = (string) $text;
+//                ob_start();
+//                xdebug_var_dump($text);
+//                $text = ob_get_clean();
+                $text = json_encode((array) $text, true);
+//                if (json_last_error()) $text = json_last_error_msg();
+//                $text = implode("\n", (array) $text);
+//                $text = (array) $text;
+//                array_walk_recursive($text, function (&$el) {
+//                    if (is_array($el)) {
+//                        implode("\n", (array) $el);
+//                    }
+//                });
+//                $text = (array) $text;
+//                $text = implode("\n",  $text);
         }
+
         (self::$deb)->alert($text);
 
     }
 
-    /**
-     * @return RequestMng
-     */
-    public static function getBuffer()
-    {
-        return self::$buffer;
-    }
+
+
 
 }

@@ -11,10 +11,8 @@ class GUIRequest extends AbstractRequest
     protected $env = AppMsg::GUI;
     protected $blocks;
 
-    public function addBlockNumber(int $number)
-    {
-        $this->blockNumbers[] = $number;
-    }
+
+
     public function addBlock(Product $block): void
     {
         $this->blocks[$block->getNumber()] = $block->getNumber();
@@ -25,10 +23,16 @@ class GUIRequest extends AbstractRequest
         unset($this->blocks[$block->getNumber()]);
     }
 
-    public function setCmd(string $command = AppMsg::INFO)
+    public function prepareReq(string $command = AppMsg::INFO)
     {
         $this->blockNumbers = array_values($this->blocks ?? []);
         $this->addCmd($command);
+    }
 
+    public function reset()
+    {
+        $this->commands = [];
+        $this->blockNumbers = [];
+        $this->blocks = [];
     }
 }

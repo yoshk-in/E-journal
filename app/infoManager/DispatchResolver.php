@@ -22,11 +22,12 @@ class DispatchResolver
         AppMsg::DISPATCH    => Move::class,
         AppMsg::INFO        => Info::class,
         AppMsg::RANGE_INFO  => RangeInfo::class,
-        'NotFoundNumbers' => NotFound::class
+        AppMsg::NOT_FOUND   => NotFound::class
     ];
     static private $GUI_MAP = [
         AppMsg::INFO        => ResponseDispatcher::class,
-        AppMsg::DISPATCH    => ResponseDispatcher::class
+        AppMsg::DISPATCH    => ResponseDispatcher::class,
+        AppMsg::ARRIVE      => ResponseDispatcher::class
     ];
 
 

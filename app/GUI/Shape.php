@@ -4,10 +4,36 @@
 namespace App\GUI;
 
 
-class Shape extends \Gui\Components\Shape
+
+use App\events\ICellSubscriber;
+use App\events\TCellObserver;
+
+
+class Shape extends \Gui\Components\Shape implements ICellSubscriber
 {
+    use TCellObserver;
+
     private $clickCounter = 0;
     private $owner;
+    private $id;
+
+    /**
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param mixed $id
+     * @return Shape
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @return mixed
@@ -38,5 +64,7 @@ class Shape extends \Gui\Components\Shape
     {
         $this->owner = $owner;
     }
+
+
 
 }

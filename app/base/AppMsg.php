@@ -15,5 +15,6 @@ interface AppMsg
     const CLI = 'CLI';
     const GUI = 'GUI';
     const FORWARD = 'arrive or dispatch - no matter';
+    const NOT_FOUND = 'NotFoundNumbers';
 
 }

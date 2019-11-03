@@ -6,13 +6,13 @@ namespace App\domain;
 
 use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
-use App\events\{IObservable, TObservable};
+use App\events\{IListenable, IObservable, TListenable, TObservable};
 use DateTimeImmutable;
 
 
-abstract class AbstractProcedure implements IObservable
+abstract class AbstractProcedure implements IObservable, IListenable
 {
-    use TObservable;
+    use TListenable;
 
     /** @Column(type="datetime_immutable", nullable=true)    */
     protected $start;
@@ -51,7 +51,7 @@ abstract class AbstractProcedure implements IObservable
         $this->owner = $owner;
     }
 
-    public function setStart()
+    public function start()
     {
         $this->_setStart();
         $this->notify(AppMsg::ARRIVE);

@@ -6,19 +6,27 @@ namespace App\GUI;
 
 
 
+use App\base\GUIRequest;
+
 class NewClickHandler extends ClickHandler
 {
+    private $request;
 
-    public static function handle(Shape $emitter, string $prevColor)
+    public function __construct(GUIRequest $request)
+    {
+        $this->request = $request;
+    }
+
+    public function handle(Shape $emitter, string $prevColor)
     {
         $emitter = $emitter->getOwner()->getActiveCell();
         $emitter->plusClickCounter();
         if ($emitter->getClickCounter() % 2 === 0) {
             $emitter->setBorderColor(Color::WHITE);
-            GUIManager::getBuffer()->removeBlock($emitter->getOwner()->getData());
+            $this->request->removeBlock($emitter->getOwner()->getData());
         } else {
             $emitter->setBorderColor(self::$nextColor[$emitter->getOwner()->getActiveColor()]);
-            GUIManager::getBuffer()->addBlock($emitter->getOwner()->getData());
+            $this->request->addBlock($emitter->getOwner()->getData());
         }
     }
 

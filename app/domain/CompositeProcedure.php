@@ -28,19 +28,19 @@ class CompositeProcedure extends CasualProcedure
         $this->inners = new ArrayCollection(ProcedureFactory::createPartials($inners, $this));
     }
 
-    public function setEnd()
+    public function end()
     {
-        $this->checkInput((bool) $this->innersFinished(), 'внутренние процедуры данного события не завершены:' );
-        parent::setEnd();
+        $this->checkInput((bool) $this->areInnersFinished(), 'внутренние процедуры данного события не завершены:' );
+        parent::end();
     }
 
-    public function setStart(?string $partial = null)
+    public function start(?string $partial = null)
     {
         if ($partial) {
             $this->startInner($partial);
             return;
         }
-        parent::setStart();
+        parent::start();
     }
 
     public function getInners(): ?\ArrayAccess
@@ -63,13 +63,14 @@ class CompositeProcedure extends CasualProcedure
     }
 
 
-    protected function innersFinished()
+    public function areInnersFinished()
     {
         foreach ($this->inners as $inner) {
             if (!$inner->isFinished()) return false;
         }
         return true;
     }
+
 
     protected function startInner(string $partial_name)
     {
@@ -80,6 +81,6 @@ class CompositeProcedure extends CasualProcedure
             }
         }
         $this->checkInput((bool)($found ?? false), ' внутренней процедуры с таким именем не найдено: ' . $partial_name);
-        $found->setStart();
+        $found->start();
     }
 }

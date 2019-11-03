@@ -64,14 +64,29 @@ class Product implements IObservable
         return $this->number;
     }
 
+    public function forward()
+    {
+        $current_proc = $this->getCurrentProc();
+        $state = $current_proc->getState();
+
+        if ($state === AbstractProcedure::STAGE['not_start'] || $state === AbstractProcedure::STAGE['end']) {
+            $this->startProcedure();
+        } else {
+
+            if (($current_proc instanceof CompositeProcedure) && ($state === AbstractProcedure::STAGE['start'] && !$current_proc->areInnersFinished())) {
+
+                $this->startProcedure($current_proc->getUncompletedProcedures()->first()->getName());
+            } else {
+                $this->endProcedure();
+            }
+        }
+    }
+
 
     public function startProcedure(?string $partial = null)
     {
         $this->move(function ($partial) {
-            if (is_null($this->currentProc)) {
-                $this->currentProc = $this->procCollection->first();
-            }
-            $this->currentProc->setStart($partial);
+            $this->getCurrentProc()->start($partial);
         }, $partial);
 
     }
@@ -107,7 +122,7 @@ class Product implements IObservable
     public function endProcedure()
     {
         $this->move(function () {
-            $this->currentProc->setEnd();
+            $this->getCurrentProc()->end();
             if ($this->currentProc === $this->procCollection->last()) {
                 $this->finished = true;
             }
@@ -116,7 +131,7 @@ class Product implements IObservable
 
     public function getCurrentProc(): CasualProcedure
     {
-        return $this->currentProc;
+        return $this->currentProc = $this->currentProc ?? $this->procCollection->first();
     }
 
 
@@ -133,7 +148,7 @@ class Product implements IObservable
 
     protected function isNotFinishedCheck()
     {
-        if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe' . $this->number);
+        if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe ' . $this->number);
     }
 
 }

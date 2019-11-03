@@ -4,10 +4,6 @@
 namespace App\GUI;
 
 
-use Gui\Components\Div;
-use Gui\Components\Label;
-use App\GUI\Shape;
-use Gui\Components\VisualObjectInterface;
 
 class RowShapeFactory
 {
@@ -17,14 +13,15 @@ class RowShapeFactory
     private $top;
     private $startLeft;
     private $offset;
-    private $notActiveColor;
     private $activeCell;
-    private $cellCount = 0;
     private $activeColor;
     private $data;
+//    private $childRows;
+    private $cells = [];
 
 
-    public function __construct(int $startTop, int $startLeft, $rowHeight, $cellWidth, string $notActiveColor = COLOR::GREEN)
+
+    public function __construct(int $startTop, int $startLeft, $rowHeight, $cellWidth)
     {
         $this->startTop = $startTop;
         $this->top = $startTop;
@@ -32,20 +29,21 @@ class RowShapeFactory
         $this->offset = $startLeft;
         $this->rowHeight = $rowHeight;
         $this->cellWidth = $cellWidth;
-        $this->notActiveColor = $notActiveColor;
     }
 
-    public function add(string $color, $owner = null)
+    public function create(string $color, $owner = null)
     {
-        $shape = $this->addWithWidth($this->cellWidth, $color, $owner);
-        ++$this->cellCount;
-        if (is_null($this->activeCell) && ($this->cellCount > 1)) {
-            ($color === $this->notActiveColor) ?: ($this->activeCell = $shape) && $this->activeColor = $color;
-        }
+        $shape = $this->createWithWidth($this->cellWidth, $color, $owner);
         return $shape;
     }
 
-    public function addWithWidth($width, string $color, $owner = null)
+//    public function addChildRow(RowShapeFactory $row)
+//    {
+//        $this->childRows[] = $row;
+//    }
+
+
+    public function createWithWidth($width, string $color, RowShapeFactory $owner = null)
     {
         $shape = (new Shape([
             'left' => $this->offset,
@@ -55,7 +53,10 @@ class RowShapeFactory
             'backgroundColor' => $color,
             'borderColor' => Color::WHITE
         ]));
-        $shape->setOwner($owner ?? $this);
+        $this->cells[] = $shape;
+        $shape->setId(array_key_last($this->cells));
+
+        $owner ? $shape->setOwner($owner) && $owner->addCell($shape) /*&& $owner->addChildRow($this)*/ : $shape->setOwner($this) && $this->addCell($shape);
 
         $this->offset += $width;
         return $shape;
@@ -91,6 +92,24 @@ class RowShapeFactory
     public function setData($data): void
     {
         $this->data = $data;
+    }
+
+    public function setActiveCell(Shape $cell, string $color)
+    {
+        $this->activeCell = $cell;
+        $this->activeColor = $color;
+    }
+
+    public function addCell(Shape $shape)
+    {
+        $this->cells[] = $shape;
+        $shape->setId(array_key_last($this->cells));
+    }
+
+    public function nextActiveCell(Shape $shape, string $color)
+    {
+        $next = $this->cells[$shape->getId() + 1] ?? $shape;
+        $this->setActiveCell($next, $color);
     }
 
 

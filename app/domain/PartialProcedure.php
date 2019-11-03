@@ -25,7 +25,7 @@ class PartialProcedure extends AbstractProcedure
         $this->interval = $interval;
     }
 
-    public function setStart(?string  $partial = null)
+    public function start(?string  $partial = null)
     {
         parent::_setStart();
         $this->setEnd();

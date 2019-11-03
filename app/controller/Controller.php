@@ -4,6 +4,8 @@
 namespace App\controller;
 
 ;
+
+use App\GUI\GUIManager;
 use App\infoManager\InfoManager;
 use App\command\CmdResolver;
 use App\events\EventChannel;
@@ -14,7 +16,7 @@ class Controller
     protected $commandResolver;
     protected $request;
 
-    //needs only to tracking products and procedures by render
+    //needs only to tracking products and procedures by info dispatching
     private $eventChannel;
 
     public function __construct(

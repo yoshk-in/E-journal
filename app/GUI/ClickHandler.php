@@ -17,6 +17,6 @@ abstract class ClickHandler
 
     protected $counter;
 
-    abstract public static function handle(Shape $emitter, string $prevColor);
+    abstract public function handle(Shape $emitter, string $prevColor);
 
 }

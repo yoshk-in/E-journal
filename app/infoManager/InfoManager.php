@@ -17,7 +17,8 @@ class InfoManager implements ISubscriber
         AppMsg::DISPATCH,
         AppMsg::ARRIVE,
         AppMsg::INFO,
-        AppMsg::RANGE_INFO
+        AppMsg::RANGE_INFO,
+        AppMsg::NOT_FOUND
     ];
 
 

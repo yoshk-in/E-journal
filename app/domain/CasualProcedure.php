@@ -22,19 +22,19 @@ class CasualProcedure extends AbstractProcedure
      **/
     protected $owner;
 
-    public function setStart()
+    public function start()
     {
         if ($this->isFinished()) {
             $this->getProduct()->nextProc($this);
             return;
         }
-        parent::setStart();
+        parent::start();
     }
 
-    public function setEnd()
+    public function end()
     {
         $this->checkInput((bool)$this->getStart(), ' событие еще не начато');
-        $this->checkInput(!$end = $this->getEnd(), 'coбытие уже отмечено');
+        $this->checkInput(!$end = $this->getEnd(), ' coбытие уже отмечено');
         $this->end = new DateTimeImmutable('now');
         $this->state = self::STAGE['end'];
         $this->notify(AppMsg::DISPATCH);

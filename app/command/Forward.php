@@ -5,7 +5,10 @@ namespace App\command;
 
 
 use App\domain\AbstractProcedure;
+use App\domain\CasualProcedure;
+use App\domain\CompositeProcedure;
 use App\GUI\GUIManager;
+
 
 class Forward extends Move
 {
@@ -14,10 +17,9 @@ class Forward extends Move
     {
         [$found_products,] = $this->productRepository->findByNumbers($productName, $numbers);
         $all = array_merge($found_products->toArray(), $new ?? []);
-        foreach ($all as $product)  {
-            ($product->getCurrentProc()->getState() === AbstractProcedure::STAGE['not_start']) ?
-                $product->startProcedure($procedure):
-                $product->endProcedure($procedure);
+
+        foreach ($all as $product) {
+            $product->forward();
         }
         $this->productRepository->save();
     }

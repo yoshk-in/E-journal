@@ -19,4 +19,9 @@ class Response
     {
         $this->info[] = $info;
     }
+
+    public function reset()
+    {
+        $this->info = [];
+    }
 }
