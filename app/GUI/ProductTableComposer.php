@@ -4,20 +4,27 @@
 namespace App\GUI;
 
 
-use App\domain\AbstractProcedure;
 use App\domain\CasualProcedure;
 use App\domain\CompositeProcedure;
+use App\domain\PartialProcedure;
 use App\domain\ProcedureMap;
 use App\domain\Product;
-
+use App\events\ProcCellSynchronize;
+use App\GUI\handlers\CellActivator;
 class ProductTableComposer
 {
 
     private $map;
+    private $cellActivate;
+    private $colorant;
+    private $synchronize;
 
-    public function __construct(ProcedureMap $map)
+    public function __construct(ProcedureMap $map, CellActivator $cellActivate, ProcCellSynchronize $synchronize)
     {
         $this->map = $map;
+        $this->cellActivate = $cellActivate;
+        $this->colorant = ProdProcColorant::class;
+        $this->synchronize = $synchronize;
     }
 
     public function tableByResponse(TableFactory $table, string $productName, Response $response)
@@ -25,72 +32,67 @@ class ProductTableComposer
         // header row
         $this->createHeaderRow($table, $productName);
 
-        foreach ($response->getInfo() as $product) {
+        foreach ($response->getInfo() as $key => $product) {
             $table->newRow($product->getNumber(), $product);
             //y header
-            $table->addClickTextCell($product->getNumber(), State::COLOR[$product->getCurrentProc()->getState()]);
+            $table->addClickTextCell($product->getNumber(), $this->colorant::productColor($product));
+            //rest data table
             $this->createProductRow($table, $product);
+
+            //activate cells and sync by proc state
+            $row = $table->getCurrentRow();
+            $this->cellActivate->byProduct($row, $product);
+            $this->synchronize->attachRowCells($row);
         }
     }
-
 
 
     protected function createHeaderRow(TableFactory $table, string $productName)
     {
         //xy header - first cell
-        $table->addTextCell('номера');
+        $table->addTextShape('номера');
 
         foreach ($this->map->getProdProcArr($productName) as $proc) {
-            (isset($proc['inners'])) ? $table->addWideTextCell($proc['name']) : $table->addTextCell($proc['name']);
+            (isset($proc['inners'])) ? $table->addWideTextShape($proc['name']) : $table->addTextShape($proc['name']);
         }
 
     }
 
     protected function createProductRow(TableFactory $table, Product $product)
     {
-        foreach ($product->getProcedures() as $key => $procedure) {
+        foreach ($product->getProcedures() as $procedure) {
             switch (get_class($procedure)) {
                 case CompositeProcedure::class:
-                    $shape = $this->createCompositeCell($table, $procedure);
+                    $this->createCompositeCell($table, $procedure);
                     break;
                 default :
-                   $shape = $this->createCasualCell($table, $procedure);
+                    $this->createCasualCell($table, $procedure);
             }
-            $procedure->attach($shape);
         }
-
     }
 
-    protected function createCompositeCell(TableFactory $table, CompositeProcedure $procedure): Shape
+    protected function createCompositeCell(TableFactory $table, CompositeProcedure $procedure): Cell
     {
         $parts = $procedure->getInners();
-        $composite = $table->beginCompositeCell($color = State::COLOR[$state = $procedure->getState()], $parts->count());
-        $this->createPartialCells($table, $procedure);
+        $composite = $table->beginCompositeCell($this->colorant::color($procedure), $parts->count());
+        $this->createPartialCells($table, $procedure->getInners());
         $table->finishCompositeCell();
-        !$this->isActiveCell($table, $state) ?: $table->setRowActiveCell($composite, $color);
         return $composite;
     }
 
-    protected function isActiveCell(TableFactory $table, int $state) : bool
-    {
-        $res = ($state !== AbstractProcedure::STAGE['end'] && is_null($table->getRowActiveCell())) ? true : false;
-        return $res;
-    }
 
-    protected function createPartialCells(TableFactory $table, CompositeProcedure $procedure)
+    protected function createPartialCells(TableFactory $table, \ArrayAccess $inners)
     {
-        foreach ($procedure->getInners() as $part) {
-            $shape = $table->addClickTextCell($part->getName(), $color = State::COLOR[$partState = $part->getState()]);
-            $procedure->attach($shape);
-            !$this->isActiveCell($table, $partState) ?: $table->setRowActiveCell($shape, $color);
+        foreach ($inners as $part) {
+            $table->addClickTextCell($part->getName(), $this->colorant::color($part));
         }
     }
 
-    protected function createCasualCell(TableFactory $table, CasualProcedure $procedure): Shape
+    protected function createCasualCell(TableFactory $table, CasualProcedure $procedure): Cell
     {
-        $shape = $table->addClickCell($color = State::COLOR[$state = $procedure->getState()]);
-        !$this->isActiveCell($table, $state) ?: $table->setRowActiveCell($shape, $color);
+        $shape = $table->addClickCell($this->colorant::color($procedure));
         return $shape;
     }
+
 
 }

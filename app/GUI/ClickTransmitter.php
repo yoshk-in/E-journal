@@ -10,18 +10,18 @@ class ClickTransmitter
 {
     private $clickMng;
 
-    public function __construct(MouseMnger $clickMng)
+    public function __construct(MouseMng $clickMng)
     {
         $this->clickMng = $clickMng;
     }
 
-    public function fromTo(string $currentColor, VisualObjectInterface $from, VisualObjectInterface $to)
+    public function fromTo(string $currentColor, VisualObjectInterface $from, Cell $to)
     {
         $from->on('mousedown', $this->clickHandler($to, $currentColor));
         $to->on('mousedown', $this->clickHandler($to, $currentColor));
     }
 
-    public function on(VisualObjectInterface $object, $currentColor)
+    public function on(Cell $object, $currentColor)
     {
         $object->on('mousedown', $this->clickHandler($object, $currentColor));
     }

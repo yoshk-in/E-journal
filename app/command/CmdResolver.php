@@ -20,7 +20,10 @@ class CmdResolver
         AppMsg::ARRIVE => Arrive::class,
         AppMsg::PARTY => Party::class,
         AppMsg::CLEAR_JOURNAL => ClearJournal::class,
-        AppMsg::FORWARD => Forward::class
+        AppMsg::FORWARD => Forward::class,
+        AppMsg::GUI_INFO => GUIInfo::class,
+        AppMsg::CREATE_PRODUCTS => CreateProducts::class,
+        AppMsg::CURRENT_PROC_INFO => CurrentProcInfo::class
     ];
 
     public function __construct(ContainerInterface $container, AbstractRequest $request)

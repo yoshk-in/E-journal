@@ -8,7 +8,7 @@ use App\base\AppMsg;
 use App\events\IObservable;
 use App\events\TObservable;
 
-class NotFoundNumbersWrapper implements IObservable
+class NotFoundWrapper implements IObservable
 {
     use TObservable;
 
@@ -21,7 +21,8 @@ class NotFoundNumbersWrapper implements IObservable
 
     public function getNumbers()
     {
-        return $this->numbers;    }
+        return $this->numbers;
+    }
 
 
 }

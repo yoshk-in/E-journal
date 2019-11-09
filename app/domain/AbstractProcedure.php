@@ -6,13 +6,13 @@ namespace App\domain;
 
 use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
-use App\events\{IListenable, IObservable, TListenable, TObservable};
+use App\events\{IObservable,  TObservable};
 use DateTimeImmutable;
 
 
-abstract class AbstractProcedure implements IObservable, IListenable
+abstract class AbstractProcedure implements IObservable
 {
-    use TListenable;
+    use TObservable;
 
     /** @Column(type="datetime_immutable", nullable=true)    */
     protected $start;
@@ -72,11 +72,23 @@ abstract class AbstractProcedure implements IObservable, IListenable
         return $this->state === self::STAGE['end'];
     }
 
+    public function isNotStarted(): bool
+    {
+        return $this->getState() === self::STAGE['not_start'];
+    }
+
+    public function isStarted(): bool
+    {
+        return $this->getState() === self::STAGE['start'];
+    }
+
 
     public function getName(): string
     {
         return $this->name;
     }
+
+
 
     public function getStart(): ?\DateTimeInterface
     {

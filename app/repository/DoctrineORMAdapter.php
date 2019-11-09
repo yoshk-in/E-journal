@@ -6,7 +6,6 @@ namespace App\repository;
 
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
-use Doctrine\Common\Collections\Expr\Comparison;
 use Doctrine\ORM\EntityManagerInterface;
 
 
@@ -16,33 +15,16 @@ class DoctrineORMAdapter
     private $_em;
     private $servicedEntity;
     private $docRep;
-    private $criteria;
-
-
-
 
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->_em = $entityManager;
-        $this->criteria = Criteria::class;
     }
 
     public function setServicedEntity($entity)
     {
         $this->servicedEntity = $entity;
         $this->docRep = $this->_em->getRepository($this->servicedEntity);
-    }
-
-
-    public function findWhereEach(Comparison $prevWhere, string $fieldName, array $values): Collection
-    {
-
-        $criteria = $this->criteria::create();
-        foreach ($values as $value) {
-            $criteria->orWhere($criteria::expr()->eq($fieldName, $value));
-        }
-
-        return $this->docRep->matching($criteria->andWhere($prevWhere));
     }
 
 
@@ -56,12 +38,26 @@ class DoctrineORMAdapter
         $this->_em->persist($object);
     }
 
-    public function whereProperty(string $fieldName, string $fieldValue): Comparison
+    public function findEntityById(string $entityClass, $id): ?object
     {
-        return $this->criteria::expr()->eq($fieldName, $fieldValue);
+        return $this->_em->getRepository($entityClass)->find($id);
     }
 
 
+    public function findWhere(array $criteria, array $order): array
+    {
+        return $this->docRep->findBy($criteria, $order);
+    }
+
+    public function findOneWhere(array $criteria, array $order): object
+    {
+        return $this->docRep->findOneBy($criteria, $order);
+    }
+
+    public function findAll(array $criteria, array $order): array
+    {
+        return $this->docRep->findBy($criteria, $order);
+    }
 
 
 }

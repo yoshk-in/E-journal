@@ -4,7 +4,7 @@
 namespace App\GUI;
 
 
-class MouseMnger
+class MouseMng
 {
     private $currentStrategy;
 

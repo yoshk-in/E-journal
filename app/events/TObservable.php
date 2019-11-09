@@ -16,11 +16,6 @@ trait TObservable
     public function notify(string $event)
     {
         self::$eventChannel->notify($this, $event);
-        if (isset($this->listeners)) {
-            foreach ($this->listeners as $listener) {
-                $listener->notify($this);
-            }
-        }
     }
 
 

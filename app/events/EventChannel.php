@@ -32,4 +32,11 @@ class EventChannel implements IEventChannel
         }
     }
 
+    public function subscribe(ISubscriber $subscriber)
+    {
+        foreach ($subscriber->subscribeOn() as $event) {
+            $this->channels[$event][] = $subscriber;
+        };
+    }
+
 }

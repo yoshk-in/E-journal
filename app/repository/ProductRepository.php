@@ -12,12 +12,14 @@ use App\events\Event;
 use App\events\ISubscriber;
 use Exception;
 use ReflectionClass;
+use App\domain\ProductNumberManager;
 
 class ProductRepository implements ISubscriber
 {
 
     private $orm;
     private $domainClass = Product::class;
+    private $numbersHorizon = ProductNumberManager::class;
 
     const FIELD = [
         'name' => 'name',
@@ -25,15 +27,19 @@ class ProductRepository implements ISubscriber
         'finished' => 'finished'
     ];
 
+    const NAME_FIELD = 'name';
+    const NUMBER_FIELD = 'number';
+    const FINISHED_FIELD = 'finished';
+
     const SUBSCRIBE_ON = [
         AppMsg::ARRIVE,
         AppMsg::DISPATCH,
-        Event::PRODUCT_MOVE
+        Event::PRODUCT_MOVE,
     ];
 
     private $procedureFactory;
 
-    public function __construct( DoctrineORMAdapter $orm, ProcedureFactory $procedureFactory)
+    public function __construct(DoctrineORMAdapter $orm, ProcedureFactory $procedureFactory)
     {
         $this->orm = $orm;
         $this->orm->setServicedEntity($this->domainClass);
@@ -56,38 +62,37 @@ class ProductRepository implements ISubscriber
         foreach ($numbers as $number) {
             $object = new $this->domainClass($number, $productName, $this->procedureFactory);
             $objects[] = $object;
-            foreach ($object->getProcedures() as $proc)
-            {
-                $this->orm->persist($proc);
-                if ($proc instanceof CompositeProcedure) {
-                    foreach ($proc->getInners() as $inner) {
-                        $this->orm->persist($inner);
-                    }
-                }
-            }
+            $this->orm->persist($object);
+            $this->persistProductProcedures($object);
         }
         return $objects;
     }
 
-    public function findByNumbers( string $productName, array $numbers): array
+    public function findByNumbers(string $productName, array $numbers): array
     {
-        $name_criteria =  $this->orm->whereProperty(self::FIELD['name'], $productName);
-        $found = $this->orm->findWhereEach($name_criteria, self::FIELD['number'], $numbers);
+        $found = $this->orm->findWhere(
+            [self::NAME_FIELD => $productName, self::NUMBER_FIELD => $numbers],
+            [self::NUMBER_FIELD => 'ASC']
+        );
 
         $not_found = array_filter($numbers, function ($number) use ($found) {
             foreach ($found as $product) {
                 if ($product->getNumber() == $number) return false;
             }
-            return  true;
+            return true;
         });
 
         return [$found, $not_found];
     }
 
-    public function findNotFinished(string $productName) : \ArrayAccess
+    public function findNotFinished(string $productName): array
     {
-        $name_criteria =  $this->orm->whereProperty(self::FIELD['name'], $productName);
-        return $this->orm->findWhereEach($name_criteria, self::FIELD['finished'], [false]);
+        return $this->orm->findWhere([self::NAME_FIELD => $productName, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'ASC']);
+    }
+
+    public function findLast(string $productName)
+    {
+        return $this->orm->findOneWhere([self::NAME_FIELD => $productName], [self::NUMBER_FIELD => 'DESC']);
     }
 
     public function save()
@@ -103,5 +108,34 @@ class ProductRepository implements ISubscriber
     public function subscribeOn(): array
     {
         return self::SUBSCRIBE_ON;
+    }
+
+    public function getNumbersMng(string $productName) : ProductNumberManager
+    {
+        $horizon = $this->orm->findEntityById($this->numbersHorizon, $productName);
+        if (empty($horizon)) {
+            $horizon = new ProductNumberManager();
+            $horizon->setProductName($productName);
+            $this->orm->persist($horizon);
+            return $horizon;
+        };
+        return $horizon;
+    }
+
+    public function findAll(string $productName): array
+    {
+        return $this->orm->findAll([self::NAME_FIELD => $productName], [self::NUMBER_FIELD => 'ASC']);
+    }
+
+    private function persistProductProcedures(Product $product)
+    {
+        foreach ($product->getProcedures() as $proc) {
+            $this->orm->persist($proc);
+            if ($proc instanceof CompositeProcedure) {
+                foreach ($proc->getInners() as $inner) {
+                    $this->orm->persist($inner);
+                }
+            }
+        }
     }
 }

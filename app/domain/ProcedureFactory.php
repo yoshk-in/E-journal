@@ -16,9 +16,12 @@ class ProcedureFactory
     public function createProcedures(Product $product): array
     {
         foreach ($this->creationMap->getProdProcArr($product->getName()) as $idState => $procedure) {
+            $idState += $compositeInnersCount ?? 0;
             switch (isset($procedure['inners'])) {
                 case true :
-                    $array[] = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);
+                    $composite = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);
+                    $compositeInnersCount = $composite->getInnersCount();
+                    $array[] = $composite;
                     break;
                 case false:
                     $array[] = new CasualProcedure($procedure['name'], $idState, $product);
@@ -29,8 +32,9 @@ class ProcedureFactory
 
     public static function createPartials(array $partials, CompositeProcedure $owner): array
     {
+        $idOwner = $owner->getIdState();
         foreach ($partials as $idState => $partial) {
-            $array[] = new PartialProcedure($partial['name'], $idState, $owner, $partial['interval']);
+            $array[] = new PartialProcedure($partial['name'], $idOwner + $idState + 1, $owner, $partial['interval']);
         }
         return $array;
     }

@@ -17,7 +17,7 @@ class RangeInfo extends Move
         foreach ($collection as $product) {
             $product->report(AppMsg::RANGE_INFO);
         }
-        (new NotFoundNumbersWrapper($not_found))->notify(AppMsg::NOT_FOUND);
+        (new NotFoundWrapper($not_found))->notify(AppMsg::NOT_FOUND);
 
     }
 

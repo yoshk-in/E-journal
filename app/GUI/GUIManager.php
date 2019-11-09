@@ -8,7 +8,10 @@ use App\base\AppMsg;
 use App\base\GUIRequest;
 use App\controller\Controller;
 use App\domain\ProcedureMap;
+use App\GUI\startMode\FirstStart;
+use App\GUI\startMode\NotFirstStart;
 use Psr\Container\ContainerInterface;
+use React\EventLoop\LoopInterface;
 
 
 class GUIManager
@@ -18,53 +21,47 @@ class GUIManager
     private $response;
     private $server;
     private $procedureMap;
-    private static $deb;
     private $container;
-    private $mouseMng;
     private $product;
-    private $tComposer;
-    private $table;
+    private $productsPerPage = 10;
+
+    const START_MODE = [
+      AppMsg::GUI_INFO => NotFirstStart::class,
+      AppMsg::NOT_FOUND => FirstStart::class
+    ];
 
 
-    public function __construct(ProcedureMap $procedureMap, ContainerInterface $container, MouseMnger $mouseMng, ProductTableComposer $tComposer)
+    public function __construct(ProcedureMap $procedureMap, ContainerInterface $container)
     {
         $this->procedureMap = $procedureMap;
-        $this->container    = $container;
-        $this->request      = $container->get(GUIRequest::class);
-        $this->response     = $container->get(Response::class);
-        $this->mouseMng     = $mouseMng;
-        $this->tComposer    = $tComposer;
+        $this->container = $container;
+        $this->request = $container->get(GUIRequest::class);
+        $this->response = $container->get(Response::class);
     }
 
     public function run(Controller $app)
     {
-        $this->server   = $app;
-        $this->product  = $this->procedureMap->getProducts()[0];
-        $this->gui      = self::$deb = WindowFactory::create();
-        $response       = $this->firstRequest();
-
-        $this->gui->on('start', function () use ($response) {
-            $this->table = new TableFactory(
-                20, 20, 50, 100, $wide_cell = 600, $this->mouseMng
-            );
-            $this->tComposer->tableByResponse($this->table, $this->product, $response);
-            $this->response->reset();
-
-            ButtonFactory::createWithOn(function () {
-                $this->updateTable();
-            });
-            $this->mouseMng->changeHandler(new NewClickHandler($this->request));
+        $this->server = $app;
+        $this->product = $this->procedureMap->getProducts()[0];
+        $this->gui = WindowFactory::create();
+        $this->container->set(LoopInterface::class, $this->gui->getLoop());
+        Debug::set($this->gui);
+        $this->firstRequest();
+        $this->gui->on('start', function () {
+            $mode = self::START_MODE[$this->response->getType()];
+            $start_mode = $this->container->get($mode);
+            $start_mode->run($this->response, $this->gui);
         });
         $this->gui->run();
     }
 
 
-    private function doRequest($cmd)
+    public function doRequest($cmd = AppMsg::FORWARD)
     {
+        $this->response->reset();
         $this->request->prepareReq($cmd);
         $this->request->setProduct($this->product);
-        $this->request->setPartial(null);
-//        $this->alert($this->request);
+//        Debug::print($this->request);
         try {
             $this->server->run();
         } catch (\Exception $e) {
@@ -73,44 +70,46 @@ class GUIManager
         return $this->response;
     }
 
-    private function firstRequest(): Response
+    public function alert(string $msg)
     {
-        return $this->doRequest(AppMsg::INFO);
+        $this->gui->alert($msg);
     }
 
-    private function updateTable()
+    private function firstRequest()
     {
-        $this->doRequest(AppMsg::FORWARD);
+        $this->doRequest(AppMsg::GUI_INFO);
+    }
+
+    public function  update()
+    {
+        $this->doRequest();
         $this->response->reset();
     }
 
-    public static function alert($text)
+
+    /**
+     * @return GUIRequest|mixed
+     */
+    public function getRequest()
     {
-        switch (gettype($text)) {
-            case 'string':
-                break;
-            default:
-//                ob_start();
-//                xdebug_var_dump($text);
-//                $text = ob_get_clean();
-                $text = json_encode((array) $text, true);
-//                if (json_last_error()) $text = json_last_error_msg();
-//                $text = implode("\n", (array) $text);
-//                $text = (array) $text;
-//                array_walk_recursive($text, function (&$el) {
-//                    if (is_array($el)) {
-//                        implode("\n", (array) $el);
-//                    }
-//                });
-//                $text = (array) $text;
-//                $text = implode("\n",  $text);
-        }
-
-        (self::$deb)->alert($text);
-
+        return $this->request;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getProduct()
+    {
+        return $this->product;
+    }
 
+    /**
+     * @return int
+     */
+    public function getProductsPerPage(): int
+    {
+        return $this->productsPerPage;
+    }
 
 
 }

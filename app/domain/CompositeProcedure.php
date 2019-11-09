@@ -16,7 +16,8 @@ use Doctrine\Common\Collections\Collection;
 class CompositeProcedure extends CasualProcedure
 {
     /**
-     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", fetch="EAGER")
+     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner")
+     * @OrderBy({"idState"="ASC"})
      */
     protected $inners;
 
@@ -48,6 +49,20 @@ class CompositeProcedure extends CasualProcedure
         return $this->inners;
     }
 
+    public function getInnerByName(string $name): PartialProcedure
+    {
+        foreach ($this->inners as $inner)
+        {
+            if ($inner->getName() === $name) return $inner;
+        }
+        throw new \Exception("{$this->getName()} не имеет процедуры с именем $name");
+    }
+
+    public function getInnersCount(): int
+    {
+        return $this->getInners()->count();
+    }
+
     public function getCompletedProcedures(): Collection
     {
         return $this->inners->filter(function ($el) {
@@ -62,9 +77,19 @@ class CompositeProcedure extends CasualProcedure
         });
     }
 
+    public function getFirstUnfinishedProc(): ?PartialProcedure
+    {
+        if ($this->isFinished()) return null;
+        foreach ($this->inners as $inner) {
+            if ($inner->isFinished()) continue;
+            return $inner;
+        }
+    }
+
 
     public function areInnersFinished()
     {
+
         foreach ($this->inners as $inner) {
             if (!$inner->isFinished()) return false;
         }
@@ -83,4 +108,5 @@ class CompositeProcedure extends CasualProcedure
         $this->checkInput((bool)($found ?? false), ' внутренней процедуры с таким именем не найдено: ' . $partial_name);
         $found->start();
     }
+
 }

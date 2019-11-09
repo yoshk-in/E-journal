@@ -23,7 +23,7 @@ class Product implements IObservable
     protected $id;
 
     /**
-     * @OneToMany(targetEntity="CasualProcedure", mappedBy="owner", fetch="EAGER")
+     * @OneToMany(targetEntity="CasualProcedure", mappedBy="owner")
      * @OrderBy({"idState" = "ASC"})
      */
     protected $procCollection;
@@ -93,11 +93,12 @@ class Product implements IObservable
 
     public function nextProc(CasualProcedure $proc)
     {
-        $this->currentProc = $this->procCollection[$next_id = $proc->getIdState() + 1];
+        $key = $this->procCollection->indexOf($proc);
+        $this->currentProc = $this->procCollection[$key + 1];
         $this->startProcedure();
     }
 
-    public function getCompleteProcedures(): Collection
+    public function getCompletedProcedures(): Collection
     {
         return $this->procCollection->filter(function ($el) {
             return $el->isFinished();
@@ -134,6 +135,23 @@ class Product implements IObservable
         return $this->currentProc = $this->currentProc ?? $this->procCollection->first();
     }
 
+    // get current procedure or next if current is finished
+
+    public function getFirstUnfinishedProc(): ?AbstractProcedure
+    {
+        $current_proc = $this->getCurrentProc();
+        $key = $this->procCollection->indexOf($current_proc);
+        $res = $current_proc->isFinished() ? $this->procCollection[$key + 1] : $current_proc;
+        return $res;
+    }
+
+    public function getConcreteUnfinishedProc(): ?AbstractProcedure
+    {
+        $unfinished = $this->getFirstUnfinishedProc();
+        if ($unfinished instanceof CompositeProcedure) return $unfinished->getFirstUnfinishedProc() ?? $unfinished;
+        return $unfinished;
+    }
+
 
     public function getProcedures(): Collection
     {
@@ -145,11 +163,17 @@ class Product implements IObservable
         $this->notify($typeReport);
     }
 
+    public function isFinished(): bool
+    {
+        return $this->finished;
+    }
+
 
     protected function isNotFinishedCheck()
     {
         if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe ' . $this->number);
     }
+
 
 }
 

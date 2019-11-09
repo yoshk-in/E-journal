@@ -3,6 +3,7 @@
 
 namespace App\domain;
 
+use App\base\AppMsg;
 use DateInterval;
 use DateTimeImmutable;
 
@@ -10,8 +11,10 @@ use DateTimeImmutable;
  * @Entity
  *
  */
-class PartialProcedure extends AbstractProcedure
+class PartialProcedure extends AbstractProcedure implements IBeforeEnd
 {
+    use TBeforeEnd;
+
     /** @ManyToOne(targetEntity="CasualProcedure") */
     protected $owner;
     /** @Column(type="string", name="`interval`") */
@@ -29,6 +32,7 @@ class PartialProcedure extends AbstractProcedure
     {
         parent::_setStart();
         $this->setEnd();
+        $this->notify(AppMsg::ARRIVE);
     }
 
     protected function setEnd() : DateTimeImmutable

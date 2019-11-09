@@ -9,8 +9,8 @@ use App\base\GUIRequest;
 class ResponseDispatcher
 {
 
-    private $response;
-    private $request;
+    protected $response;
+    protected $request;
 
     public function __construct(GUIRequest $request, Response $response)
     {

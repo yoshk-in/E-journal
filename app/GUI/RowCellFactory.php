@@ -5,7 +5,7 @@ namespace App\GUI;
 
 
 
-class RowShapeFactory
+class RowCellFactory
 {
     private $rowHeight;
     private $cellWidth;
@@ -16,8 +16,8 @@ class RowShapeFactory
     private $activeCell;
     private $activeColor;
     private $data;
-//    private $childRows;
     private $cells = [];
+    private $block = false;
 
 
 
@@ -33,19 +33,15 @@ class RowShapeFactory
 
     public function create(string $color, $owner = null)
     {
-        $shape = $this->createWithWidth($this->cellWidth, $color, $owner);
+        $shape = $this->createByWidth($this->cellWidth, $color, $owner);
         return $shape;
     }
 
-//    public function addChildRow(RowShapeFactory $row)
-//    {
-//        $this->childRows[] = $row;
-//    }
 
 
-    public function createWithWidth($width, string $color, RowShapeFactory $owner = null)
+    public function createByWidth($width, string $color, RowCellFactory $owner = null)
     {
-        $shape = (new Shape([
+        $shape = (new Cell([
             'left' => $this->offset,
             'top' => $this->top,
             'width' => $width,
@@ -53,10 +49,8 @@ class RowShapeFactory
             'backgroundColor' => $color,
             'borderColor' => Color::WHITE
         ]));
-        $this->cells[] = $shape;
-        $shape->setId(array_key_last($this->cells));
 
-        $owner ? $shape->setOwner($owner) && $owner->addCell($shape) /*&& $owner->addChildRow($this)*/ : $shape->setOwner($this) && $this->addCell($shape);
+        $owner ? $owner->addCell($shape) : $this->addCell($shape);
 
         $this->offset += $width;
         return $shape;
@@ -72,7 +66,7 @@ class RowShapeFactory
         ];
     }
 
-    public function getActiveCell(): ?Shape
+    public function getActiveCell(): Cell
     {
         return $this->activeCell;
     }
@@ -94,22 +88,48 @@ class RowShapeFactory
         $this->data = $data;
     }
 
-    public function setActiveCell(Shape $cell, string $color)
+    public function setActiveCell(int $key, string $color)
     {
-        $this->activeCell = $cell;
+        // first cell is just header product number not procedure so + 1
+        $this->activeCell = $this->cells[$this->keyWithoutHeadCell($key)];
         $this->activeColor = $color;
     }
 
-    public function addCell(Shape $shape)
+    public function addCell(Cell $shape)
     {
+        $shape->setOwner($this);
         $this->cells[] = $shape;
-        $shape->setId(array_key_last($this->cells));
     }
 
-    public function nextActiveCell(Shape $shape, string $color)
+
+    public function getCell(int $key): Cell
     {
-        $next = $this->cells[$shape->getId() + 1] ?? $shape;
-        $this->setActiveCell($next, $color);
+        return $this->cells[$this->keyWithoutHeadCell($key)];
+    }
+
+    public function getCells(): array
+    {
+        return $this->cells;
+    }
+
+    public function blockRow(bool $bool)
+    {
+        $this->block = $bool;
+    }
+
+    public function isBlock(): bool
+    {
+        return $this->block;
+    }
+
+    public function getHeadCell(): Cell
+    {
+        return $this->cells[0];
+    }
+
+    private function keyWithoutHeadCell(int $key): int
+    {
+        return $key + 1;
     }
 
 

@@ -9,14 +9,6 @@ use Gui\Components\VisualObject;
 abstract class ClickHandler
 {
 
-    protected static $nextColor = [
-        State::COLOR[0] => State::COLOR[1],
-        State::COLOR[1] => State::COLOR[2]
-    ];
-
-
-    protected $counter;
-
-    abstract public function handle(Shape $emitter, string $prevColor);
+    abstract public function handle(Cell $emitter, string $prevColor);
 
 }

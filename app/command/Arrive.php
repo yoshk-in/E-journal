@@ -17,7 +17,7 @@ class  Arrive extends Move
             $this->ensureRightInput(is_null($procedure), self::ERR_NOT_ARRIVED, $not_found);
             $new = $this->productRepository->createProducts($not_found, $productName);
         }
-        $all = array_merge($found_products->toArray(), $new ?? []);
+        $all = array_merge($found_products, $new ?? []);
         foreach ($all as $product)  {
             $product->startProcedure($procedure);
         }

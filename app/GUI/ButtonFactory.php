@@ -8,14 +8,14 @@ use Gui\Components\Button;
 
 class ButtonFactory
 {
-    public static function createWithOn(\Closure $clickCallback): Button
+    public static function createWithOn(\Closure $clickCallback, $offset = 600): Button
     {
         $button = new Button([
             'value' => 'отправить',
-            'top' => 300,
-            'left' => 300,
-            'width' => 400,
-            'height' => 200
+            'top' => 580,
+            'left'=> $offset,
+            'width' => 300,
+            'height' => 70
         ]);
         $button->on('mousedown', $clickCallback);
         return $button;

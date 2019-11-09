@@ -25,7 +25,7 @@ class GUIRequest extends AbstractRequest
 
     public function prepareReq(string $command = AppMsg::INFO)
     {
-        $this->blockNumbers = array_values($this->blocks ?? []);
+        $this->blockNumbers = array_merge($this->blockNumbers, array_values($this->blocks ?? []));
         $this->addCmd($command);
     }
 

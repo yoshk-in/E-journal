@@ -17,4 +17,8 @@ interface AppMsg
     const FORWARD = 'arrive or dispatch - no matter';
     const NOT_FOUND = 'NotFoundNumbers';
 
+    const CREATE_PRODUCTS = 'create new product numbers';
+    const GUI_INFO = 'info found';
+    const CURRENT_PROC_INFO = 'current proc info';
+
 }

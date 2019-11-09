@@ -14,8 +14,8 @@ class WindowFactory
             'title' => 'ЖУРНАЛ УЧЕТА',
             'left' => 248,
             'top' => 50,
-            'width' => 1024,
-            'height' => 600,
+            'width' => 1600,
+            'height' => 900,
         ]);
     }
 }
