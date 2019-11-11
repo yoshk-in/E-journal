@@ -1,36 +1,29 @@
 <?php
 
 
-namespace App\GUI;
+namespace App\GUI\components;
 
 
+use App\GUI\Color;
 use Gui\Components\ContainerObjectInterface;
 use Gui\Components\Shape;
+use App\GUI\RowCellFactory;
 
 
-class Cell
+class Cell extends GuiComponentWrapper
 {
 
     private $clickCounter = 0;
     private $owner;
-    private $shape;
     private $defaultBorderColor;
     private $clickBlock = false;
 
 
-    public function __construct(
-
-        array $defaultAttributes = [],
-        ContainerObjectInterface $parent = null,
-        $application = null,
-        $defaultBorderColor = Color::WHITE
-
-    ) {
-
-        $this->shape = new Shape($defaultAttributes, $parent, $application);
-        $this->defaultBorderColor = $defaultBorderColor;
-    }
-
+ public function __construct(array $defaultAttributes = [], ContainerObjectInterface $parent = null, $application = null, string $defaultBorderColor = Color::WHITE)
+ {
+     parent::__construct($defaultAttributes, $parent, $application);
+     $this->defaultBorderColor = $defaultBorderColor;
+ }
 
     /**
      * @return mixed
@@ -70,15 +63,15 @@ class Cell
 
     public function __call($name, $arguments)
     {
-        if (method_exists($this->shape, $name)) {
-            return $this->shape->$name(...$arguments);
+        if (method_exists($this->component, $name)) {
+            return $this->component->$name(...$arguments);
         }
         throw new \Exception('call undefined method');
     }
 
     public function defaultBorderColor()
     {
-        $this->shape->setBorderColor($this->defaultBorderColor);
+        $this->component->setBorderColor($this->defaultBorderColor);
     }
 
     public function getData()
@@ -98,4 +91,8 @@ class Cell
     }
 
 
+    protected function componentClass(): string
+    {
+        return Shape::class;
+    }
 }

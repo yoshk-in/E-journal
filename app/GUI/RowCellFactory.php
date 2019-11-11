@@ -5,6 +5,10 @@ namespace App\GUI;
 
 
 
+use App\GUI\components\LabelWrapper;
+use Gui\Components\Label;
+use App\GUI\components\Cell;
+
 class RowCellFactory
 {
     private $rowHeight;
@@ -17,6 +21,7 @@ class RowCellFactory
     private $activeColor;
     private $data;
     private $cells = [];
+    private $labels = [];
     private $block = false;
 
 
@@ -31,17 +36,16 @@ class RowCellFactory
         $this->cellWidth = $cellWidth;
     }
 
-    public function create(string $color, $owner = null)
+    public function create(string $color)
     {
-        $shape = $this->createByWidth($this->cellWidth, $color, $owner);
+        $shape = $this->createByWidth($this->cellWidth, $color);
         return $shape;
     }
 
 
-
-    public function createByWidth($width, string $color, RowCellFactory $owner = null)
+    public function createByWidth($width, string $color)
     {
-        $shape = (new Cell([
+        $cell = (new Cell([
             'left' => $this->offset,
             'top' => $this->top,
             'width' => $width,
@@ -49,11 +53,16 @@ class RowCellFactory
             'backgroundColor' => $color,
             'borderColor' => Color::WHITE
         ]));
-
-        $owner ? $owner->addCell($shape) : $this->addCell($shape);
+        $cell->setTop($this->top);
+        $this->addCell($cell);
 
         $this->offset += $width;
-        return $shape;
+        return $cell;
+    }
+
+    public function addLabelForLastCell(LabelWrapper $label)
+    {
+        $this->labels[array_key_last($this->cells)] = $label;
     }
 
     public function getSizes(): array
@@ -66,12 +75,12 @@ class RowCellFactory
         ];
     }
 
-    public function getActiveCell(): Cell
+    public function getActiveCell(): ?Cell
     {
         return $this->activeCell;
     }
 
-    public function getActiveColor(): string
+    public function getActiveColor(): ?string
     {
         return $this->activeColor;
     }
@@ -88,10 +97,16 @@ class RowCellFactory
         $this->data = $data;
     }
 
-    public function setActiveCell(int $key, string $color)
+    public function setActiveCellById(int $key, string $color)
     {
         // first cell is just header product number not procedure so + 1
         $this->activeCell = $this->cells[$this->keyWithoutHeadCell($key)];
+        $this->activeColor = $color;
+    }
+
+    public function setActiveCell(Cell $cell, string $color)
+    {
+        $this->activeCell = $cell;
         $this->activeColor = $color;
     }
 
@@ -126,6 +141,35 @@ class RowCellFactory
     {
         return $this->cells[0];
     }
+
+    public function getCellsAndLabels(): array
+    {
+        return [$this->cells, $this->labels];
+    }
+
+    public function mergeCellsAndLabels(RowCellFactory $row)
+    {
+        $cellsAndLabels = $row->getCellsAndLabels();
+        $this->cells = array_merge($this->cells, $cellsAndLabels[0]);
+        $this->labels = array_merge($this->labels, $cellsAndLabels[1]);
+        foreach ($cellsAndLabels[0] as $cell) {
+            $cell->setOwner($this);
+        }
+    }
+
+    public function reduceTopOnOneHeight()
+    {
+        foreach ($this->cells as $cell)
+        {
+            $cell->setTop($cell->getTop() - $this->rowHeight);
+        }
+
+        foreach ($this->labels as $label)
+        {
+            $label->setTop($label->getTop() - $this->rowHeight);
+        }
+    }
+
 
     private function keyWithoutHeadCell(int $key): int
     {

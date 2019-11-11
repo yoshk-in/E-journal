@@ -6,6 +6,7 @@ namespace App\GUI;
 
 
 use App\base\GUIRequest;
+use App\GUI\components\Cell;
 
 class NewClickHandler extends ClickHandler
 {
@@ -32,7 +33,7 @@ class NewClickHandler extends ClickHandler
             $emitter->defaultBorderColor();
             $this->request->removeBlock($emitter->getData());
         } else {
-            $emitter->setBorderColor(ProdProcColorant::nextColor($emitter->getOwner()->getActiveColor()));
+            $emitter->setBorderColor(ProdProcColorant::nextColor($row->getActiveColor()));
             $this->request->addBlock($emitter->getData());
         }
     }

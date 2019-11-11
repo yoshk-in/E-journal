@@ -6,14 +6,22 @@ namespace App\GUI;
 
 use Gui\Application;
 use Gui\Components\Label;
+use Psr\Container\ContainerInterface;
 
 class Debug
 {
     private static $gui;
+    private static $container;
 
-    static function set(Application $gui)
+    static function set(Application $gui, ContainerInterface $container)
     {
         self::$gui = $gui;
+        self::$container = $container;
+    }
+
+    static function table()
+    {
+        return new TableFactory(20, 20, 100, 200, 600, self::$container->get(MouseMng::class));
     }
 
     static function print($text)

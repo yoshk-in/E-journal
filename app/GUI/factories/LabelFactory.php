@@ -1,19 +1,19 @@
 <?php
 
 
-namespace App\GUI;
+namespace App\GUI\factories;
 
 
-use Gui\Components\Label;
-
+use App\GUI\components\LabelWrapper;
+use App\GUI\Color;
 
 class LabelFactory
 {
     static private $color = Color::WHITE;
 
-    public static function create(string $text, string $fontSize, int $width, int $height, $top, $left): Label
+    public static function create(string $text, string $fontSize, int $width, int $height, $top, $left): LabelWrapper
     {
-        return new Label(
+        $labelWrapper =  new LabelWrapper(
             [
                 'text' => $text,
                 'fontColor' => self::$color,
@@ -24,8 +24,8 @@ class LabelFactory
                 'fontSize' => $fontSize,
 //                'backgroundColor' => Color::GREEN
             ]
-
         );
+        return $labelWrapper->setTop($top);
 
     }
 

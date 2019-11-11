@@ -61,6 +61,15 @@ class App
         ini_set('xdebug.var_display_max_depth', '4');
         ini_set('xdebug.var_display_max_children', '256');
         ini_set('xdebug.var_display_max_data', '1024');
+        ini_set('error_reporting', E_ALL);
+        set_error_handler(function($errno, $errstr) {
+            // error was suppressed with the @-operator
+            if (0 === error_reporting()) {
+                return false;
+            }
+
+            throw new \Exception($errstr, $errno);
+        });
     }
 
     static private function production()

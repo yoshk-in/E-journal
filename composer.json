@@ -1,5 +1,4 @@
 {
-  "name": "anon/jornal",
   "type": "project",
   "require": {
     "ext-mbstring": "7.*",

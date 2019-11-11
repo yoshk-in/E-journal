@@ -10,6 +10,8 @@ use App\controller\Controller;
 use App\domain\ProcedureMap;
 use App\GUI\startMode\FirstStart;
 use App\GUI\startMode\NotFirstStart;
+use Gui\Application;
+use Gui\Components\Shape;
 use Psr\Container\ContainerInterface;
 use React\EventLoop\LoopInterface;
 
@@ -26,8 +28,8 @@ class GUIManager
     private $productsPerPage = 10;
 
     const START_MODE = [
-      AppMsg::GUI_INFO => NotFirstStart::class,
-      AppMsg::NOT_FOUND => FirstStart::class
+        AppMsg::GUI_INFO => NotFirstStart::class,
+        AppMsg::NOT_FOUND => FirstStart::class
     ];
 
 
@@ -45,12 +47,19 @@ class GUIManager
         $this->product = $this->procedureMap->getProducts()[0];
         $this->gui = WindowFactory::create();
         $this->container->set(LoopInterface::class, $this->gui->getLoop());
-        Debug::set($this->gui);
+        $this->container->set(Application::class, $this->gui);
+        Debug::set($this->gui, $this->container);
         $this->firstRequest();
         $this->gui->on('start', function () {
             $mode = self::START_MODE[$this->response->getType()];
             $start_mode = $this->container->get($mode);
             $start_mode->run($this->response, $this->gui);
+//            $table = Debug::table();
+//            $this->shape = $table->addClickTextCell('hi', Color::WHITE);
+//
+//            $this->shape->on('mousedown', function () {
+//                $this->shape->setTop($this->shape->getTop() + 50);
+//            });
         });
         $this->gui->run();
     }
@@ -80,7 +89,7 @@ class GUIManager
         $this->doRequest(AppMsg::GUI_INFO);
     }
 
-    public function  update()
+    public function update()
     {
         $this->doRequest();
         $this->response->reset();

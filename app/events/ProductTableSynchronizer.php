@@ -6,39 +6,50 @@ namespace App\events;
 
 use App\base\AppMsg;
 use App\domain\AbstractProcedure;
+use App\domain\Product;
 use App\GUI\Debug;
 use App\GUI\handlers\Block;
 use App\GUI\handlers\CellActivator;
+use App\GUI\handlers\GuiComponentDestroyer;
 use App\GUI\ProdProcColorant;
 use App\GUI\RowCellFactory;
+use App\GUI\TableFactory;
 
-class ProcCellSynchronize implements ISubscriber
+class ProductTableSynchronizer implements ISubscriber
 {
-    private $rows = [];
+    private $table;
     private $cellActivate;
     private $colorant;
+    private $destroyer;
+
     const EVENTS = [
         AppMsg::ARRIVE,
         AppMsg::DISPATCH,
         AppMsg::CURRENT_PROC_INFO
-        ];
+    ];
 
-    public function __construct(CellActivator $cellActivate, EventChannel $eventChannel)
+    public function __construct(CellActivator $cellActivate, EventChannel $eventChannel, GuiComponentDestroyer $destroyer)
     {
         $this->cellActivate = $cellActivate;
         $eventChannel->subscribe($this);
         $this->colorant = ProdProcColorant::class;
+        $this->destroyer = $destroyer;
     }
 
-    public function attachRowCells(RowCellFactory $row)
+    public function attachTable(TableFactory $table)
     {
-        $this->rows[$row->getData()->getNumber()] = $row;
+        $this->table = $table;
     }
 
     public function notify(AbstractProcedure $proc)
     {
-        $row = $this->rows[$proc->getProduct()->getNumber()];
-
+        $product = $proc->getProduct();
+        if ($product->isEndLastProc()) {
+            $this->destroyer->destroy($this->table->getRow($product->getNumber())->getCellsAndLabels());
+            $this->table->unsetRow($product->getNumber());
+            return;
+        }
+        $row = $this->table->getRow($product->getNumber());
         $cell = $row->getCell($proc->getIdState());
         $cell->resetClickCounter();
         $cell->setBackgroundColor($color = $this->colorant::color($proc));
@@ -49,8 +60,12 @@ class ProcCellSynchronize implements ISubscriber
             Block::unblock($row);
         }
 
-        $this->cellActivate->byProduct($row, $proc->getProduct());
+        $this->activateRowByProduct($row, $proc->getProduct());
+    }
 
+    public function activateRowByProduct(RowCellFactory $row, Product $product)
+    {
+        $this->cellActivate->byProduct($row, $product);
     }
 
     public function update(Object $observable, string $event)
@@ -62,4 +77,5 @@ class ProcCellSynchronize implements ISubscriber
     {
         return self::EVENTS;
     }
+
 }

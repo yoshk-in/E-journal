@@ -40,6 +40,9 @@ class Product implements IObservable
     /**     @Column(type="boolean")                 */
     protected $finished = false;
 
+    protected $isEndLastProd = false;
+
+
 
     public function __construct(int $number, string $name, ProcedureFactory $factory)
     {
@@ -123,10 +126,9 @@ class Product implements IObservable
     public function endProcedure()
     {
         $this->move(function () {
+            $isLast = $this->isLastProc();
             $this->getCurrentProc()->end();
-            if ($this->currentProc === $this->procCollection->last()) {
-                $this->finished = true;
-            }
+            !$isLast ?: $this->finished = true;
         });
     }
 
@@ -168,11 +170,25 @@ class Product implements IObservable
         return $this->finished;
     }
 
+    public function isEndLastProc(): bool
+    {
+        return $this->isEndLastProd;
+    }
 
     protected function isNotFinishedCheck()
     {
         if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe ' . $this->number);
     }
+
+    protected function isLastProc(): bool
+    {
+        if ($this->currentProc === $this->procCollection->last())
+        {
+            return $this->isEndLastProd = true;
+        }
+        return false;
+    }
+
 
 
 }

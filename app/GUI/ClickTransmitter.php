@@ -4,7 +4,8 @@
 namespace App\GUI;
 
 
-use Gui\Components\VisualObjectInterface;
+use App\GUI\components\GuiComponentWrapper;
+use App\GUI\components\Cell;
 
 class ClickTransmitter
 {
@@ -15,7 +16,7 @@ class ClickTransmitter
         $this->clickMng = $clickMng;
     }
 
-    public function fromTo(string $currentColor, VisualObjectInterface $from, Cell $to)
+    public function fromTo(string $currentColor, GuiComponentWrapper $from, Cell $to)
     {
         $from->on('mousedown', $this->clickHandler($to, $currentColor));
         $to->on('mousedown', $this->clickHandler($to, $currentColor));

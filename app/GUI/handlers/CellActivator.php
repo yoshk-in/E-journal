@@ -53,7 +53,7 @@ class CellActivator
 
     private function setActiveCell(RowCellFactory $row, AbstractProcedure $procedure)
     {
-        $row->setActiveCell($procedure->getIdState(), $this->colorant::color($procedure));
+        $row->setActiveCellById($procedure->getIdState(), $this->colorant::color($procedure));
     }
 
     private function activatePartialCellByProc(RowCellFactory $row, PartialProcedure $active)

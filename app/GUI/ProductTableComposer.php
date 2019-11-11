@@ -6,32 +6,30 @@ namespace App\GUI;
 
 use App\domain\CasualProcedure;
 use App\domain\CompositeProcedure;
-use App\domain\PartialProcedure;
 use App\domain\ProcedureMap;
 use App\domain\Product;
-use App\events\ProcCellSynchronize;
-use App\GUI\handlers\CellActivator;
+use App\events\ProductTableSynchronizer;
+use App\GUI\components\Cell;
+
 class ProductTableComposer
 {
 
     private $map;
-    private $cellActivate;
     private $colorant;
-    private $synchronize;
+    private $synchronizer;
 
-    public function __construct(ProcedureMap $map, CellActivator $cellActivate, ProcCellSynchronize $synchronize)
+    public function __construct(ProcedureMap $map, ProductTableSynchronizer $synchronize)
     {
         $this->map = $map;
-        $this->cellActivate = $cellActivate;
         $this->colorant = ProdProcColorant::class;
-        $this->synchronize = $synchronize;
+        $this->synchronizer = $synchronize;
     }
 
     public function tableByResponse(TableFactory $table, string $productName, Response $response)
     {
+        $this->synchronizer->attachTable($table);
         // header row
         $this->createHeaderRow($table, $productName);
-
         foreach ($response->getInfo() as $key => $product) {
             $table->newRow($product->getNumber(), $product);
             //y header
@@ -41,8 +39,7 @@ class ProductTableComposer
 
             //activate cells and sync by proc state
             $row = $table->getCurrentRow();
-            $this->cellActivate->byProduct($row, $product);
-            $this->synchronize->attachRowCells($row);
+            $this->synchronizer->activateRowByProduct($row, $product);
         }
     }
 
@@ -50,10 +47,10 @@ class ProductTableComposer
     protected function createHeaderRow(TableFactory $table, string $productName)
     {
         //xy header - first cell
-        $table->addTextShape('номера');
+        $table->addTextCell('номера');
 
         foreach ($this->map->getProdProcArr($productName) as $proc) {
-            (isset($proc['inners'])) ? $table->addWideTextShape($proc['name']) : $table->addTextShape($proc['name']);
+            (isset($proc['inners'])) ? $table->addWideTextCell($proc['name']) : $table->addTextCell($proc['name']);
         }
 
     }

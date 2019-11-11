@@ -4,7 +4,7 @@
 namespace App\GUI;
 
 
-use Gui\Components\VisualObject;
+use App\GUI\components\Cell;
 
 abstract class ClickHandler
 {

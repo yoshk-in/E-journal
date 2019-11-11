@@ -17,12 +17,14 @@ class NotFirstStart extends StartMode
 {
     private $tComposer;
     private $mouseMng;
+    private $buttonFactory;
 
     public function __construct(GUIManager $app, ProductTableComposer $tComposer, MouseMng $mouseMng)
     {
         parent::__construct($app);
         $this->tComposer = $tComposer;
         $this->mouseMng = $mouseMng;
+        $this->buttonFactory = ButtonFactory::class;
     }
 
     function run(Response $response, Application $gui)
@@ -32,12 +34,19 @@ class NotFirstStart extends StartMode
         );
         $this->tComposer->tableByResponse($table, $this->app->getProduct(), $response);
         $response->reset();
+        $this->createButton($table, $startLeft);
+        $this->mouseMng->changeHandler(new NewClickHandler($this->app->getRequest(), $this->app));
+    }
 
-        ButtonFactory::createWithOn(
+
+
+    private function createButton($table, $offset)
+    {
+        $this->buttonFactory::createWithOn(
             function () {
                 $this->app->update();
             },
-            $table->getWidth() + $startLeft);
-        $this->mouseMng->changeHandler(new NewClickHandler($this->app->getRequest(), $this->app));
+            $table->getWidth() + $offset
+        );
     }
 }
