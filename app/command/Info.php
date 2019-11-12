@@ -18,13 +18,13 @@ class Info extends Move
 
     protected function getNotFinished(string $productName): array
     {
-        return $this->productRepository->findNotFinished($productName);
+        return $this->productRepository->findUnfinished($productName);
     }
 
     protected function reportInfo(array $collection)
     {
         foreach ($collection as $product) {
-            $product->report(AppMsg::INFO);
+            $product->report(AppMsg::PRODUCT_INFO);
         }
     }
 

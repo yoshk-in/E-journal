@@ -8,7 +8,7 @@ interface AppMsg
 {
     const ARRIVE = 'Arrive';
     const DISPATCH = 'Dispatch';
-    const INFO = 'Info';
+    const PRODUCT_INFO = 'Info';
     const RANGE_INFO = 'RangeInfo';
     const PARTY = 'Party';
     const CLEAR_JOURNAL = 'ClearJournal';
@@ -18,7 +18,8 @@ interface AppMsg
     const NOT_FOUND = 'NotFoundNumbers';
 
     const CREATE_PRODUCTS = 'create new product numbers';
+    const CREATE_NEW_ONE_PRODUCT = 'create new one product';
     const GUI_INFO = 'info found';
-    const CURRENT_PROC_INFO = 'current proc info';
+    const CURRENT_PROCEDURE_INFO = 'current proc info';
 
 }

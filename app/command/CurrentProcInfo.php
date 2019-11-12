@@ -18,7 +18,7 @@ class CurrentProcInfo extends Move
             if ($proc instanceof CompositeProcedure) {
                 $proc = $proc->getInnerByName($procedure);
             }
-            $proc->notify(AppMsg::CURRENT_PROC_INFO);
+            $proc->notify(AppMsg::CURRENT_PROCEDURE_INFO);
         }
 
     }

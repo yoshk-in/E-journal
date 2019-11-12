@@ -15,7 +15,7 @@ class CmdResolver
 
     const CMD_MAP = [
         AppMsg::RANGE_INFO => RangeInfo::class,
-        AppMsg::INFO => Info::class,
+        AppMsg::PRODUCT_INFO => Info::class,
         AppMsg::DISPATCH => Dispatch::class,
         AppMsg::ARRIVE => Arrive::class,
         AppMsg::PARTY => Party::class,
@@ -23,7 +23,8 @@ class CmdResolver
         AppMsg::FORWARD => Forward::class,
         AppMsg::GUI_INFO => GUIInfo::class,
         AppMsg::CREATE_PRODUCTS => CreateProducts::class,
-        AppMsg::CURRENT_PROC_INFO => CurrentProcInfo::class
+        AppMsg::CURRENT_PROCEDURE_INFO => CurrentProcInfo::class,
+        AppMsg::CREATE_NEW_ONE_PRODUCT => CreateNewOneProduct::class
     ];
 
     public function __construct(ContainerInterface $container, AbstractRequest $request)

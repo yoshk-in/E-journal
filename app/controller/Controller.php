@@ -6,13 +6,12 @@ namespace App\controller;
 ;
 
 use App\GUI\GUIManager;
-use App\infoManager\InfoManager;
+use App\infoManager\CLIInfoManager;
 use App\command\CmdResolver;
 use App\events\EventChannel;
 
 class Controller
 {
-    protected $infoMng;
     protected $commandResolver;
     protected $request;
 
@@ -21,11 +20,9 @@ class Controller
 
     public function __construct(
         CmdResolver $commandResolver,
-        InfoManager $infoMng,
         EventChannel $eventChannel
     ) {
         $this->commandResolver = $commandResolver;
-        $this->infoMng = $infoMng;
         $this->eventChannel = $eventChannel;
     }
 
@@ -33,9 +30,8 @@ class Controller
     {
         $commands = $this->commandResolver->getCommand();
         foreach ($commands as $command) {
-            $output[] = $command->execute();
+            $command->execute();
         }
-        $this->infoMng->dispatch();
     }
 
 }

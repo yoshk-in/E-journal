@@ -7,13 +7,12 @@ namespace App\events;
 use App\base\AppMsg;
 use App\domain\AbstractProcedure;
 use App\domain\Product;
-use App\GUI\Debug;
 use App\GUI\handlers\Block;
 use App\GUI\handlers\CellActivator;
 use App\GUI\handlers\GuiComponentDestroyer;
 use App\GUI\ProdProcColorant;
 use App\GUI\RowCellFactory;
-use App\GUI\TableFactory;
+use App\GUI\Table;
 
 class ProductTableSynchronizer implements ISubscriber
 {
@@ -25,18 +24,17 @@ class ProductTableSynchronizer implements ISubscriber
     const EVENTS = [
         AppMsg::ARRIVE,
         AppMsg::DISPATCH,
-        AppMsg::CURRENT_PROC_INFO
+        AppMsg::CURRENT_PROCEDURE_INFO
     ];
 
-    public function __construct(CellActivator $cellActivate, EventChannel $eventChannel, GuiComponentDestroyer $destroyer)
+    public function __construct(CellActivator $cellActivate, GuiComponentDestroyer $destroyer)
     {
         $this->cellActivate = $cellActivate;
-        $eventChannel->subscribe($this);
         $this->colorant = ProdProcColorant::class;
         $this->destroyer = $destroyer;
     }
 
-    public function attachTable(TableFactory $table)
+    public function attachTable(Table $table)
     {
         $this->table = $table;
     }

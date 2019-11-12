@@ -53,7 +53,6 @@ class RowCellFactory
             'backgroundColor' => $color,
             'borderColor' => Color::WHITE
         ]));
-        $cell->setTop($this->top);
         $this->addCell($cell);
 
         $this->offset += $width;

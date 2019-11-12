@@ -11,6 +11,6 @@ class Info extends Parser
 
     protected function doParse($request)
     {
-        $request->addCmd(AppMsg::INFO);
+        $request->addCmd(AppMsg::PRODUCT_INFO);
     }
 }

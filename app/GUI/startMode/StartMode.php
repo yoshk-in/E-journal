@@ -5,8 +5,6 @@ namespace App\GUI\startMode;
 
 
 use App\GUI\GUIManager;
-use App\GUI\Response;
-use Gui\Application;
 
 abstract class StartMode
 {
@@ -18,5 +16,5 @@ abstract class StartMode
         $this->app = $app;
     }
 
-    abstract function run(Response $response, Application $gui);
+    abstract public function run();
 }

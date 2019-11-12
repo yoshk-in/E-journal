@@ -25,7 +25,7 @@ class LabelFactory
 //                'backgroundColor' => Color::GREEN
             ]
         );
-        return $labelWrapper->setTop($top);
+        return $labelWrapper /* ->setTop($top) */ ;
 
     }
 

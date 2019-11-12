@@ -38,7 +38,7 @@ class DoctrineORMAdapter
         $this->_em->persist($object);
     }
 
-    public function findEntityById(string $entityClass, $id): ?object
+    public function findEntityById(string $entityClass, $id)
     {
         return $this->_em->getRepository($entityClass)->find($id);
     }
@@ -49,7 +49,7 @@ class DoctrineORMAdapter
         return $this->docRep->findBy($criteria, $order);
     }
 
-    public function findOneWhere(array $criteria, array $order): object
+    public function findOneWhere(array $criteria, array $order)
     {
         return $this->docRep->findOneBy($criteria, $order);
     }

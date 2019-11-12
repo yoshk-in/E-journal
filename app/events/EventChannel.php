@@ -10,18 +10,8 @@ class EventChannel implements IEventChannel
 
     public function __construct(array $subscribers, array $observables)
     {
-
-        foreach ($subscribers as $subscriber) {
-            if (!$subscriber instanceof ISubscriber) throw new \Exception('subscriber must implements ISubscriber interface');
-            foreach ($subscriber->subscribeOn() as $event) {
-                $this->channels[$event][] = $subscriber;
-            };
-        }
-
-        foreach ($observables as $observable) {
-            if (array_search(IObservable::class, class_implements($observable)) === false) throw new \Exception('observable must implements IObservable interface');
-            $observable::attachToEventChannel($this);
-        }
+        $this->subscribeArray($subscribers);
+        $this->attachStaticArray($observables);
     }
 
     public function notify($object, string $event)
@@ -35,8 +25,40 @@ class EventChannel implements IEventChannel
     public function subscribe(ISubscriber $subscriber)
     {
         foreach ($subscriber->subscribeOn() as $event) {
-            $this->channels[$event][] = $subscriber;
+            $this->channels[$event][$this->subscriberKey($subscriber)] = $subscriber;
         };
+    }
+
+    public function describe(ISubscriber $subscriber, string $event)
+    {
+        $key = $this->subscriberKey($subscriber);
+        if (isset($this->channels[$event][$key])) {
+            unset($this->channels[$event][$key]);
+        }
+    }
+
+    public function subscribeArray(array $subscribers)
+    {
+        foreach ($subscribers as $subscriber) {
+            $this->subscribe($subscriber);
+        }
+    }
+
+    public function attachStaticArray(array $observables)
+    {
+        foreach ($observables as $observable) {
+            $this->attachStatic($observable);
+        }
+    }
+
+    public function attachStatic($observable)
+    {
+        $observable::attachToEventChannel($this);
+    }
+
+    private function subscriberKey($subscriber): string
+    {
+        return get_class($subscriber);
     }
 
 }

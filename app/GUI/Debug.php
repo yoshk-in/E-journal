@@ -5,7 +5,6 @@ namespace App\GUI;
 
 
 use Gui\Application;
-use Gui\Components\Label;
 use Psr\Container\ContainerInterface;
 
 class Debug
@@ -21,7 +20,7 @@ class Debug
 
     static function table()
     {
-        return new TableFactory(20, 20, 100, 200, 600, self::$container->get(MouseMng::class));
+        return new Table(20, 20, 100, 200, 600, self::$container->get(MouseMng::class));
     }
 
     static function print($text)

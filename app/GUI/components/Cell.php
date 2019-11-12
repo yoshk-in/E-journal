@@ -61,13 +61,6 @@ class Cell extends GuiComponentWrapper
         $this->owner = $owner;
     }
 
-    public function __call($name, $arguments)
-    {
-        if (method_exists($this->component, $name)) {
-            return $this->component->$name(...$arguments);
-        }
-        throw new \Exception('call undefined method');
-    }
 
     public function defaultBorderColor()
     {

@@ -2,6 +2,7 @@
 
 namespace App\domain;
 
+use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
 use App\events\{Event, IObservable, TObservable};
 use Doctrine\Common\Collections\ArrayCollection;
@@ -23,7 +24,7 @@ class Product implements IObservable
     protected $id;
 
     /**
-     * @OneToMany(targetEntity="CasualProcedure", mappedBy="owner")
+     * @OneToMany(targetEntity="CasualProcedure", mappedBy="owner", fetch="EAGER")
      * @OrderBy({"idState" = "ASC"})
      */
     protected $procCollection;
@@ -41,6 +42,8 @@ class Product implements IObservable
     protected $finished = false;
 
     protected $isEndLastProd = false;
+
+    protected static $changeState = Event::PRODUCT_MOVE;
 
 
 
@@ -98,6 +101,7 @@ class Product implements IObservable
     {
         $key = $this->procCollection->indexOf($proc);
         $this->currentProc = $this->procCollection[$key + 1];
+        $this->notify(self::$changeState);
         $this->startProcedure();
     }
 
@@ -119,7 +123,6 @@ class Product implements IObservable
     {
         $this->isNotFinishedCheck();
         $move($partial);
-        $this->notify(Event::PRODUCT_MOVE);
     }
 
 
@@ -128,7 +131,7 @@ class Product implements IObservable
         $this->move(function () {
             $isLast = $this->isLastProc();
             $this->getCurrentProc()->end();
-            !$isLast ?: $this->finished = true;
+            !$isLast ?: ($this->finished = true) && $this->notify(self::$changeState);
         });
     }
 

@@ -9,6 +9,7 @@ use App\base\GUIRequest;
 use App\controller\CLIController;
 use App\controller\Controller;
 use App\controller\GUIController;
+use App\GUI\GUIManager;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 
@@ -43,9 +44,7 @@ class App
     {
         $container = self::bootstrap();
         $container->set(AbstractRequest::class, $container->get(GUIRequest::class));
-        $gui = $container->get(GUIController::class);
-        $app = $container->get(Controller::class);
-        $gui->setNextHandler($app);
+        $gui = $container->get(GUIManager::class);
         $gui->run();
     }
 
@@ -62,18 +61,19 @@ class App
         ini_set('xdebug.var_display_max_children', '256');
         ini_set('xdebug.var_display_max_data', '1024');
         ini_set('error_reporting', E_ALL);
-        set_error_handler(function($errno, $errstr) {
-            // error was suppressed with the @-operator
-            if (0 === error_reporting()) {
-                return false;
-            }
-
-            throw new \Exception($errstr, $errno);
-        });
+//        set_error_handler(function($errno, $errstr) {
+//            // error was suppressed with the @-operator
+//            if (0 === error_reporting()) {
+//                return false;
+//            }
+//
+//            throw new \Exception($errstr, $errno);
+//        });
     }
 
     static private function production()
     {
+        ini_set('xdebug.var_display_max_depth', '4');
         if (function_exists('xdebug_disable')) {
             xdebug_disable();
         }

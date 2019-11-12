@@ -16,7 +16,7 @@ use Doctrine\Common\Collections\Collection;
 class CompositeProcedure extends CasualProcedure
 {
     /**
-     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner")
+     * @OneToMany(targetEntity="PartialProcedure", mappedBy="owner", fetch="EAGER")
      * @OrderBy({"idState"="ASC"})
      */
     protected $inners;
@@ -89,7 +89,6 @@ class CompositeProcedure extends CasualProcedure
 
     public function areInnersFinished()
     {
-
         foreach ($this->inners as $inner) {
             if (!$inner->isFinished()) return false;
         }

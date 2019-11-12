@@ -27,7 +27,6 @@ class GUIController implements IController
     public function run()
     {
         $this->GUIManager->run($this->next);
-        //$this->next->run($this->request);
     }
 
 }

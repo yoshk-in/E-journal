@@ -1,18 +1,18 @@
 <?php
 
 
-namespace App\GUI;
+namespace App\GUI\factories;
 
 
 use Gui\Components\Button;
 
 class ButtonFactory
 {
-    public static function createWithOn(\Closure $clickCallback, $offset = 600): Button
+    public static function createWithOn(\Closure $clickCallback, $offset, $top, string $text): Button
     {
         $button = new Button([
-            'value' => 'отправить',
-            'top' => 580,
+            'value' => $text,
+            'top' => $top,
             'left'=> $offset,
             'width' => 300,
             'height' => 70

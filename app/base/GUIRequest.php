@@ -23,7 +23,7 @@ class GUIRequest extends AbstractRequest
         unset($this->blocks[$block->getNumber()]);
     }
 
-    public function prepareReq(string $command = AppMsg::INFO)
+    public function prepareReq(string $command = AppMsg::PRODUCT_INFO)
     {
         $this->blockNumbers = array_merge($this->blockNumbers, array_values($this->blocks ?? []));
         $this->addCmd($command);

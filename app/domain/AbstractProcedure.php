@@ -28,7 +28,7 @@ abstract class AbstractProcedure implements IObservable
     protected $idState;
 
     /** @Column(name="state", type="integer")               */
-    protected $state = 0;
+    protected $state = self::STAGE['not_start'];
 
     /**
      * @Id @Column(type="integer")
@@ -42,6 +42,9 @@ abstract class AbstractProcedure implements IObservable
         'end' => 2
     ];
 
+    protected static $startEvent = AppMsg::ARRIVE;
+    protected static $endEvent = AppMsg::DISPATCH;
+
     protected $owner;
 
     public function __construct(string $name, int $idState, object $owner)
@@ -54,7 +57,7 @@ abstract class AbstractProcedure implements IObservable
     public function start()
     {
         $this->_setStart();
-        $this->notify(AppMsg::ARRIVE);
+        $this->changeStateToStart();
     }
 
     public function getProduct(): Product
@@ -89,7 +92,6 @@ abstract class AbstractProcedure implements IObservable
     }
 
 
-
     public function getStart(): ?\DateTimeInterface
     {
         return $this->start;
@@ -105,6 +107,19 @@ abstract class AbstractProcedure implements IObservable
         return $this->state;
     }
 
+    final protected function changeStateToStart()
+    {
+        $this->state = self::STAGE['start'];
+        $this->notify(self::$startEvent);
+    }
+
+    final protected function changeStateToEnd()
+    {
+        $this->state = self::STAGE['end'];
+        $this->notify(self::$endEvent);
+    }
+
+
     protected function getOwner()
     {
         return $this->owner;
@@ -114,7 +129,6 @@ abstract class AbstractProcedure implements IObservable
     {
         $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
         $this->start = new DateTimeImmutable('now');
-        $this->state = self::STAGE['start'];
     }
 
 

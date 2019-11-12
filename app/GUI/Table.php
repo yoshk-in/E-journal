@@ -9,9 +9,9 @@ use Gui\Components\Label;
 use App\GUI\components\Cell;
 use App\GUI\factories\LabelFactory;
 
-class TableFactory
+class Table
 {
-    private $shapeFactory;
+    private $currentRow;
     private $textFactory;
     private $wideCellWidth;
     private $defaultColor;
@@ -19,12 +19,12 @@ class TableFactory
     private $click;
     private $left;
     private $rows = [];
-    private $parentFactory;
+    private $parentRow;
 
 
     public function __construct(int $startTop, int $startLeft, $rowHeight, $cellWidth, $wideCellWidth, MouseMng $click, $defaultColor = Color::BLACK, $fontSize = 10)
     {
-        $this->shapeFactory = new RowCellFactory($startTop, $this->left = $startLeft, $rowHeight, $cellWidth);
+        $this->currentRow = new RowCellFactory($startTop, $this->left = $startLeft, $rowHeight, $cellWidth);
         $this->textFactory = LabelFactory::class;
         $this->wideCellWidth = $wideCellWidth;
         $this->defaultColor = $defaultColor;
@@ -34,7 +34,7 @@ class TableFactory
 
     public function getCurrentRow(): RowCellFactory
     {
-        return $this->shapeFactory;
+        return $this->currentRow;
     }
 
     public function getRow($key): RowCellFactory
@@ -50,15 +50,15 @@ class TableFactory
 
     public function getWidth()
     {
-        [ , , $width] = $this->shapeFactory->getSizes();
+        [ , , $width] = $this->currentRow->getSizes();
         return $width;
     }
 
 
     public function addTextCell(string $text, ?string $color = null): array
     {
-        $sizes = $this->shapeFactory->getSizes();
-        $shape = $this->shapeFactory->create($color ?? $this->defaultColor);
+        $sizes = $this->currentRow->getSizes();
+        $shape = $this->currentRow->create($color ?? $this->defaultColor);
         $text = $this->textInMiddle($text, ...$sizes);
         return [$text, $shape];
     }
@@ -66,17 +66,18 @@ class TableFactory
 
     public function addWideTextCell(string $text)
     {
-        [, $height, $left, $top] = $this->shapeFactory->getSizes();
-        $this->shapeFactory->createByWidth($this->wideCellWidth, $this->defaultColor);
+        [, $height, $left, $top] = $this->currentRow->getSizes();
+        $this->currentRow->createByWidth($this->wideCellWidth, $this->defaultColor);
         $this->textInMiddle($text, $this->wideCellWidth, $height, $left, $top);
     }
 
-    public function newRow(string $key, $data)
+    public function newRow(string $key, $data): RowCellFactory
     {
-        [$width, $height, , $top] = $this->shapeFactory->getSizes();
-        $this->shapeFactory = new RowCellFactory($top + $height, $this->left, $height, $width);
-        $this->rows[$key] = $this->shapeFactory;
-        $this->shapeFactory->setData($data);
+        [$width, $height, , $top] = $this->currentRow->getSizes();
+        $this->currentRow = new RowCellFactory($top + $height, $this->left, $height, $width);
+        $this->rows[$key] = $this->currentRow;
+        $this->currentRow->setData($data);
+        return $this->currentRow;
     }
 
     public function addClickTextCell(string $text, string $color): Cell
@@ -89,13 +90,13 @@ class TableFactory
 
     public function beginCompositeCell(string $compositeColor, int $count, int $topOffset = 10, int $leftOffset = 10)
     {
-        [, $height, $left, $top] = $this->shapeFactory->getSizes();
-        $this->parentFactory = $this->shapeFactory;
-        $compositeShape = $this->shapeFactory->createByWidth($this->wideCellWidth, $compositeColor);
+        [, $height, $left, $top] = $this->currentRow->getSizes();
+        $this->parentRow = $this->currentRow;
+        $compositeShape = $this->currentRow->createByWidth($this->wideCellWidth, $compositeColor);
 
         $this->click->on($compositeShape, $compositeColor);
 
-        $this->shapeFactory = new RowCellFactory(
+        $this->currentRow = new RowCellFactory(
             $top + $topOffset,
             $left + $leftOffset,
             $height - 2 * $topOffset,
@@ -106,14 +107,14 @@ class TableFactory
 
     public function finishCompositeCell()
     {
-        $this->parentFactory->mergeCellsAndLabels($this->shapeFactory);
-        $this->shapeFactory = $this->parentFactory;
-        $this->parentFactory = null;
+        $this->parentRow->mergeCellsAndLabels($this->currentRow);
+        $this->currentRow = $this->parentRow;
+        $this->parentRow = null;
     }
 
     public function addClickCell(string $color): Cell
     {
-        $shape = $this->shapeFactory->create($color);
+        $shape = $this->currentRow->create($color);
         $this->click->on($shape, $color);
         return $shape;
     }
@@ -129,7 +130,7 @@ class TableFactory
             $top + ($height - $word_height) / 2,
             $left + ($width - $word_width) / 2
         );
-        $this->shapeFactory->addLabelForLastCell($label);
+        $this->currentRow->addLabelForLastCell($label);
         return $label;
     }
 

@@ -5,8 +5,6 @@ namespace App\command;
 
 
 use App\base\AppMsg;
-use App\events\Event;
-use App\GUI\GUIManager;
 
 class CreateProducts extends Move
 {
@@ -15,7 +13,7 @@ class CreateProducts extends Move
     {
        $products = $this->productRepository->createProducts($numbers, $productName);
        foreach ($products as $product) {
-           $product->report(AppMsg::INFO);
+           $product->report(AppMsg::GUI_INFO);
        }
        $this->productRepository->save();
     }

@@ -59,13 +59,14 @@ class ProductRepository implements ISubscriber
 
     public function createProducts(array $numbers, string $productName): array
     {
-        foreach ($numbers as $number) {
+        [,$not_found] = $this->findByNumbers($productName, $numbers);
+        foreach ($not_found as $number) {
             $object = new $this->domainClass($number, $productName, $this->procedureFactory);
             $objects[] = $object;
             $this->orm->persist($object);
             $this->persistProductProcedures($object);
         }
-        return $objects;
+        return $objects ?? [];
     }
 
     public function findByNumbers(string $productName, array $numbers): array
@@ -85,14 +86,24 @@ class ProductRepository implements ISubscriber
         return [$found, $not_found];
     }
 
-    public function findNotFinished(string $productName): array
+    public function findUnfinished(string $productName): array
     {
         return $this->orm->findWhere([self::NAME_FIELD => $productName, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'ASC']);
     }
 
-    public function findLast(string $productName)
+    public function findLast(string $productName): ?Product
     {
         return $this->orm->findOneWhere([self::NAME_FIELD => $productName], [self::NUMBER_FIELD => 'DESC']);
+    }
+
+    public function findLastUnfinished(string $product): ?Product
+    {
+        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NAME_FIELD => 'DESC']);
+    }
+
+    public function findFirstUnfinished(string $product): ?Product
+    {
+        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NAME_FIELD => 'ASC']);
     }
 
     public function save()

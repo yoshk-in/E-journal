@@ -17,34 +17,29 @@ use Psr\Container\ContainerInterface;
 class DispatchResolver
 {
     private $appContainer;
-    private $eventMap = [];
+//    private $eventMap = [];
 
     static private $CLI_MAP = [
         AppMsg::ARRIVE          => Move::class,
         AppMsg::DISPATCH        => Move::class,
-        AppMsg::INFO            => Info::class,
+        AppMsg::PRODUCT_INFO    => Info::class,
         AppMsg::RANGE_INFO      => RangeInfo::class,
         AppMsg::NOT_FOUND       => NotFound::class
     ];
 
-    static private $GUI_MAP = [
-        AppMsg::INFO            => ResponseDispatcher::class,
-        AppMsg::DISPATCH        => ResponseDispatcher::class,
-        AppMsg::ARRIVE          => ResponseDispatcher::class,
-        AppMsg::NOT_FOUND       => NotFoundResponseDispatcher::class
-    ];
 
 
-    public function __construct(ContainerInterface $appContainer, AbstractRequest $request)
+
+    public function __construct(ContainerInterface $appContainer)
     {
         $this->appContainer = $appContainer;
-        $this->eventMap = self::${$request->getEnv() . '_MAP'};
+//        $this->eventMap = self::$CLI_MAP;
 
     }
 
     public function getDispatcher(string $event)
     {
-        return $this->appContainer->get($this->eventMap[$event]);
+        return $this->appContainer->get(self::$CLI_MAP[$event]);
     }
 
 

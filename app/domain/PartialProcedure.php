@@ -32,7 +32,7 @@ class PartialProcedure extends AbstractProcedure implements IBeforeEnd
     {
         parent::_setStart();
         $this->setEnd();
-        $this->notify(AppMsg::ARRIVE);
+        $this->changeStateToStart();
     }
 
     protected function setEnd() : DateTimeImmutable

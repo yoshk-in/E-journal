@@ -26,12 +26,7 @@ abstract class Move extends Command
 
     public function execute()
     {
-        try {
-            $this->doExecute(...$this->getRequestProps());
-        } catch (\Exception $e) {
-            $e->getMessage();
-            exit;
-        }
+        $this->doExecute(...$this->getRequestProps());
     }
 
     protected function getRequestProps(): array

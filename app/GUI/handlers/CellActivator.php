@@ -10,7 +10,6 @@ use App\domain\CasualProcedure;
 use App\domain\CompositeProcedure;
 use App\domain\PartialProcedure;
 use App\domain\Product;
-use App\GUI\Debug;
 use App\GUI\ProdProcColorant;
 use App\GUI\RowCellFactory;
 use App\GUI\scheduler\Scheduler;
@@ -21,6 +20,7 @@ class CellActivator
     private $scheduler;
     private $block;
     private $colorant;
+    private $successFullMsg = 'Блок N%s процедура %s завершена';
 
     public function __construct(Scheduler $scheduler)
     {
@@ -59,19 +59,18 @@ class CellActivator
     private function activatePartialCellByProc(RowCellFactory $row, PartialProcedure $active)
     {
         $this->setActiveCell($row, $active);
-        if ($active->isStarted()) {
-            $this->block::rowAndActiveCell($row);
 
-            $this->scheduler->addTask($active->beforeEnd(), function () use ($active) {
+        if (!$active->isStarted()) return;
 
-                $active->notify(AppMsg::CURRENT_PROC_INFO);
+        $this->block::rowAndActiveCell($row);
+        $this->scheduler->addTask(
+            $active->beforeEnd(),
+            function () use ($active) {
+                $active->notify(AppMsg::CURRENT_PROCEDURE_INFO);
+                return sprintf($this->successFullMsg, $active->getProduct()->getNumber(), $active->getName());
+            }
+        );
 
-                Debug::print(
-                    'Блок N ' . $active->getProduct()->getNumber()
-                    . ' процедура  '  . $active->getName()  . ' завершена'
-                );
-            });
-        }
 
     }
 
