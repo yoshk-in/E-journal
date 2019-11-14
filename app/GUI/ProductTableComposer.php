@@ -10,40 +10,67 @@ use App\domain\CompositeProcedure;
 use App\domain\ProcedureMap;
 use App\domain\Product;
 use App\events\ISubscriber;
-use App\events\ProductTableSynchronizer;
+use App\events\ProductTableSync;
 use App\GUI\components\Cell;
+use App\GUI\components\Pager;
+use App\GUI\domainBridge\Store;
+use App\GUI\factories\TableFactory;
 
 class ProductTableComposer implements ISubscriber
 {
 
     private $map;
     private $colorant;
-    private $synchronizer;
-    protected $table;
+    private $tSync;
+    protected $currentTable;
+    private $tFactory;
+    private $mouseMng;
+    private $productsPerPage = 15;
+    private $tables = [];
+    private $tableSizes = [ 20,  60,  50,  100, 600]; // [ left, top, height, widthCell, wideCell ]
+    private $pager;
+    private $visibleTable;
+    private $store;
+
     const EVENTS = [
         AppMsg::GUI_INFO,
     ];
 
-    public function __construct(ProcedureMap $map, ProductTableSynchronizer $synchronize)
+
+    public function __construct(ProcedureMap $map, ProductTableSync $tSync, MouseHandlerMng $click, Pager $pager, Store $store, $tFactory = TableFactory::class)
     {
         $this->map = $map;
         $this->colorant = ProdProcColorant::class;
-        $this->synchronizer = $synchronize;
+        $this->tSync = $tSync;
+        $this->tSync->attachTableComposer($this);
+        $this->tFactory = $tFactory;
+        $this->mouseMng = $click;
+        $this->pager = $pager;
+        $this->store = $store;
     }
 
-    public function prepareTable(Table $table, string $productName)
+    public function prepareTable(string $productName)
     {
-        $this->synchronizer->attachTable($this->table = $table);
-        $this->createHeaderRow($table, $productName);
+        $this->pager->addLabel();
+        $this->createPagerButton();
+        $this->visibleTable = $this->currentTable = $this->tables[] = $this->tFactory::create($this->mouseMng, ...$this->tableSizes);
+        $this->createHeaderRow($this->currentTable, $productName);
     }
 
     protected function createProductRow(Product $product)
     {
-        $row = $this->table->newRow($product->getNumber(), $product);
+        $row = $this->currentTable->newRow($product->getNumber(), $product);
         $this->createHeaderCell($product);
-        $this->createProcedureRow($this->table, $product);
+        $this->createProcedureRow($this->currentTable, $product);
         //activate cells and sync by proc state
-        $this->synchronizer->activateRowByProduct($row, $product);
+        $this->tSync->activateRowByProduct($row, $product);
+        $this->store->add($product->getId(), $row);
+    }
+
+    public function unsetRow(CellRow $row)
+    {
+        $table = $row->getOwner();
+        $table->unsetRow($row->getData()->getNumber());
     }
 
 
@@ -96,12 +123,35 @@ class ProductTableComposer implements ISubscriber
 
     protected function createHeaderCell(Product $product)
     {
-        $this->table->addClickTextCell($product->getNumber(), $this->colorant::productColor($product));
+        $this->currentTable->addClickTextCell($product->getNumber(), $this->colorant::productColor($product));
+    }
+
+    protected function createPagerButton()
+    {
+        $this->pager->add(function ($tableNumber) {
+            $onClickTable = $this->tables[$tableNumber];
+            if ($onClickTable === $this->visibleTable) return;
+            $this->visibleTable->setVisible(false);
+            $this->visibleTable = $onClickTable;
+            $this->visibleTable->setVisible(true);
+        });
     }
 
 
     public function update(Object $observable, string $event)
     {
+        if ($this->currentTable->rowCount() === $this->productsPerPage)
+        {
+            $prevTable = $this->currentTable;
+            $this->createPagerButton();
+            $this->currentTable = $this->tables[] = $this->tFactory::create($this->mouseMng, ...$this->tableSizes);
+            if ($prevTable == $this->visibleTable)
+            {
+                $prevTable->setVisible(false);
+                $this->visibleTable = $this->currentTable;
+                $this->visibleTable->setVisible(true);
+            }
+        }
         $this->createProductRow($observable);
     }
 

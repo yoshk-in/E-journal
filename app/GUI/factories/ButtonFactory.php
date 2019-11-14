@@ -8,16 +8,22 @@ use Gui\Components\Button;
 
 class ButtonFactory
 {
-    public static function createWithOn(\Closure $clickCallback, $offset, $top, string $text): Button
+    public static function createWithOn(string $text, $left, $top, $height, $width, \Closure $clickCallback): Button
     {
-        $button = new Button([
-            'value' => $text,
-            'top' => $top,
-            'left'=> $offset,
-            'width' => 300,
-            'height' => 70
-        ]);
+        $button = self::create($text, $left, $top, $height, $width);
         $button->on('mousedown', $clickCallback);
         return $button;
+    }
+
+    public static function create(string $text, $left, $top, $height, $width): Button
+    {
+        return new Button([
+            'value' => $text,
+            'width' => $width,
+            'height' => $height,
+            'top' => $top,
+            'left'=> $left,
+        ]);
+
     }
 }

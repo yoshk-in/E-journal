@@ -178,6 +178,11 @@ class Product implements IObservable
         return $this->isEndLastProd;
     }
 
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
     protected function isNotFinishedCheck()
     {
         if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe ' . $this->number);

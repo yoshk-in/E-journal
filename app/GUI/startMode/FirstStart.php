@@ -73,7 +73,7 @@ class FirstStart extends StartMode
             }
 
             $request = $this->app->getRequest();
-            $request->setBlockNumbers(range($value, (int)$value + $this->app->getProductsPerPage()));
+            $request->setBlockNumbers([$value]);
             $this->app->doRequest(AppMsg::CREATE_PRODUCTS);
         });
     }

@@ -17,7 +17,7 @@ class CreateNewOneProduct extends Move
             ++$nextNumber;
             $newProduct = $this->productRepository->createProducts([$nextNumber], $productName);
         }
-        $newProduct[0]->notify(AppMsg::GUI_INFO);
         $this->productRepository->save();
+        $newProduct[0]->notify(AppMsg::GUI_INFO);
     }
 }

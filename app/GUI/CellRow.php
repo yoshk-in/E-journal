@@ -6,10 +6,9 @@ namespace App\GUI;
 
 
 use App\GUI\components\LabelWrapper;
-use Gui\Components\Label;
 use App\GUI\components\Cell;
 
-class RowCellFactory
+class CellRow
 {
     private $rowHeight;
     private $cellWidth;
@@ -19,6 +18,7 @@ class RowCellFactory
     private $offset;
     private $activeCell;
     private $activeColor;
+    private $owner;
     private $data;
     private $cells = [];
     private $labels = [];
@@ -26,7 +26,7 @@ class RowCellFactory
 
 
 
-    public function __construct(int $startTop, int $startLeft, $rowHeight, $cellWidth)
+    public function __construct(int $startTop, int $startLeft, $rowHeight, $cellWidth, $owner = null)
     {
         $this->startTop = $startTop;
         $this->top = $startTop;
@@ -34,16 +34,22 @@ class RowCellFactory
         $this->offset = $startLeft;
         $this->rowHeight = $rowHeight;
         $this->cellWidth = $cellWidth;
+        $this->owner = $owner;
     }
 
-    public function create(string $color)
+    public function getOwner()
     {
-        $shape = $this->createByWidth($this->cellWidth, $color);
+        return $this->owner;
+    }
+
+    public function addCell(string $color)
+    {
+        $shape = $this->addCellByWidth($this->cellWidth, $color);
         return $shape;
     }
 
 
-    public function createByWidth($width, string $color)
+    public function addCellByWidth($width, string $color)
     {
         $cell = (new Cell([
             'left' => $this->offset,
@@ -53,7 +59,7 @@ class RowCellFactory
             'backgroundColor' => $color,
             'borderColor' => Color::WHITE
         ]));
-        $this->addCell($cell);
+        $this->captureCell($cell);
 
         $this->offset += $width;
         return $cell;
@@ -72,6 +78,26 @@ class RowCellFactory
             $this->offset,
             $this->top
         ];
+    }
+
+    public function setVisible(bool $bool)
+    {
+        $this->executeCallOnAllEls(function ($el) use ($bool)
+        {
+            $el->setVisible($bool);
+        });
+    }
+
+    protected function executeCallOnAllEls(\Closure $call)
+    {
+        foreach ($this->cells as $cell)
+        {
+            $call($cell);
+        }
+        foreach ($this->labels as $label)
+        {
+            $call($label);
+        }
     }
 
     public function getActiveCell(): ?Cell
@@ -109,7 +135,7 @@ class RowCellFactory
         $this->activeColor = $color;
     }
 
-    public function addCell(Cell $shape)
+    public function captureCell(Cell $shape)
     {
         $shape->setOwner($this);
         $this->cells[] = $shape;
@@ -146,7 +172,7 @@ class RowCellFactory
         return [$this->cells, $this->labels];
     }
 
-    public function mergeCellsAndLabels(RowCellFactory $row)
+    public function mergeCellsAndLabels(CellRow $row)
     {
         $cellsAndLabels = $row->getCellsAndLabels();
         $this->cells = array_merge($this->cells, $cellsAndLabels[0]);
@@ -158,6 +184,7 @@ class RowCellFactory
 
     public function reduceTopOnOneHeight()
     {
+        $this->top -= $this->rowHeight;
         foreach ($this->cells as $cell)
         {
             $cell->setTop($cell->getTop() - $this->rowHeight);

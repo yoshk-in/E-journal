@@ -37,7 +37,7 @@ abstract class GuiComponentWrapper
                 return $this->callComponent($name, $arguments);
             case 'set':
                 $this->callComponent($name, $arguments);
-                $this->propertyContainer[$rest] = $arguments;
+                $this->propertyContainer[$rest] = $argument = $arguments[0];
                 return $this;
         }
         throw new \Exception('call undefined method');

@@ -4,7 +4,7 @@ use App\infoManager\CLIInfoManager;
 use App\repository\ProductRepository;
 use App\domain\{CasualProcedure, Product};
 use \App\command\NotFoundWrapper;
-use App\events\ProductTableSynchronizer;
+use App\events\ProductTableSync;
 
 return [
     'app.domain_path' => ['app/domain'],

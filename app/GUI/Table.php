@@ -5,7 +5,6 @@ namespace App\GUI;
 
 
 use App\GUI\components\LabelWrapper;
-use Gui\Components\Label;
 use App\GUI\components\Cell;
 use App\GUI\factories\LabelFactory;
 
@@ -22,9 +21,9 @@ class Table
     private $parentRow;
 
 
-    public function __construct(int $startTop, int $startLeft, $rowHeight, $cellWidth, $wideCellWidth, MouseMng $click, $defaultColor = Color::BLACK, $fontSize = 10)
+    public function __construct(MouseHandlerMng $click, int $startTop, int $startLeft, $rowHeight, $cellWidth, $wideCellWidth, $defaultColor = Color::BLACK, $fontSize = 10)
     {
-        $this->currentRow = new RowCellFactory($startTop, $this->left = $startLeft, $rowHeight, $cellWidth);
+        $this->currentRow = new CellRow($startTop, $this->left = $startLeft, $rowHeight, $cellWidth);
         $this->textFactory = LabelFactory::class;
         $this->wideCellWidth = $wideCellWidth;
         $this->defaultColor = $defaultColor;
@@ -32,14 +31,27 @@ class Table
         $this->click = new ClickTransmitter($click);
     }
 
-    public function getCurrentRow(): RowCellFactory
+    public function getCurrentRow(): CellRow
     {
         return $this->currentRow;
     }
 
-    public function getRow($key): RowCellFactory
+    public function getRow($key): CellRow
     {
         return $this->rows[$key];
+    }
+
+    public function rowCount(): int
+    {
+        return count($this->rows);
+    }
+
+    public function setVisible(bool $bool)
+    {
+        foreach ($this->rows as $row)
+        {
+            $row->setVisible($bool);
+        }
     }
 
     public function unsetRow($key)
@@ -58,27 +70,34 @@ class Table
     public function addTextCell(string $text, ?string $color = null): array
     {
         $sizes = $this->currentRow->getSizes();
-        $shape = $this->currentRow->create($color ?? $this->defaultColor);
+        $shape = $this->currentRow->addCell($color ?? $this->defaultColor);
         $text = $this->textInMiddle($text, ...$sizes);
         return [$text, $shape];
+    }
+
+    public function getSize(): array
+    {
+        return $this->currentRow->getSizes();
     }
 
 
     public function addWideTextCell(string $text)
     {
         [, $height, $left, $top] = $this->currentRow->getSizes();
-        $this->currentRow->createByWidth($this->wideCellWidth, $this->defaultColor);
+        $this->currentRow->addCellByWidth($this->wideCellWidth, $this->defaultColor);
         $this->textInMiddle($text, $this->wideCellWidth, $height, $left, $top);
     }
 
-    public function newRow(string $key, $data): RowCellFactory
+    public function newRow(string $key, $data): CellRow
     {
         [$width, $height, , $top] = $this->currentRow->getSizes();
-        $this->currentRow = new RowCellFactory($top + $height, $this->left, $height, $width);
+        $this->currentRow = new CellRow($top + $height, $this->left, $height, $width, $this);
         $this->rows[$key] = $this->currentRow;
         $this->currentRow->setData($data);
         return $this->currentRow;
     }
+
+
 
     public function addClickTextCell(string $text, string $color): Cell
     {
@@ -92,11 +111,11 @@ class Table
     {
         [, $height, $left, $top] = $this->currentRow->getSizes();
         $this->parentRow = $this->currentRow;
-        $compositeShape = $this->currentRow->createByWidth($this->wideCellWidth, $compositeColor);
+        $compositeShape = $this->currentRow->addCellByWidth($this->wideCellWidth, $compositeColor);
 
         $this->click->on($compositeShape, $compositeColor);
 
-        $this->currentRow = new RowCellFactory(
+        $this->currentRow = new CellRow(
             $top + $topOffset,
             $left + $leftOffset,
             $height - 2 * $topOffset,
@@ -114,7 +133,7 @@ class Table
 
     public function addClickCell(string $color): Cell
     {
-        $shape = $this->currentRow->create($color);
+        $shape = $this->currentRow->addCell($color);
         $this->click->on($shape, $color);
         return $shape;
     }

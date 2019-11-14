@@ -9,11 +9,13 @@ use App\base\GUIRequest;
 use App\controller\Controller;
 use App\domain\ProcedureMap;
 use App\events\EventChannel;
-use App\events\ProductTableSynchronizer;
+use App\events\ProductTableSync;
 use App\GUI\startMode\ModeManager;
+use Gui\Application;
 use Gui\Components\VisualObjectInterface;
 use Psr\Container\ContainerInterface;
 use React\EventLoop\LoopInterface;
+use App\GUI\factories\GuiFactory;
 
 
 class GUIManager
@@ -24,8 +26,7 @@ class GUIManager
     private $procedureMap;
     private $container;
     private $product;
-    private $productsPerPage = 10;
-
+    private $windowSizes = [20, 20, 1600, 900];
 
 
     public function __construct(ProcedureMap $procedureMap, ContainerInterface $container, GUIRequest $request, Controller $server)
@@ -39,8 +40,8 @@ class GUIManager
     public function run()
     {
         $this->product = $this->procedureMap->getProducts()[0];
-        $this->gui = WindowFactory::create();
-//        Debug::set($this->gui, $this->container);
+        $this->gui = GuiFactory::create(...$this->getWindowSizes());
+        Debug::set($this->gui, $this->container);
         $this->setUpGuiEnvironment();
         $this->gui->on('start', function () {
             $this->firstRequest();
@@ -96,19 +97,20 @@ class GUIManager
         return $this->gui->getLoop();
     }
 
+    public function getWindowSizes(): array
+    {
+        return $this->windowSizes;
+    }
+
     public function getProduct()
     {
         return $this->product;
     }
 
-    public function getProductsPerPage(): int
-    {
-        return $this->productsPerPage;
-    }
-
 
     private function setUpGuiEnvironment()
     {
+        $this->container->set(Application::class, $this->gui);
         $this->container->set(LoopInterface::class, $this->gui->getLoop());
         $this->setSubscribersToEventChannel();
     }
@@ -118,7 +120,7 @@ class GUIManager
         $this->container->get(EventChannel::class)->subscribeArray([
             $this->container->get(ModeManager::class),
             $this->container->get(ProductTableComposer::class),
-            $this->container->get(ProductTableSynchronizer::class),
+            $this->container->get(ProductTableSync::class),
         ]);
     }
 

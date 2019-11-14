@@ -11,7 +11,7 @@ class ClickTransmitter
 {
     private $clickMng;
 
-    public function __construct(MouseMng $clickMng)
+    public function __construct(MouseHandlerMng $clickMng)
     {
         $this->clickMng = $clickMng;
     }

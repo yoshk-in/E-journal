@@ -7,7 +7,7 @@ namespace App\GUI\components;
 use App\GUI\Color;
 use Gui\Components\ContainerObjectInterface;
 use Gui\Components\Shape;
-use App\GUI\RowCellFactory;
+use App\GUI\CellRow;
 
 
 class Cell extends GuiComponentWrapper
@@ -48,7 +48,7 @@ class Cell extends GuiComponentWrapper
     /**
      * @return mixed
      */
-    public function getOwner(): RowCellFactory
+    public function getOwner(): CellRow
     {
         return $this->owner;
     }
@@ -56,7 +56,7 @@ class Cell extends GuiComponentWrapper
     /**
      * @param mixed $owner
      */
-    public function setOwner(RowCellFactory $owner): void
+    public function setOwner(CellRow $owner): void
     {
         $this->owner = $owner;
     }

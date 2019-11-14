@@ -20,7 +20,7 @@ class Debug
 
     static function table()
     {
-        return new Table(20, 20, 100, 200, 600, self::$container->get(MouseMng::class));
+        return new Table(20, 20, 100, 200, 600, self::$container->get(MouseHandlerMng::class));
     }
 
     static function print($text)

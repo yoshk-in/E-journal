@@ -4,15 +4,15 @@
 namespace App\GUI\factories;
 
 
-use App\GUI\MouseMng;
+use App\GUI\MouseHandlerMng;
 use App\GUI\Table;
 
 class TableFactory
 {
-    public static function create(int $offset, MouseMng $mng) : Table
+    public static function create(MouseHandlerMng $mng, int $offset, int $top, int $height, int $cellWidth, int $wideCell) : Table
     {
         return new Table(
-            20, $offset = 20, 50, 100, $wide_cell = 600, $mng
+             $mng, $top, $offset, $height, $cellWidth, $wideCell
         );
     }
 

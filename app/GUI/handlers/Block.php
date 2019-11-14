@@ -4,17 +4,17 @@
 namespace App\GUI\handlers;
 
 
-use App\GUI\RowCellFactory;
+use App\GUI\CellRow;
 
 class Block
 {
-    public static function rowAndActiveCell(RowCellFactory $row)
+    public static function rowAndActiveCell(CellRow $row)
     {
         $row->blockRow(true);
         $row->getActiveCell()->blockClick(true);
     }
 
-    public static function unblock(RowCellFactory $row)
+    public static function unblock(CellRow $row)
     {
         $row->blockRow(false);
         $row->getActiveCell()->blockClick(false);

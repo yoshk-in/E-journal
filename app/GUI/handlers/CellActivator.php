@@ -11,7 +11,7 @@ use App\domain\CompositeProcedure;
 use App\domain\PartialProcedure;
 use App\domain\Product;
 use App\GUI\ProdProcColorant;
-use App\GUI\RowCellFactory;
+use App\GUI\CellRow;
 use App\GUI\scheduler\Scheduler;
 
 class CellActivator
@@ -29,7 +29,7 @@ class CellActivator
         $this->colorant = ProdProcColorant::class;
     }
 
-    public function byProduct(RowCellFactory $row, Product $product)
+    public function byProduct(CellRow $row, Product $product)
     {
         $active = $product->getFirstUnfinishedProc() ?? $product->getCurrentProc();
 
@@ -42,7 +42,7 @@ class CellActivator
         }
     }
 
-    private function activateCompositeCellByProc(RowCellFactory $row, AbstractProcedure $active)
+    private function activateCompositeCellByProc(CellRow $row, AbstractProcedure $active)
     {
         if ($active->areInnersFinished() || $active->isNotStarted()) {
             $this->setActiveCell($row, $active);
@@ -51,12 +51,12 @@ class CellActivator
         }
     }
 
-    private function setActiveCell(RowCellFactory $row, AbstractProcedure $procedure)
+    private function setActiveCell(CellRow $row, AbstractProcedure $procedure)
     {
         $row->setActiveCellById($procedure->getIdState(), $this->colorant::color($procedure));
     }
 
-    private function activatePartialCellByProc(RowCellFactory $row, PartialProcedure $active)
+    private function activatePartialCellByProc(CellRow $row, PartialProcedure $active)
     {
         $this->setActiveCell($row, $active);
 

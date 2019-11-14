@@ -18,7 +18,7 @@ class GUIInfo extends Move
                 return;
             }
             $last = $product->getNumber();
-            $products = $this->createNumbers($productName, range($last +1, $last + 11));
+            $products = $this->createNumbers($productName, [$last + 1]);
 
         }
 //        $numberOrderReference = $products[0]->getNumber();
@@ -33,8 +33,7 @@ class GUIInfo extends Move
 //    protected function extraCheckMissingNumbers(string $productName, Product $product, int $nextNumber, array &$checkingArray, int $currentKey)
 //    {
 //        if ($product->getNumber() !== $nextNumber) {
-//            $missingNumbers = [];
-//            $this->checkMissingElemOfArray($checkingArray, ++$currentKey, $nextNumber, $missingNumbers);
+//            $missingNumbers = $this->checkMissingElemOfArray($checkingArray, ++$currentKey, $nextNumber, []);
 //        } else {
 //            return;
 //        }
@@ -45,13 +44,13 @@ class GUIInfo extends Move
 //
 //    }
 //
-//    protected function checkMissingElemOfArray(array $array, int &$currentKey, int &$reference, array $store)
+//    protected function checkMissingElemOfArray(array $array, int &$currentKey, int &$reference, array $result)
 //    {
 //        if (!isset($array[$currentKey])) return;
 //        if ($array[$currentKey]->getNumber() === $reference) return;
-//        $store[] = $reference;
-//        $this->checkMissingElemOfArray($array, ++$currentKey, ++$reference, $store);
-//        return $store;
+//        $result[] = $reference;
+//        $this->checkMissingElemOfArray($array, ++$currentKey, ++$reference, $result);
+//        return $result;
 //    }
 
     protected function createNumbers(string $productName, array $numbers): array
