@@ -29,17 +29,20 @@ class Product implements IObservable
      */
     protected $procCollection;
 
-    /**     @Column(type="integer")                 */
+    /**     @Column(type="integer")                     */
     protected $number;
 
-    /**     @Column(type="string")                  */
+    /**     @Column(type="string")                      */
     protected $name;
 
-    /**     @OneToOne(targetEntity="CasualProcedure")     */
+    /**     @OneToOne(targetEntity="CasualProcedure")    */
     protected $currentProc;
 
-    /**     @Column(type="boolean")                 */
+    /**     @Column(type="boolean")                      */
     protected $finished = false;
+
+    /** @Column(type="boolean")                          */
+    protected $started = false;
 
     protected $isEndLastProd = false;
 
@@ -97,6 +100,11 @@ class Product implements IObservable
 
     }
 
+    public function procStart(CasualProcedure $proc)
+    {
+       if ($this->isFirstProc()) $this->started = true;
+    }
+
     public function nextProc(CasualProcedure $proc)
     {
         $key = $this->procCollection->indexOf($proc);
@@ -129,10 +137,14 @@ class Product implements IObservable
     public function endProcedure()
     {
         $this->move(function () {
-            $isLast = $this->isLastProc();
             $this->getCurrentProc()->end();
-            !$isLast ?: ($this->finished = true) && $this->notify(self::$changeState);
+            $this->notify(self::$changeState);
         });
+    }
+
+    public function procEnd(CasualProcedure $procedure)
+    {
+        if ($this->isLastProc()) $this->finished = true;
     }
 
     public function getCurrentProc(): CasualProcedure
@@ -173,9 +185,9 @@ class Product implements IObservable
         return $this->finished;
     }
 
-    public function isEndLastProc(): bool
+    public function isStarted(): bool
     {
-        return $this->isEndLastProd;
+        return $this->started;
     }
 
     public function getId(): int
@@ -186,6 +198,15 @@ class Product implements IObservable
     protected function isNotFinishedCheck()
     {
         if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe ' . $this->number);
+    }
+
+    protected function isFirstProc(): bool
+    {
+        if ($this->currentProc === $this->procCollection->first())
+        {
+            return true;
+        }
+        return false;
     }
 
     protected function isLastProc(): bool

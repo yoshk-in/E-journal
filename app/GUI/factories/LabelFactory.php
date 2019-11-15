@@ -29,4 +29,15 @@ class LabelFactory
 
     }
 
+    public static function createBlank($left, $top): LabelWrapper
+    {
+        return new LabelWrapper(
+            [
+                'fontColor' => self::$color,
+                'left' => $left,
+                'top' => $top
+            ]
+        );
+    }
+
 }

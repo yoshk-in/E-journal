@@ -57,6 +57,7 @@ abstract class AbstractProcedure implements IObservable
     public function start()
     {
         $this->_setStart();
+        $this->getProduct()->procStart($this);
         $this->changeStateToStart();
     }
 

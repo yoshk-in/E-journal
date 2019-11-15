@@ -26,12 +26,7 @@ class GuiComponentDestroyer
         if (is_null($this->lastCall)) {
             $this->destroyArrayOfArray($guiComponents);
         } else {
-            $this->loop->futureTick(function () use ($guiComponents) {
-                $this->destroyArrayOfArray($guiComponents);
-            });
-            $this->loop->futureTick(function () {
-                $this->lastCall = null;
-            });
+            $this->loop->futureTick($this->destroyClosure($guiComponents));
         }
     }
 
@@ -42,6 +37,21 @@ class GuiComponentDestroyer
                 $this->destroyElement($component);
             }
         }
+    }
+
+    private function resetLastCallClosure(): \Closure
+    {
+        return function () {
+            $this->lastCall = null;
+        };
+    }
+
+    private function destroyClosure(array $components): \Closure
+    {
+        return function () use ($components) {
+            $this->destroyArrayOfArray($components);
+            $this->loop->futureTick($this->resetLastCallClosure());
+        };
     }
 
     private function destroyElement(GuiComponentWrapper $object)

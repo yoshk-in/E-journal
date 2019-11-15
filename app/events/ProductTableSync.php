@@ -12,6 +12,7 @@ use App\GUI\domainBridge\Store;
 use App\GUI\handlers\Block;
 use App\GUI\handlers\CellActivator;
 use App\GUI\handlers\GuiComponentDestroyer;
+use App\GUI\handlers\GuiStat;
 use App\GUI\ProdProcColorant;
 use App\GUI\CellRow;
 use App\GUI\ProductTableComposer;
@@ -23,6 +24,7 @@ class ProductTableSync implements ISubscriber
     private $colorant;
     private $store;
     private $destroyer;
+    private $analytic;
 
     const EVENTS = [
         AppMsg::ARRIVE,
@@ -30,12 +32,13 @@ class ProductTableSync implements ISubscriber
         AppMsg::CURRENT_PROCEDURE_INFO
     ];
 
-    public function __construct(CellActivator $cellActivate, GuiComponentDestroyer $destroyer, Store $store)
+    public function __construct(CellActivator $cellActivate, GuiComponentDestroyer $destroyer, Store $store, GuiStat $analytic)
     {
         $this->cellActivate = $cellActivate;
         $this->colorant = ProdProcColorant::class;
         $this->destroyer = $destroyer;
         $this->store = $store;
+        $this->analytic = $analytic;
     }
 
     public function attachTableComposer(ProductTableComposer $tComposer)
@@ -45,13 +48,15 @@ class ProductTableSync implements ISubscriber
 
     public function notify(AbstractProcedure $proc)
     {
+        $this->analytic->updateStat();
         $product = $this->productByProc($proc);
-        if ($product->isEndLastProc()) {
+        if ($product->isFinished()) {
             $this->destroyTableRow($product);
             return;
         }
         $row = $this->updateRowCellByProc($proc);
         $this->activateRowByProduct($row, $product);
+
     }
 
     public function activateRowByProduct(CellRow $row, Product $product)
