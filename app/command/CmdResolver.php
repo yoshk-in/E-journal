@@ -24,7 +24,8 @@ class CmdResolver
         AppMsg::GUI_INFO => GUIInfo::class,
         AppMsg::CREATE_PRODUCTS => CreateProducts::class,
         AppMsg::CURRENT_PROCEDURE_INFO => CurrentProcInfo::class,
-        AppMsg::CREATE_NEW_ONE_PRODUCT => CreateNewOneProduct::class
+        AppMsg::CREATE_NEW_ONE_PRODUCT => CreateNewOneProduct::class,
+        AppMsg::STAT_INFO => StartedAndUnfinishedInfoProducts::class
     ];
 
     public function __construct(ContainerInterface $container, AbstractRequest $request)
@@ -34,14 +35,14 @@ class CmdResolver
     }
 
 
-    public function getCommand() : array
+    public function getCommand(): array
     {
         $result_cmd_array = [];
         $commands = $this->request->getCmd();
 
         if (!empty($commands)) {
             foreach ($commands as $command) {
-                    $result_cmd_array[] = $this->container->get(self::CMD_MAP[$command]);
+                $result_cmd_array[] = $this->container->get(self::CMD_MAP[$command]);
             }
             return $result_cmd_array;
 

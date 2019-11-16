@@ -10,6 +10,7 @@ use App\controller\Controller;
 use App\domain\ProcedureMap;
 use App\events\EventChannel;
 use App\events\ProductTableSync;
+use App\GUI\handlers\GuiStat;
 use App\GUI\startMode\ModeManager;
 use Gui\Application;
 use Gui\Components\VisualObjectInterface;
@@ -87,6 +88,11 @@ class GUIManager
         $this->doRequest(AppMsg::CREATE_NEW_ONE_PRODUCT);
     }
 
+    public function statRequest()
+    {
+        $this->doRequest(AppMsg::STAT_INFO);
+    }
+
     public function getRequest()
     {
         return $this->request;
@@ -121,6 +127,7 @@ class GUIManager
             $this->container->get(ModeManager::class),
             $this->container->get(ProductTableComposer::class),
             $this->container->get(ProductTableSync::class),
+            $this->container->get(GuiStat::class)
         ]);
     }
 

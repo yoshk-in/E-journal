@@ -46,7 +46,8 @@ class Product implements IObservable
 
     protected $isEndLastProd = false;
 
-    protected static $changeState = Event::PRODUCT_MOVE;
+    protected static $changeState = Event::PRODUCT_CHANGE_STATE;
+    protected static $procChangeState = AppMsg::PRODUCT_MOVE;
 
 
 
@@ -102,7 +103,7 @@ class Product implements IObservable
 
     public function procStart(CasualProcedure $proc)
     {
-       if ($this->isFirstProc()) $this->started = true;
+       if ($this->isFirstProc()) ($this->started = true) && $this->notify(self::$changeState);
     }
 
     public function nextProc(CasualProcedure $proc)
@@ -131,6 +132,7 @@ class Product implements IObservable
     {
         $this->isNotFinishedCheck();
         $move($partial);
+        $this->notify(self::$procChangeState);
     }
 
 
@@ -138,13 +140,12 @@ class Product implements IObservable
     {
         $this->move(function () {
             $this->getCurrentProc()->end();
-            $this->notify(self::$changeState);
         });
     }
 
     public function procEnd(CasualProcedure $procedure)
     {
-        if ($this->isLastProc()) $this->finished = true;
+        if ($this->isLastProc()) ($this->finished = true) && $this->notify(self::$changeState);
     }
 
     public function getCurrentProc(): CasualProcedure

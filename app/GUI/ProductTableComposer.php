@@ -13,7 +13,7 @@ use App\events\ISubscriber;
 use App\events\ProductTableSync;
 use App\GUI\components\Cell;
 use App\GUI\components\Pager;
-use App\GUI\domainBridge\Store;
+use App\GUI\domainBridge\RowStore;
 use App\GUI\factories\TableFactory;
 
 class ProductTableComposer implements ISubscriber
@@ -37,7 +37,7 @@ class ProductTableComposer implements ISubscriber
     ];
 
 
-    public function __construct(ProcedureMap $map, ProductTableSync $tSync, MouseHandlerMng $click, Pager $pager, Store $store, $tFactory = TableFactory::class)
+    public function __construct(ProcedureMap $map, ProductTableSync $tSync, MouseHandlerMng $click, Pager $pager, RowStore $store, $tFactory = TableFactory::class)
     {
         $this->map = $map;
         $this->colorant = ProdProcColorant::class;

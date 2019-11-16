@@ -48,6 +48,6 @@ class Info extends AbstractInfoDispatcher
     public function flush()
     {
         parent::flush();
-        echo (new ProductStat())->doStat($this->statBuffer);
+        echo (new ProductStat())->renderStat($this->statBuffer);
     }
 }

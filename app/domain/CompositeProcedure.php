@@ -23,9 +23,9 @@ class CompositeProcedure extends CasualProcedure
 
 
 
-    public function __construct(string $name, int $idState, Product $product, array $inners)
+    public function __construct(string $name, int $idState, Product $product, string $nameAfterEnd, array $inners)
     {
-        parent::__construct($name, $idState, $product);
+        parent::__construct($name, $idState, $product, $nameAfterEnd);
         $this->inners = new ArrayCollection(ProcedureFactory::createPartials($inners, $this));
     }
 

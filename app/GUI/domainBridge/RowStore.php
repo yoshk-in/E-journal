@@ -4,18 +4,18 @@
 namespace App\GUI\domainBridge;
 
 
-
+use App\domain\Product;
+use App\events\IListener;
 use App\GUI\CellRow;
+use App\GUI\Debug;
 
-class Store
+class RowStore
 {
     private $rowStore = [];
-    private $productStore = [];
 
     public function add(int $id, $row)
     {
         $this->rowStore[$id] = $row;
-        $this->addStartedProduct($row);
     }
 
     public function get(int $id)
@@ -30,14 +30,7 @@ class Store
         return $data;
     }
 
-    public function getStartedProducts(): array
-    {
-        return $this->productStore;
-    }
 
-    private function addStartedProduct(CellRow $row)
-    {
-        if (!$row->getData()->isStarted()) return;
-        $this->productStore[] = $row->getData();
-    }
+
+
 }

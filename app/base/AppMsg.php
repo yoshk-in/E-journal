@@ -21,5 +21,7 @@ interface AppMsg
     const CREATE_NEW_ONE_PRODUCT = 'create new one product';
     const GUI_INFO = 'info found';
     const CURRENT_PROCEDURE_INFO = 'current proc info';
+    const STAT_INFO = 'started and unfinished products';
+    const PRODUCT_MOVE = 'product procedure change state';
 
 }

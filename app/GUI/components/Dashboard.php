@@ -41,15 +41,15 @@ class Dashboard
         $this->leftOffset = $width - $this->offset;
         $this->createAddProductButton();
         $this->createSubmitButton();
-        $this->createAsyncRest();
+        $this->createStatLayer();
     }
 
-    private function createAsyncRest()
-    {
-        $this->loop->futureTick(function () {
-            $this->createStatLayer();
-        });
-    }
+//    private function createAsyncRest()
+//    {
+//        $this->loop->futureTick(function () {
+//            $this->createStatLayer();
+//        });
+//    }
 
     private function createStatLayer()
     {
@@ -57,7 +57,6 @@ class Dashboard
         $height = $this->buttonHeight;
         [$left, $top] = $this->updateCreateLine($height, $width);
         $label = $this->lFactory::createBlank($left - 3 * $this->buttonHeight, $top);
-//        $label = $this->lFactory::create('текушая статистика: ', 10, $width, $height, $top, $left);
         $this->analytic->attachOutput($label);
     }
 

@@ -19,12 +19,12 @@ class ProcedureFactory
             $idState += $compositeInnersCount ?? 0;
             switch (isset($procedure['inners'])) {
                 case true :
-                    $composite = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['inners']);
+                    $composite = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['next'], $procedure['inners']);
                     $compositeInnersCount = $composite->getInnersCount();
                     $array[] = $composite;
                     break;
                 case false:
-                    $array[] = new CasualProcedure($procedure['name'], $idState, $product);
+                    $array[] = new CasualProcedure($procedure['name'], $idState, $product, $procedure['next']);
             }
         }
         return $array;

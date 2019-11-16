@@ -24,17 +24,19 @@ class ProductRepository implements ISubscriber
     const FIELD = [
         'name' => 'name',
         'number' => 'number',
-        'finished' => 'finished'
+        'finished' => 'finished',
+        'started' => 'started'
     ];
 
     const NAME_FIELD = 'name';
     const NUMBER_FIELD = 'number';
     const FINISHED_FIELD = 'finished';
+    const STARTED_FIELD = 'started';
 
     const SUBSCRIBE_ON = [
         AppMsg::ARRIVE,
         AppMsg::DISPATCH,
-        Event::PRODUCT_MOVE,
+        Event::PRODUCT_CHANGE_STATE,
     ];
 
     private $procedureFactory;
@@ -98,12 +100,17 @@ class ProductRepository implements ISubscriber
 
     public function findLastUnfinished(string $product): ?Product
     {
-        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NAME_FIELD => 'DESC']);
+        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'DESC']);
     }
 
     public function findFirstUnfinished(string $product): ?Product
     {
-        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NAME_FIELD => 'ASC']);
+        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'ASC']);
+    }
+
+    public function findStartedAndUnfinished(string $product): array
+    {
+        return $this->orm->findWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false, self::STARTED_FIELD => true], [self::NUMBER_FIELD => 'ASC']);
     }
 
     public function save()
@@ -121,17 +128,17 @@ class ProductRepository implements ISubscriber
         return self::SUBSCRIBE_ON;
     }
 
-    public function getNumbersMng(string $productName) : ProductNumberManager
-    {
-        $horizon = $this->orm->findEntityById($this->numbersHorizon, $productName);
-        if (empty($horizon)) {
-            $horizon = new ProductNumberManager();
-            $horizon->setProductName($productName);
-            $this->orm->persist($horizon);
-            return $horizon;
-        };
-        return $horizon;
-    }
+//    public function getNumbersMng(string $productName) : ProductNumberManager
+//    {
+//        $horizon = $this->orm->findEntityById($this->numbersHorizon, $productName);
+//        if (empty($horizon)) {
+//            $horizon = new ProductNumberManager();
+//            $horizon->setProductName($productName);
+//            $this->orm->persist($horizon);
+//            return $horizon;
+//        };
+//        return $horizon;
+//    }
 
     public function findAll(string $productName): array
     {

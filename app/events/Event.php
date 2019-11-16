@@ -6,6 +6,6 @@ namespace App\events;
 
 interface Event
 {
-    const PRODUCT_MOVE = 'product move';
+    const PRODUCT_CHANGE_STATE = 'product change him state';
 
 }
