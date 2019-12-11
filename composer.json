@@ -20,7 +20,10 @@
       "data\\": "cache/",
       "tests\\": "tests/",
       "bootstrap\\": "bootstrap/"
-    }
+    },
+    "files": [
+      "app/GUI/functions.php"
+    ]
   },
   "require-dev": {
     "phpunit/phpunit": "8.*",

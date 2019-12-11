@@ -5,27 +5,32 @@ namespace App\command;
 
 
 use App\base\AbstractRequest;
-use App\domain\ProcedureMap;
+use App\domain\Product;
+use App\domain\ProductMap;
 use App\repository\ProductRepository;
+use Psr\Container\ContainerInterface;
 
 abstract class Move extends Command
 {
 
     protected $productRepository;
-    protected $productMap;
     protected $orm;
     const ERR_NOT_ARRIVED = 'данные блоки еше не поступали на настройку:';
+    private $container;
+    private $productMap;
 
 
-    public function __construct(ProductRepository $repository, ProcedureMap $productMap, AbstractRequest $request)
+    public function __construct(ProductRepository $repository, AbstractRequest $request, ContainerInterface $container, ProductMap $productMap)
     {
         $this->productRepository = $repository;
-        $this->productMap = $productMap;
         parent::__construct($request);
+        $this->container = $container;
+        $this->productMap = $productMap;
     }
 
     public function execute()
     {
+        Product::setNumberStrategy($this->container->get($this->productMap->getNumberStrategy($this->request->getProduct())));
         $this->doExecute(...$this->getRequestProps());
     }
 

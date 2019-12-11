@@ -52,6 +52,7 @@ abstract class AbstractProcedure implements IObservable
         $this->name = $name;
         $this->idState = $idState;
         $this->owner = $owner;
+        $this->notify(AppMsg::PERSIST_NEW);
     }
 
     public function start()

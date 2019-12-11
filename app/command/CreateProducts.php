@@ -14,7 +14,7 @@ class CreateProducts extends Move
        $products = $this->productRepository->createProducts($numbers, $productName);
         $this->productRepository->save();
         foreach ($products as $product) {
-           $product->report(AppMsg::GUI_INFO);
+           $product->report(AppMsg::GUI_INFO . $product->getName());
        }
     }
 }

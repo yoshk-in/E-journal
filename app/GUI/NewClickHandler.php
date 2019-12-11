@@ -7,33 +7,34 @@ namespace App\GUI;
 
 use App\base\GUIRequest;
 use App\GUI\components\Cell;
+use App\GUI\handlers\Alert;
 
 class NewClickHandler extends ClickHandler
 {
     private $request;
-    private $gui;
+    private $alert;
 
-    public function __construct(GUIRequest $request, GUIManager $gui)
+    public function __construct(GUIRequest $request, Alert $alert)
     {
         $this->request = $request;
-        $this->gui = $gui;
+        $this->alert = $alert;
     }
 
-    public function handle(Cell $emitter, string $prevColor)
+    public function handle(Cell $emitter)
     {
         $row = $emitter->getOwner();
         if ($row->isBlock()) {
-            $this->gui->alert($row->getData()->getConcreteUnfinishedProc()->getName() . ' не завершена');
+            $this->alert->alert($row->getData()->getConcreteUnfinishedProc()->getName() . ' не завершена');
             return;
         }
 
         $emitter = $row->getActiveCell();
         $emitter->plusClickCounter();
         if ($emitter->getClickCounter() % 2 === 0) {
-            $emitter->defaultBorderColor();
+            $emitter->default();
             $this->request->removeBlock($emitter->getData());
         } else {
-            $emitter->setBorderColor(ProdProcColorant::nextColor($row->getActiveColor()));
+            $emitter->setBorderColor(ProductStateColorize::nextColor($row->getActiveColor()));
             $this->request->addBlock($emitter->getData());
         }
     }

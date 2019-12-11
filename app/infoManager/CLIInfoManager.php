@@ -29,7 +29,7 @@ class CLIInfoManager implements ISubscriber
         $channel->subscribe($this);
     }
 
-    public function update(Object $observable, string $event)
+    public function update($observable, string $event)
     {
         $dispatcher = $this->dispatchResolver->getDispatcher($event);
         $dispatcher->handle($observable);

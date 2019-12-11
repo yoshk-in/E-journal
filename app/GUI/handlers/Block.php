@@ -4,7 +4,7 @@
 namespace App\GUI\handlers;
 
 
-use App\GUI\CellRow;
+use App\GUI\tableStructure\CellRow;
 
 class Block
 {

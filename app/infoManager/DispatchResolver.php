@@ -17,7 +17,6 @@ use Psr\Container\ContainerInterface;
 class DispatchResolver
 {
     private $appContainer;
-//    private $eventMap = [];
 
     static private $CLI_MAP = [
         AppMsg::ARRIVE          => Move::class,
@@ -33,7 +32,6 @@ class DispatchResolver
     public function __construct(ContainerInterface $appContainer)
     {
         $this->appContainer = $appContainer;
-//        $this->eventMap = self::$CLI_MAP;
 
     }
 

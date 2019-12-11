@@ -29,8 +29,11 @@ class Product implements IObservable
      */
     protected $procCollection;
 
-    /**     @Column(type="integer")                     */
+    /**     @Column(type="integer", nullable = true)     */
     protected $number;
+
+    /**     @Column(type="integer", nullable = true)     */
+    protected $advancedNumber;
 
     /**     @Column(type="string")                      */
     protected $name;
@@ -41,21 +44,40 @@ class Product implements IObservable
     /**     @Column(type="boolean")                      */
     protected $finished = false;
 
-    /** @Column(type="boolean")                          */
+    /**     @Column(type="boolean")                       */
     protected $started = false;
 
     protected $isEndLastProd = false;
 
+    protected static $numberStrategy;
+
     protected static $changeState = Event::PRODUCT_CHANGE_STATE;
     protected static $procChangeState = AppMsg::PRODUCT_MOVE;
+    protected static $productStarted = AppMsg::PRODUCT_STARTED;
 
 
 
     public function __construct(int $number, string $name, ProcedureFactory $factory)
     {
-        $this->number = $number;
         $this->name = $name;
         $this->procCollection = new ArrayCollection($factory->createProcedures($this));
+        $this->notify(AppMsg::PERSIST_NEW);
+        self::$numberStrategy->setProductNumber($this, $number);
+    }
+
+    public static function setNumberStrategy(NumberStrategy $strategy)
+    {
+        self::$numberStrategy = $strategy;
+    }
+
+    public function nextNumber(): ?int
+    {
+        return self::$numberStrategy->nextNumber($this);
+    }
+
+    public function getAdvancedNumber()
+    {
+        return self::$numberStrategy->getAdvancedNumber($this);
     }
 
 
@@ -64,14 +86,26 @@ class Product implements IObservable
         return [$this->name, $this->number];
     }
 
+    public function setNumbers(?int $number, int $advancedNumber)
+    {
+        assert(get_called_class() instanceof NumberStrategy, ' bad usage for product numbering');
+        $this->number = $number;
+        $this->advancedNumber = $advancedNumber;
+    }
+
     public function getName(): string
     {
         return $this->name;
     }
 
-    public function getNumber(): int
+    public function getNumbersToStrategy(): array
     {
-        return $this->number;
+        return [$this->number, $this->advancedNumber];
+    }
+
+    public function getNumber(): ?int
+    {
+        return self::$numberStrategy->getNumber($this);
     }
 
     public function forward()
@@ -83,7 +117,7 @@ class Product implements IObservable
             $this->startProcedure();
         } else {
 
-            if (($current_proc instanceof CompositeProcedure) && ($state === AbstractProcedure::STAGE['start'] && !$current_proc->areInnersFinished())) {
+            if (($current_proc instanceof CompositeProcedure) && ($state === AbstractProcedure::STAGE['start'] && !$current_proc->innersFinished())) {
 
                 $this->startProcedure($current_proc->getUncompletedProcedures()->first()->getName());
             } else {
@@ -103,8 +137,9 @@ class Product implements IObservable
 
     public function procStart(CasualProcedure $proc)
     {
-       if ($this->isFirstProc()) ($this->started = true) && $this->notify(self::$changeState);
+       if ($this->isFirstProc()) $this->productStarted() && $this->notify(self::$changeState);
     }
+
 
     public function nextProc(CasualProcedure $proc)
     {
@@ -163,10 +198,10 @@ class Product implements IObservable
         return $res;
     }
 
-    public function getConcreteUnfinishedProc(): ?AbstractProcedure
+    public function getActiveProc(): ?AbstractProcedure
     {
         $unfinished = $this->getFirstUnfinishedProc();
-        if ($unfinished instanceof CompositeProcedure) return $unfinished->getFirstUnfinishedProc() ?? $unfinished;
+        if ($unfinished instanceof CompositeProcedure && $unfinished->isStarted()) return $unfinished->getFirstUnfinishedProc() ?? $unfinished;
         return $unfinished;
     }
 
@@ -217,6 +252,12 @@ class Product implements IObservable
             return $this->isEndLastProd = true;
         }
         return false;
+    }
+
+    protected function productStarted()
+    {
+        $this->started = true;
+        $this->notify($this->name . self::$productStarted);
     }
 
 

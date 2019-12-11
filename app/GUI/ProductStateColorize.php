@@ -7,7 +7,7 @@ namespace App\GUI;
 use App\domain\AbstractProcedure;
 use App\domain\Product;
 
-class ProdProcColorant
+class ProductStateColorize
 {
     const COLOR = [
         Color::BLACK,
@@ -20,6 +20,12 @@ class ProdProcColorant
         Color::ORANGE => Color::GREEN,
         Color::GREEN => Color::BLACK
     ];
+
+
+    public function __invoke(AbstractProcedure $procedure): string
+    {
+        return self::color($procedure);
+    }
 
 
     public static function color(AbstractProcedure $procedure): string

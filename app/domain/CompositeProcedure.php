@@ -23,15 +23,15 @@ class CompositeProcedure extends CasualProcedure
 
 
 
-    public function __construct(string $name, int $idState, Product $product, string $nameAfterEnd, array $inners)
+    public function __construct(string $name, int $idState, Product $product, string $nameAfterEnd, array $inners, ProcedureFactory $factory)
     {
         parent::__construct($name, $idState, $product, $nameAfterEnd);
-        $this->inners = new ArrayCollection(ProcedureFactory::createPartials($inners, $this));
+        $this->inners = new ArrayCollection($factory->createPartials($inners, $this));
     }
 
     public function end()
     {
-        $this->checkInput((bool) $this->areInnersFinished(), 'внутренние процедуры данного события не завершены:' );
+        $this->checkInput((bool) $this->innersFinished(), 'внутренние процедуры данного события не завершены:' );
         parent::end();
     }
 
@@ -87,7 +87,7 @@ class CompositeProcedure extends CasualProcedure
     }
 
 
-    public function areInnersFinished()
+    public function innersFinished()
     {
         foreach ($this->inners as $inner) {
             if (!$inner->isFinished()) return false;

@@ -3,9 +3,10 @@
 
 namespace App\GUI;
 
-
 use Gui\Application;
 use Psr\Container\ContainerInterface;
+
+
 
 class Debug
 {
@@ -18,9 +19,9 @@ class Debug
         self::$container = $container;
     }
 
-    static function table()
+    static function getApp()
     {
-        return new Table(20, 20, 100, 200, 600, self::$container->get(MouseHandlerMng::class));
+        return self::$gui;
     }
 
     static function print($text)
@@ -29,10 +30,16 @@ class Debug
             case 'string':
                 break;
             default:
-                $text = json_encode((array)$text, true);
+//                $text = json_encode((array)$text, true);
+                $text = (array) $text;
         }
 
        self::$gui->alert($text);
+    }
+
+    static function setTimeout()
+    {
+        self::$gui->getLoop()->addTimer( 1, function () { exit; });
     }
 
 }

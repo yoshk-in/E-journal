@@ -3,80 +3,127 @@
 
 namespace App\GUI\components;
 
-
-use App\GUI\Debug;
+use App\GUI\domainBridge\RequestManager;
 use App\GUI\factories\ButtonFactory;
+use App\GUI\factories\InputFactoryWrapping;
 use App\GUI\factories\LabelFactory;
 use App\GUI\GUIManager;
+use App\GUI\handlers\Alert;
 use App\GUI\handlers\GuiStat;
-use React\EventLoop\LoopInterface;
 
 class Dashboard
 {
-    private $bFactory;
-    private $app;
-    private $offset = 30;
-    private $topOffset;
-    private $leftOffset;
-    private $buttonHeight = 70;
-    private $buttonWidth = 300;
-    private $loop;
-    private $lFactory;
-    private $analytic;
+
+    protected $bFactory;
+    protected $app;
+    protected $offset = 30;
+    protected $topOffset = 30;
+    protected $leftOffset;
+    protected $buttonHeight = 70;
+    protected $buttonWidth = 300;
+    protected $lFactory;
+    protected $analytic;
+    protected $iFactory;
+    protected $productSelect;
+    protected $inputText;
+    private $requestMng;
+    private $alert;
+    private $widthInputLabel = 50;
+    private $title = 'счетчик от ежемесячной отгрузки продукции:';
+    private $titleHeight = 20;
+    private $margin = 20;
 
 
-    public function __construct(GUIManager $app, LoopInterface $loop, GuiStat $analytic, $bFactory = ButtonFactory::class, $lFactory = LabelFactory::class)
+    public function __construct(
+        GUIManager $app,
+        GuiStat $analytic,
+        ProductChangeEvent $productSelect,
+        RequestManager $requestMng,
+        Alert $alert,
+        ButtonFactory $bFactory,
+        LabelFactory $lFactory,
+        InputFactory $iFactory
+    )
     {
         $this->bFactory = $bFactory;
         $this->app = $app;
-        $this->loop = $loop;
         $this->lFactory = $lFactory;
         $this->analytic = $analytic;
+        $this->iFactory = $iFactory;
+        $this->productSelect = $productSelect;
+        $this->requestMng = $requestMng;
+        $this->alert = $alert;
     }
 
     public function create()
     {
         [, , $width,] = $this->app->getWindowSizes();
-        $this->topOffset = $this->offset;
-        $this->leftOffset = $width - $this->offset;
+        $this->leftOffset = $width - $this->offset - $this->buttonWidth;
+        $this->createProductSelect();
+        $this->createInputNumber();
         $this->createAddProductButton();
         $this->createSubmitButton();
-        $this->createStatLayer();
+        $this->analytic->createStat($this);
+//        $this->createStatLayer();
     }
 
-//    private function createAsyncRest()
+    protected function createProductSelect()
+    {
+        [$left, $top] = $this->updateCreateLine($this->buttonHeight, $this->buttonWidth);
+        $this->lFactory::createByLeftTop('Продукт:', $left, $top);
+        $this->productSelect->create($left, $top + $this->offset);
+    }
+
+    protected function createInputNumber()
+    {
+        [$left, $top] = $this->updateCreateLine($this->buttonHeight, $this->buttonWidth);
+        $this->lFactory::createbyLeftTop('Номер:', $left, $top);
+        $this->inputText = $this->iFactory::createTextInput($left, $top + $this->offset);
+    }
+
+
+//    protected function createStatLayer()
 //    {
-//        $this->loop->futureTick(function () {
-//            $this->createStatLayer();
-//        });
+//        $width = $this->buttonWidth;
+//        $height = $this->buttonHeight;
+//        [$left, $top] = $this->updateCreateLine($height, $width);
+//        $this->makeStatLayer($height, $width, $left, $top);
 //    }
 
-    private function createStatLayer()
+//    protected function makeStatLayer(int $height, int $width, int $left, int $top)
+//    {
+//        $label = $this->lFactory::createBlank($left - 3 * $this->buttonHeight, $top);
+//        $this->analytic->attachOutput($label);
+//    }
+    public function setStatAnalytic(GuiStat $analytic)
     {
-        $width = $this->buttonWidth;
-        $height = $this->buttonHeight;
-        [$left, $top] = $this->updateCreateLine($height, $width);
-        $label = $this->lFactory::createBlank($left - 3 * $this->buttonHeight, $top);
-        $this->analytic->attachOutput($label);
+        $this->analytic = $analytic;
     }
 
-    private function createSubmitButton()
+    public function createStatLabel(): LabelWrapper
     {
-        $on = function () {
-            $this->app->update();
-        };
-        $this->createButton('ЗАПИСАТЬ', $on);
+        [$left, $top] = $this->updateCreateLine($this->buttonHeight, $this->buttonWidth);
+        return $this->lFactory::createBlank($left - 3 * $this->buttonHeight, $top);
     }
 
-    private function createAddProductButton()
+    protected function createSubmitButton()
     {
-        $on = function () {
-            $this->app->addProduct();
-        };
-        $this->createButton('+   ДОБАВИТЬ  ', $on);
+        $this->createButton('ЗАПИСАТЬ', \Closure::fromCallable([$this->requestMng, 'moveProduct']));
     }
 
-    private function createButton(string $text, \Closure $on)
+    protected function createAddProductButton()
+    {
+        $this->createButton('+   ДОБАВИТЬ  ', \Closure::fromCallable([$this, 'addProductByInput']));
+    }
+
+    protected function addProductByInput()
+    {
+        $input = $this->inputText->getValue();
+        $this->inputText->setValue('');
+        $this->requestMng->addProduct($input);
+    }
+
+    protected function createButton(string $text, \Closure $on)
     {
         $callFactoryMethod = function ($text, $left, $top, $height, $width) use ($on) {
             $this->bFactory::createWithOn($text, $left, $top, $height, $width, $on);
@@ -84,18 +131,32 @@ class Dashboard
         $this->createElement($text, $this->buttonHeight, $this->buttonWidth, $callFactoryMethod);
     }
 
-    private function createElement(string $text, int $elHeight, int $elWidth, \Closure $createMethod)
+    protected function createElement(string $text, int $elHeight, int $elWidth, \Closure $createMethod)
     {
         [$left, $top] = $this->updateCreateLine($elHeight, $elWidth);
         $createMethod($text, $left, $top, $elHeight, $elWidth);
     }
 
-    private function updateCreateLine(int $elHeight, int $elWidth): array
+    protected function updateCreateLine(int $elHeight, int $elWidth): array
     {
         $top = $this->topOffset;
-        $left = $this->leftOffset - $elWidth;
         $this->topOffset += $this->offset + $elHeight;
-        return[$left, $top];
+        return [$this->leftOffset, $top];
+    }
+
+    protected function getCurrentLeftTopOffsets(): array
+    {
+        return [$this->leftOffset, $this->topOffset];
+    }
+
+    public function createNumberCounterLayer(): array
+    {
+        [$left, $top] = $this->getCurrentLeftTopOffsets();
+        $this->lFactory::createByHeight($this->title, $left, $top, $this->titleHeight);
+        $top += $this->titleHeight;
+        $input = $this->iFactory::createByWidth($left, $top, $this->widthInputLabel);
+        $productNumberLabel = $this->lFactory::createBlank($left + $this->margin + $this->widthInputLabel, $top);
+        return [$input, $productNumberLabel];
     }
 
 

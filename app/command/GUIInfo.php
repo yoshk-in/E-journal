@@ -12,50 +12,19 @@ class GUIInfo extends Move
     {
         $products = $this->productRepository->findUnfinished($productName);
         if (empty($products)) {
-            $product = $this->productRepository->findLast($productName);
-            if (empty($product)) {
+//            $product = $this->productRepository->findLast($productName);
+//            if (empty($product)) {
                 (new NotFoundWrapper([]))->notify(AppMsg::NOT_FOUND);
-                return;
-            }
-            $last = $product->getNumber();
-            $products = $this->createNumbers($productName, [$last + 1]);
+//                return;
+//            }
+//            $products = $this->createNumbers($productName, [$product->nextNumber()]);
 
         }
-//        $numberOrderReference = $products[0]->getNumber();
         foreach ($products as $key => $product) {
-//            $this->extraCheckMissingNumbers($productName, $product, $numberOrderReference, $products, $key);
-//            ++$numberOrderReference;
-            $product->report(AppMsg::GUI_INFO);
+            $product->report(AppMsg::GUI_INFO . $product->getName());
         }
         $this->productRepository->save();
     }
 
-//    protected function extraCheckMissingNumbers(string $productName, Product $product, int $nextNumber, array &$checkingArray, int $currentKey)
-//    {
-//        if ($product->getNumber() !== $nextNumber) {
-//            $missingNumbers = $this->checkMissingElemOfArray($checkingArray, ++$currentKey, $nextNumber, []);
-//        } else {
-//            return;
-//        }
-//        $products = $this->createNumbers($productName, $missingNumbers);
-//        foreach ($products as $product) {
-//            $product->report(AppMsg::GUI_INFO);
-//        }
-//
-//    }
-//
-//    protected function checkMissingElemOfArray(array $array, int &$currentKey, int &$reference, array $result)
-//    {
-//        if (!isset($array[$currentKey])) return;
-//        if ($array[$currentKey]->getNumber() === $reference) return;
-//        $result[] = $reference;
-//        $this->checkMissingElemOfArray($array, ++$currentKey, ++$reference, $result);
-//        return $result;
-//    }
 
-    protected function createNumbers(string $productName, array $numbers): array
-    {
-        return $this->productRepository->createProducts($numbers, $productName);
-
-    }
 }

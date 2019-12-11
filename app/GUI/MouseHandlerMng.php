@@ -19,7 +19,7 @@ class MouseHandlerMng
        $this->currentStrategy = $strategy;
     }
 
-    public function getHandler()
+    public function getHandler() : ClickHandler
     {
         return $this->currentStrategy;
     }

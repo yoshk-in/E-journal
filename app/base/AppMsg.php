@@ -4,6 +4,8 @@
 namespace App\base;
 
 
+use App\domain\CasualNumberStrategy;
+
 interface AppMsg
 {
     const ARRIVE = 'Arrive';
@@ -23,5 +25,6 @@ interface AppMsg
     const CURRENT_PROCEDURE_INFO = 'current proc info';
     const STAT_INFO = 'started and unfinished products';
     const PRODUCT_MOVE = 'product procedure change state';
-
+    const PRODUCT_STARTED = 'product started';
+    const PERSIST_NEW = 'persist new objects';
 }

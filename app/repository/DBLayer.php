@@ -9,7 +9,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 
 
-class DoctrineORMAdapter
+class DBLayer
 {
 
     private $_em;

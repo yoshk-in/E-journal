@@ -56,11 +56,17 @@ class App
 
     static private function dev()
     {
+        function assertFailed() {
+            throw new \Exception('assertion has failed');
+        }
         ini_set('xdebug.max_nesting_level', '150');
         ini_set('xdebug.var_display_max_depth', '4');
         ini_set('xdebug.var_display_max_children', '256');
         ini_set('xdebug.var_display_max_data', '1024');
         ini_set('error_reporting', E_ALL);
+        ini_set('assert.active', 1);
+        ini_set('assert.bail', 1);
+        ini_set('assert.callback', 'assertFailed');
 //        set_error_handler(function($errno, $errstr) {
 //            // error was suppressed with the @-operator
 //            if (0 === error_reporting()) {
@@ -73,9 +79,13 @@ class App
 
     static private function production()
     {
-        ini_set('xdebug.var_display_max_depth', '4');
-        if (function_exists('xdebug_disable')) {
+
+        if (extension_loaded('xdebug')) {
             xdebug_disable();
+            ini_set('xdebug.remote_autostart',0);
+            ini_set('xdebug.remote_enable', 0);
+            ini_set('xdebug.profiler_enable',0);
+            ini_set('xdebug.var_display_max_depth', 0);
         }
     }
 

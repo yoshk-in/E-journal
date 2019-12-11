@@ -11,12 +11,12 @@ class EventChannel implements IEventChannel
     public function __construct(array $subscribers, array $observables)
     {
         $this->subscribeArray($subscribers);
-        $this->attachStaticArray($observables);
+        $this->attachArray($observables);
     }
 
     public function notify($object, string $event)
     {
-//        if (!array_key_exists($event, $this->channels)) return;
+        if (!key_exists($event, $this->channels)) return;
         foreach ($this->channels[$event] as $subscriber) {
             $subscriber->update($object, $event);
         }
@@ -29,7 +29,7 @@ class EventChannel implements IEventChannel
         };
     }
 
-    public function describe(ISubscriber $subscriber, string $event)
+    public function unsubscribe(ISubscriber $subscriber, string $event)
     {
         $key = $this->subscriberKey($subscriber);
         if (isset($this->channels[$event][$key])) {
@@ -44,14 +44,14 @@ class EventChannel implements IEventChannel
         }
     }
 
-    public function attachStaticArray(array $observables)
+    public function attachArray(array $observables)
     {
         foreach ($observables as $observable) {
-            $this->attachStatic($observable);
+            $this->attach($observable);
         }
     }
 
-    public function attachStatic($observable)
+    public function attach($observable)
     {
         $observable::attachToEventChannel($this);
     }

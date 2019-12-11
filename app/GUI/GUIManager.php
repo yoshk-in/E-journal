@@ -4,19 +4,22 @@
 namespace App\GUI;
 
 
-use App\base\AppMsg;
 use App\base\GUIRequest;
 use App\controller\Controller;
-use App\domain\ProcedureMap;
+use App\domain\ProductMap;
 use App\events\EventChannel;
-use App\events\ProductTableSync;
+use App\GUI\domainBridge\ProductTableSync;
+use App\GUI\components\CounterDashboard;
+use App\GUI\components\Dashboard;
+use App\GUI\domainBridge\RequestManager;
+use App\GUI\handlers\CounterGuiStat;
 use App\GUI\handlers\GuiStat;
-use App\GUI\startMode\ModeManager;
+use App\GUI\startMode\RenderMng;
 use Gui\Application;
-use Gui\Components\VisualObjectInterface;
 use Psr\Container\ContainerInterface;
 use React\EventLoop\LoopInterface;
 use App\GUI\factories\GuiFactory;
+use App\GUI\tableStructure\ProductTableComposer;
 
 
 class GUIManager
@@ -24,15 +27,19 @@ class GUIManager
     private $gui;
     private $request;
     private $server;
-    private $procedureMap;
+    private $productMap;
     private $container;
-    private $product;
     private $windowSizes = [20, 20, 1600, 900];
+    private $productStat;
+    private $dashboard;
+    private $requestMng;
+    private $render;
 
 
-    public function __construct(ProcedureMap $procedureMap, ContainerInterface $container, GUIRequest $request, Controller $server)
+
+    public function __construct(ProductMap $productMap, ContainerInterface $container, GUIRequest $request, Controller $server)
     {
-        $this->procedureMap = $procedureMap;
+        $this->productMap = $productMap;
         $this->container = $container;
         $this->request = $request;
         $this->server = $server;
@@ -40,77 +47,17 @@ class GUIManager
 
     public function run()
     {
-        $this->product = $this->procedureMap->getProducts()[0];
         $this->gui = GuiFactory::create(...$this->getWindowSizes());
         Debug::set($this->gui, $this->container);
         $this->setUpGuiEnvironment();
-        $this->gui->on('start', function () {
-            $this->firstRequest();
-        });
+        $this->gui->on('start', \Closure::fromCallable([$this->render, 'run']));
         $this->gui->run();
     }
 
 
-    public function doRequest($cmd)
-    {
-        $this->request->prepareReq($cmd);
-        $this->request->setProduct($this->product);
-        try {
-            $this->server->run();
-            $this->request->reset();
-        } catch (\Exception $e) {
-            $this->alert($e->getMessage());
-        }
-    }
-
-    public function alert(string $msg)
-    {
-        $this->gui->alert($msg);
-    }
-
-    public function destroyObject(VisualObjectInterface $object)
-    {
-        $this->gui->destroyObject($object);
-    }
-
-    private function firstRequest()
-    {
-        $this->doRequest(AppMsg::GUI_INFO);
-    }
-
-    public function update()
-    {
-        $this->doRequest(AppMsg::FORWARD);
-    }
-
-    public function addProduct()
-    {
-        $this->doRequest(AppMsg::CREATE_NEW_ONE_PRODUCT);
-    }
-
-    public function statRequest()
-    {
-        $this->doRequest(AppMsg::STAT_INFO);
-    }
-
-    public function getRequest()
-    {
-        return $this->request;
-    }
-
-    public function getLoop(): LoopInterface
-    {
-        return $this->gui->getLoop();
-    }
-
     public function getWindowSizes(): array
     {
         return $this->windowSizes;
-    }
-
-    public function getProduct()
-    {
-        return $this->product;
     }
 
 
@@ -118,17 +65,34 @@ class GUIManager
     {
         $this->container->set(Application::class, $this->gui);
         $this->container->set(LoopInterface::class, $this->gui->getLoop());
+        $this->requestMng = $this->container->get(RequestManager::class);
+        $this->productMap->isCountable($this->requestMng->getProduct()) ? $this->initCountableProductEnv() : $this->initNonCountableProductEnv();
+        $this->container->set(Dashboard::class, $this->dashboard);
+        $this->container->set(GuiStat::class, $this->productStat);
         $this->setSubscribersToEventChannel();
+        $this->render = $this->container->get(RenderMng::class);
+    }
+
+
+    private function initCountableProductEnv()
+    {
+//        $this->dashboard = $this->container->get(CounterDashboard::class);
+        $this->productStat = $this->container->get(CounterGuiStat::class);
+    }
+
+    private function initNonCountableProductEnv()
+    {
+        $this->dashboard = $this->container->get(Dashboard::class);
+        $this->productStat = $this->container->get(GuiStat::class);
     }
 
     private function setSubscribersToEventChannel()
     {
         $this->container->get(EventChannel::class)->subscribeArray([
-            $this->container->get(ModeManager::class),
-            $this->container->get(ProductTableComposer::class),
             $this->container->get(ProductTableSync::class),
-            $this->container->get(GuiStat::class)
+            $this->productStat
         ]);
     }
+
 
 }

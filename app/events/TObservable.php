@@ -13,9 +13,9 @@ trait TObservable
         self::$eventChannel = $channel;
     }
 
-    public function notify(string $event)
+    public function notify(string $event, $msg = null)
     {
-        self::$eventChannel->notify($this, $event);
+        self::$eventChannel->notify($msg ?? $this, $event);
     }
 
 

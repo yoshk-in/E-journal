@@ -50,5 +50,54 @@ return [
             'short' => 'ПЗ',         //ru name
             'next' => 'склад',                //next_ru_state
         ],
+    ],
+
+
+    'НР381Б-02' => [
+        [
+            'name' => 'настройка',              //name
+            'short' => 'настрой',            //ru name
+            'next' => 'прическа',             //next_ru_state
+        ],
+        [
+            'name' => 'электрика ОТК',         //name
+            'short' => 'ОТК',        //ru name
+            'next' => 'механика ПЗ',          //next_ru_state
+            'inners' =>
+                [                         //partial procedures
+                    [
+                        'name' => 'вибропрочность',                //name
+                        'short' => 'вибро',                //ru name
+                        'interval' => 'PT1S',                  //interval
+                        'relax' => false
+                    ],
+                    [
+                        'name' => 'прогон',               //name
+                        'short' => 'прогон',               //ru name
+                        'interval' => 'PT1S',                  //interval
+                        'relax' => false
+                    ],
+                ],
+        ],
+        [
+            'name' => 'электрика ПЗ',          //name
+            'short' => 'ПЗ',         //ru name
+            'next' => 'склад',                //next_ru_state
+            'inners' =>
+                [                         //partial procedures
+                    [
+                        'name' => 'вибропрочность',                //name
+                        'short' => 'вибро',                //ru name
+                        'interval' => 'PT1S',                  //interval
+                        'relax' => false
+                    ],
+                    [
+                        'name' => 'прогон',               //name
+                        'short' => 'прогон',               //ru name
+                        'interval' => 'PT1S',                  //interval
+                        'relax' => false
+                    ],
+                ],
+        ],
     ]
 ];

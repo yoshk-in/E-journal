@@ -5,64 +5,37 @@ namespace App\GUI\components;
 
 
 use App\GUI\Color;
+use App\GUI\components\traits\TNestingVisualObject;
+use App\GUI\components\traits\TVisualObjectWrapConstruct;
+use App\GUI\components\traits\TClickCounter;
+use App\GUI\components\traits\TOwnerable;
 use Gui\Components\ContainerObjectInterface;
-use Gui\Components\Shape;
-use App\GUI\CellRow;
+use function App\GUI\offset;
+use function App\GUI\size;
 
-
-class Cell extends GuiComponentWrapper
+class Cell extends WrapVisualObject
 {
+    use TOwnerable;
+    use TClickCounter;
+    use TVisualObjectWrapConstruct {
+        TVisualObjectWrapConstruct::__construct as visualObjectConstruct;
+    }
+    use TNestingVisualObject;
 
-    private $clickCounter = 0;
-    private $owner;
     private $defaultBorderColor;
     private $clickBlock = false;
 
-
- public function __construct(array $defaultAttributes = [], ContainerObjectInterface $parent = null, $application = null, string $defaultBorderColor = Color::WHITE)
- {
-     parent::__construct($defaultAttributes, $parent, $application);
-     $this->defaultBorderColor = $defaultBorderColor;
- }
-
-    /**
-     * @return mixed
-     */
-    public function getClickCounter()
+    public function __construct(string $class,
+                                array $defaultAttributes = [],
+                                ContainerObjectInterface $parent = null,
+                                $application = null,
+                                string $defaultBorderColor = Color::WHITE)
     {
-        return $this->clickCounter;
+        self::visualObjectConstruct($class, $defaultAttributes, $parent, $application);
+        $this->defaultBorderColor = $defaultBorderColor;
     }
 
-
-    public function plusClickCounter(): void
-    {
-        ++$this->clickCounter;
-    }
-
-    public function resetClickCounter()
-    {
-        $this->defaultBorderColor();
-        $this->clickCounter = 0;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getOwner(): CellRow
-    {
-        return $this->owner;
-    }
-
-    /**
-     * @param mixed $owner
-     */
-    public function setOwner(CellRow $owner): void
-    {
-        $this->owner = $owner;
-    }
-
-
-    public function defaultBorderColor()
+    public function default()
     {
         $this->component->setBorderColor($this->defaultBorderColor);
     }
@@ -70,6 +43,17 @@ class Cell extends GuiComponentWrapper
     public function getData()
     {
         return $this->getOwner()->getData();
+    }
+
+
+    public function getOffsets(): array
+    {
+        return offset($this->getLeft(), $this->getTop());
+    }
+
+    public function getSizes(): array
+    {
+        return size($this->getWidth(), $this->getHeight());
     }
 
 
@@ -84,8 +68,5 @@ class Cell extends GuiComponentWrapper
     }
 
 
-    protected function componentClass(): string
-    {
-        return Shape::class;
-    }
+
 }

@@ -3,10 +3,7 @@
 
 namespace App\controller;
 
-;
 
-use App\GUI\GUIManager;
-use App\infoManager\CLIInfoManager;
 use App\command\CmdResolver;
 use App\events\EventChannel;
 
@@ -17,6 +14,7 @@ class Controller
 
     //needs only to tracking products and procedures by info dispatching
     private $eventChannel;
+
 
     public function __construct(
         CmdResolver $commandResolver,

@@ -1,21 +1,20 @@
 <?php
 
 
-namespace App\events;
+namespace App\GUI\domainBridge;
 
 
 use App\base\AppMsg;
 use App\domain\AbstractProcedure;
 use App\domain\PartialProcedure;
 use App\domain\Product;
-use App\GUI\domainBridge\RowStore;
 use App\GUI\handlers\Block;
 use App\GUI\handlers\CellActivator;
 use App\GUI\handlers\GuiComponentDestroyer;
-use App\GUI\handlers\GuiStat;
-use App\GUI\ProdProcColorant;
-use App\GUI\CellRow;
-use App\GUI\ProductTableComposer;
+use App\GUI\ProductStateColorize;
+use App\GUI\tableStructure\CellRow;
+use App\GUI\tableStructure\ProductTableComposer;
+use App\events\ISubscriber;
 
 class ProductTableSync implements ISubscriber
 {
@@ -34,7 +33,7 @@ class ProductTableSync implements ISubscriber
     public function __construct(CellActivator $cellActivate, GuiComponentDestroyer $destroyer, RowStore $store)
     {
         $this->cellActivate = $cellActivate;
-        $this->colorant = ProdProcColorant::class;
+        $this->colorant = ProductStateColorize::class;
         $this->destroyer = $destroyer;
         $this->store = $store;
     }
@@ -52,11 +51,11 @@ class ProductTableSync implements ISubscriber
             return;
         }
         $row = $this->updateRowCellByProc($proc);
-        $this->activateRowByProduct($row, $product);
+        $this->activateRowCell($row, $product);
 
     }
 
-    public function activateRowByProduct(CellRow $row, Product $product)
+    public function activateRowCell(CellRow $row, Product $product)
     {
         $this->cellActivate->byProduct($row, $product);
     }
@@ -89,7 +88,7 @@ class ProductTableSync implements ISubscriber
         return $row;
     }
 
-    public function update(Object $observable, string $event)
+    public function update($observable, string $event)
     {
         $this->notify($observable);
     }

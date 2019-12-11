@@ -5,21 +5,18 @@ namespace App\repository;
 
 
 use App\base\AppMsg;
-use App\domain\CompositeProcedure;
-use App\domain\ProcedureFactory;
 use App\domain\Product;
+use App\domain\ProductFactory;
 use App\events\Event;
 use App\events\ISubscriber;
 use Exception;
 use ReflectionClass;
-use App\domain\ProductNumberManager;
 
 class ProductRepository implements ISubscriber
 {
 
     private $orm;
     private $domainClass = Product::class;
-    private $numbersHorizon = ProductNumberManager::class;
 
     const FIELD = [
         'name' => 'name',
@@ -37,16 +34,17 @@ class ProductRepository implements ISubscriber
         AppMsg::ARRIVE,
         AppMsg::DISPATCH,
         Event::PRODUCT_CHANGE_STATE,
+        AppMsg::PERSIST_NEW
     ];
 
-    private $procedureFactory;
+    private $pFactory;
 
-    public function __construct(DoctrineORMAdapter $orm, ProcedureFactory $procedureFactory)
+    public function __construct(DBLayer $orm, ProductFactory $pFactory)
     {
         $this->orm = $orm;
         $this->orm->setServicedEntity($this->domainClass);
         $this->checkMetadataDomainClass();
-        $this->procedureFactory = $procedureFactory;
+        $this->pFactory = $pFactory;
     }
 
     private function checkMetadataDomainClass()
@@ -63,10 +61,7 @@ class ProductRepository implements ISubscriber
     {
         [,$not_found] = $this->findByNumbers($productName, $numbers);
         foreach ($not_found as $number) {
-            $object = new $this->domainClass($number, $productName, $this->procedureFactory);
-            $objects[] = $object;
-            $this->orm->persist($object);
-            $this->persistProductProcedures($object);
+            $objects[] =  $this->pFactory->create($this->domainClass, $productName, $number);
         }
         return $objects ?? [];
     }
@@ -118,7 +113,7 @@ class ProductRepository implements ISubscriber
         $this->orm->save();
     }
 
-    public function update(Object $observable, string $event)
+    public function update($observable, string $event)
     {
         $this->orm->persist($observable);
     }
@@ -128,32 +123,11 @@ class ProductRepository implements ISubscriber
         return self::SUBSCRIBE_ON;
     }
 
-//    public function getNumbersMng(string $productName) : ProductNumberManager
-//    {
-//        $horizon = $this->orm->findEntityById($this->numbersHorizon, $productName);
-//        if (empty($horizon)) {
-//            $horizon = new ProductNumberManager();
-//            $horizon->setProductName($productName);
-//            $this->orm->persist($horizon);
-//            return $horizon;
-//        };
-//        return $horizon;
-//    }
 
     public function findAll(string $productName): array
     {
         return $this->orm->findAll([self::NAME_FIELD => $productName], [self::NUMBER_FIELD => 'ASC']);
     }
 
-    private function persistProductProcedures(Product $product)
-    {
-        foreach ($product->getProcedures() as $proc) {
-            $this->orm->persist($proc);
-            if ($proc instanceof CompositeProcedure) {
-                foreach ($proc->getInners() as $inner) {
-                    $this->orm->persist($inner);
-                }
-            }
-        }
-    }
+
 }

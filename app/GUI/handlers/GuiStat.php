@@ -6,22 +6,21 @@ namespace App\GUI\handlers;
 use App\base\AppMsg;
 use App\CLI\render\ProductStat;
 use App\domain\Product;
-use App\events\Event;
 use App\events\ISubscriber;
-use App\GUI\components\LabelWrapper;
-use App\GUI\GUIManager;
-use React\EventLoop\LoopInterface;
+use App\GUI\components\Dashboard;
+use App\GUI\domainBridge\RequestManager;
+use App\GUI\scheduler\Scheduler;
 
 class GuiStat implements ISubscriber
 {
-    private $stat;
-    private $output;
-    private $title = "текущая статистика: \n";
-    private $loop;
-    private $printTaskScheduled = false;
-    private $getStatTaskScheduled = false;
-
-    private $app;
+    protected $stat;
+    protected $output;
+    protected $title = "текущая статистика: \n";
+    protected $printTaskScheduled = false;
+    protected $getStatTaskScheduled = false;
+    protected $inputNumber;
+    protected $scheduler;
+    protected $requestMng;
 
     const EVENTS = [
         AppMsg::GUI_INFO,
@@ -29,39 +28,39 @@ class GuiStat implements ISubscriber
         AppMsg::PRODUCT_MOVE,
     ];
 
+    const PRODUCT_START_EVENT = AppMsg::PRODUCT_STARTED;
 
-    public function __construct(ProductStat $stat, LoopInterface $loop, GUIManager $app)
+
+    public function __construct(ProductStat $stat, Scheduler $scheduler, RequestManager $requestMng)
     {
         $this->stat = $stat;
-        $this->loop = $loop;
-        $this->app = $app;
+        $this->scheduler = $scheduler;
+        $this->requestMng = $requestMng;
     }
 
-    public function attachOutput(LabelWrapper $object)
+    public function createStat(Dashboard $dashboard)
     {
-        $this->output = $object;
+        $this->output = $dashboard->createStatLabel();
     }
 
     public function updateStat()
     {
         $this->printTaskScheduled = true;
-        $this->loop->futureTick(function () {
-            $this->output->setText($this->title . $this->stat->getStat());
-            $this->stat->resetBuffer();
-            $this->printTaskScheduled = false;
-        });
+        $this->scheduler->asyncFutureTick(\Closure::fromCallable([$this, 'printStat']));
     }
 
 
-    public function update(Object $observable, string $event)
+    public function update($observable, string $event): bool
     {
         switch ($event) {
             case ($event === self::EVENTS[0] || $event === self::EVENTS[1]):
                 $this->updateProductStat($observable);
-                break;
+                return true;
             case self::EVENTS[2]:
                 $this->getAppStat();
+                return true;
         }
+        return false;
     }
 
     public function subscribeOn(): array
@@ -69,7 +68,13 @@ class GuiStat implements ISubscriber
         return self::EVENTS;
     }
 
-    private function updateProductStat(Product $product)
+    public function getStatTaskComplete()
+    {
+        $this->getStatTaskScheduled = false;
+    }
+
+
+    protected function updateProductStat(Product $product)
     {
         if ($product->isStarted()) {
             $this->stat->oneProductStatStep($product);
@@ -77,14 +82,24 @@ class GuiStat implements ISubscriber
         }
     }
 
-    private function getAppStat()
+    protected function printStat()
+    {
+        $this->output->setText($this->title . $this->stat->getStat());
+        $this->stat->resetBuffer();
+        $this->printTaskScheduled = false;
+    }
+
+    protected function _getAppStat()
+    {
+        $this->requestMng->statInfo();
+        $this->getStatTaskComplete();
+    }
+
+    protected function getAppStat()
     {
         if ($this->getStatTaskScheduled) return;
         $this->getStatTaskScheduled = true;
-        $this->loop->futureTick(function () {
-            $this->app->statRequest();
-            $this->getStatTaskScheduled = false;
-        });
+        $this->scheduler->asyncFutureTick(\Closure::fromCallable([$this, '_getAppStat']));
 
     }
 }
