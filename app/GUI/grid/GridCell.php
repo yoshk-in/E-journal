@@ -4,23 +4,17 @@
 namespace App\GUI\grid;
 
 
-use App\GUI\factories\WrappingVisualObjectFactory;
+
+use App\GUI\grid\traits\TGridCellConstructor;
 
 class GridCell extends AbstractGridCell
 {
-    use TCreateGridCell;
+    use TGridCellConstructor, TCreateGridCell;
 
-    public function __construct(string $class, array $sizes, array $additions = [], array $onCellActions = [], $factory = WrappingVisualObjectFactory::class)
+
+    public function getId(): int
     {
-        $this->factory = $factory;
-        $this->cellClass = $class;
-        parent::__construct($sizes);
-        $this->onCellActions = $onCellActions;
-        $this->additions = $additions;
+        return $this->cellId;
     }
-
-
-
-
 
 }

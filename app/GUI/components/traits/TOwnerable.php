@@ -4,18 +4,17 @@
 namespace App\GUI\components\traits;
 
 
-use App\GUI\tableStructure\CellRow;
 
 trait TOwnerable
 {
     private $owner;
 
-    public function getOwner(): CellRow
+    public function getOwner()
     {
         return $this->owner;
     }
 
-    public function setOwner(CellRow $owner): void
+    public function setOwner($owner)
     {
         $this->owner = $owner;
     }

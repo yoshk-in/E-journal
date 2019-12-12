@@ -9,4 +9,5 @@ interface IText
     const TEXT = 'text';
     const FONT_SIZE = 'fontSize';
     const FONT_COLOR = 'fontColor';
+    const VALUE = 'value';
 }

@@ -4,11 +4,15 @@
 namespace App\GUI\components;
 
 
+use App\GUI\grid\traits\DelegateInterface;
+use App\GUI\grid\traits\TCellDelegator;
 use Gui\Components\ContainerObjectInterface;
 use Gui\Components\VisualObjectInterface;
 
-class WrapVisualObject implements VisualObjectInterface
+class WrapVisualObject implements VisualObjectInterface, DelegateInterface
 {
+    use TCellDelegator;
+
     protected $component;
     protected $propertyContainer = [];
 
@@ -24,34 +28,8 @@ class WrapVisualObject implements VisualObjectInterface
         return $this->component;
     }
 
-    final public function __call($name, $arguments)
-    {
-        [$getSet, $rest] = $this->destructNameMethod($name);
-        switch ($getSet) {
-            case 'get':
-                return $this->getMethod($rest, $name, $arguments);
-            case 'set':
-                return $this->setMethod($rest, $name, $arguments);
-        }
-        return $this->callComponent($name, $arguments);
-    }
 
-
-    public function fire(string $event)
-    {
-        $event = 'on' . $event;
-        $this->component->fire($event);
-    }
-
-
-    public function destructNameMethod($name): array
-    {
-        $getSet = substr($name, 0, 3);
-        $prop = lcfirst(substr($name, 3));
-        return [$getSet, $prop];
-    }
-
-    protected function getMethod($prop, $name, array $arguments = [])
+    public function getMethod($prop, $name, array $arguments = [])
     {
         if (key_exists($prop, $this->propertyContainer)) {
             return $this->propertyContainer[$prop];
@@ -59,19 +37,18 @@ class WrapVisualObject implements VisualObjectInterface
         return $this->callComponent($name, $arguments);
     }
 
-    protected function setMethod($prop, $name, array $arguments)
+    public function setMethod($prop, $name, array $arguments)
     {
         $this->callComponent($name, $arguments);
         $this->propertyContainer[$prop] = $arguments[0];
         return $this;
     }
 
-    protected function callComponent($name, $arguments)
+
+    public function fire(string $event)
     {
-        if (method_exists($this->component, $name)) {
-            return $this->component->$name(...$arguments);
-        }
-        throw new \Exception('call undefined method ' . $name);
+        $event = 'on' . $event;
+        $this->component->fire($event);
     }
 
     protected function call(string $func, $args = null)

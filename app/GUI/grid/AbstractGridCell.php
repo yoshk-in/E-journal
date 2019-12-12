@@ -12,6 +12,7 @@ abstract class AbstractGridCell implements GridCellInterface, IOffset
     protected $toDown;
     protected $neighborCells = [];
     protected $sizes;
+    protected $cellId;
 
     public function __construct(array $sizes)
     {
@@ -34,13 +35,24 @@ abstract class AbstractGridCell implements GridCellInterface, IOffset
         return $this;
     }
 
+    public function getChild(): \Iterator
+    {
+        foreach ($this->neighborCells as $direction => $cell) {
+            yield [$direction => $cell];
+        }
+    }
+
+    public function getSizes(): array
+    {
+        return $this->sizes;
+    }
+
 
     public function create(string $direction, Grid $grid, int $parentCellId)
     {
-        $this->id = $grid->push($parentCellId, \Closure::fromCallable([$this, 'createCell']), $this->sizes, $direction);
-        $this->next($grid, $this->id);
+        $this->cellId = $grid->pushCreate($parentCellId, \Closure::fromCallable([$this, 'createCell']), $this->sizes, $direction);
+        $this->next($grid, $this->cellId);
     }
-
 
 
     protected function next(Grid $grid, int $parentCellId)
@@ -50,5 +62,10 @@ abstract class AbstractGridCell implements GridCellInterface, IOffset
         }
     }
 
-    abstract protected function createCell(array $offsets);
+    public function getId()
+    {
+        return $this->cellId;
+    }
+
+    abstract protected function createCell(array $offsets): GridCellInterface;
 }

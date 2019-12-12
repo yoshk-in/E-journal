@@ -5,6 +5,7 @@ namespace App\GUI\tableStructure;
 
 
 use App\base\AppMsg;
+use App\domain\CasualProcedure;
 use App\domain\CompositeNumberStrategy;
 use App\domain\CompositeProcedure;
 use App\domain\PartialProcedure;
@@ -196,19 +197,27 @@ class ProductTableComposer implements ISubscriber
     protected function createProductNumberCell(Product $product)
     {
         $classes = ($text = $product->getNumber() ?? '') ? $this->textCell : $this->compositeNumberingCell;
-        $cell = $this->table()->addCell($classes, textAndColor($text, $this->colorize::productColor($product)));
-        $this->addClickStrategyToCell($cell);
+        $this->addClickStrategyToCell($this->productNumberCell($classes, $text, $product));
+    }
+
+    protected function productNumberCell($classes, $text, Product $product): VisualObjectInterface
+    {
+        return $this->table()->addCell($classes, textAndColor($text, $this->colorize::productColor($product)));
     }
 
     protected function createProcedureRow(Product $product)
     {
         foreach ($product->getProcedures() as $procedure) {
             get_class($procedure) === CompositeProcedure::class ?
-                $cell = $this->createCompositeCell($procedure)
+                $this->addClickStrategyToCell($this->createCompositeCell($procedure))
                 :
-                $cell = $this->table()->addCell($this->casualCell, color(($this->colorize)($procedure)));
+                $this->addClickStrategyToCell($this->casualCell($procedure));
         }
-        $this->addClickStrategyToCell($cell);
+    }
+
+    protected function casualCell(CasualProcedure $procedure): VisualObjectInterface
+    {
+        return $this->table()->addCell($this->casualCell, color(($this->colorize)($procedure)));
     }
 
     protected function createCompositeCell(CompositeProcedure $procedure): VisualObjectInterface
@@ -224,9 +233,14 @@ class ProductTableComposer implements ISubscriber
 
     protected function createPartialCells(PartialProcedure $part)
     {
-        $cell =  $this->table()->addCell($this->textCell, textAndColor($part->getName(), ($this->colorize)($part)));
-        $this->addClickStrategyToCell($cell);
-        $cell->transmitNestedActions([$this->onCellClickEvent]);
+        $this->addClickStrategyToCell($this->partialCell($part));
+    }
+
+    protected function partialCell(PartialProcedure $part): VisualObjectInterface
+    {
+        $cell = $this->table()->addCell($this->textCell, textAndColor($part->getName(), ($this->colorize)($part)));
+        $cell->catchNestingActions([$this->onCellClickEvent]);
+        return $cell;
     }
 
     protected function addClickStrategyToCell(VisualObjectInterface $cell)

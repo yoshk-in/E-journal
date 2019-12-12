@@ -10,12 +10,9 @@ use App\events\EventChannel;
 use App\events\IObservable;
 use App\events\TObservable;
 use App\GUI\domainBridge\RequestManager;
-use App\GUI\factories\LabelFactory;
-use App\GUI\factories\SelectFactory;
 use Gui\Components\Option;
-use Gui\Components\VisualObjectInterface;
 
-class ProductChangeEvent implements IObservable, Event
+class ProductSelect implements IObservable, Event
 {
     use TObservable;
 
@@ -43,7 +40,7 @@ class ProductChangeEvent implements IObservable, Event
     }
 
 
-    public function emitEvent(string $product)
+    public function emitChangeProductEvent(string $product)
     {
         $newProduct = $this->options[$product];
         if ($newProduct === $this->requestMng->getProduct()) return;

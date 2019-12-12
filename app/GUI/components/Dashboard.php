@@ -37,7 +37,7 @@ class Dashboard
     public function __construct(
         GUIManager $app,
         GuiStat $analytic,
-        ProductChangeEvent $productSelect,
+        ProductSelect $productSelect,
         RequestManager $requestMng,
         Alert $alert,
         ButtonFactory $bFactory,

@@ -21,6 +21,11 @@ function text(?string $text = '', ?string $fontColor = null, ?int $fontSize = nu
     return [IText::TEXT => $text, IText::FONT_COLOR => ($fontColor ?? Color::WHITE), IText::FONT_SIZE => ($fontSize ?? 10)];
 }
 
+function value(string $value): array
+{
+    return [IText::VALUE => $value];
+}
+
 function textAndColor(string $text, string $color, ?string $fontColor = null, ?int $fontSize = null): array
 {
     $textArr = text($text, $fontColor, $fontSize);

@@ -37,9 +37,14 @@ class Debug
        self::$gui->alert($text);
     }
 
-    static function setTimeout()
+    static function setTimeout($callback)
     {
-        self::$gui->getLoop()->addTimer( 1, function () { exit; });
+        self::$gui->getLoop()->addTimer( 1, $callback);
     }
 
+
+    static function futureTick(\Closure $closure)
+    {
+        self::$gui->getLoop()->futureTick($closure);
+    }
 }

@@ -27,7 +27,7 @@ trait TNestingVisualObject
             };
         [$offsets, $sizes, $additions] = ($nestingAligner)($this->getOffsets(), $this->getSizes(), $additions);
         $this->nested = $this->create($class, $offsets, $sizes, $additions);
-        is_null($onActions) ?: $this->transmitNestedActions($onActions);
+        is_null($onActions) ?: $this->catchNestingActions($onActions);
         return $this;
     }
 
@@ -43,7 +43,7 @@ trait TNestingVisualObject
         self::$nestingAligner = $closure;
     }
 
-    public function transmitNestedActions(array $onActions)
+    public function catchNestingActions(array $onActions)
     {
         foreach ($onActions as $action) {
             $this->nested->on($action, function () use ($action) { $this->fire($action); });

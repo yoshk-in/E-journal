@@ -9,19 +9,10 @@ use App\GUI\components\IOffset;
 use App\GUI\components\ISize;
 use App\GUI\components\Cell;
 use App\GUI\Color;
-use App\GUI\factories\InputFactoryWrapping;
 use App\GUI\factories\WrappingVisualObjectFactory;
 use App\GUI\IVisualClass;
-use Gui\Components\InputText;
-use Gui\Components\Shape;
 use Gui\Components\VisualObjectInterface;
-use function App\GUI\height;
-use function App\GUI\left;
-use function App\GUI\top;
-use function App\GUI\unsetKeys;
-use function App\GUI\width;
-use function App\GUI\getColor;
-use function App\GUI\getText;
+use function App\GUI\{unsetKeys, width, getColor};
 
 class CellRow implements IOffset, ISize
 {
