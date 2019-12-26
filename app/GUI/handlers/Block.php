@@ -8,7 +8,7 @@ use App\GUI\tableStructure\CellRow;
 
 class Block
 {
-    public static function rowAndActiveCell(CellRow $row)
+    public static function row(CellRow $row)
     {
         $row->blockRow(true);
         $row->getActiveCell()->blockClick(true);

@@ -4,6 +4,7 @@
 namespace App\GUI\components;
 
 
+use App\GUI\components\traits\TVisualObjectMethodAdapter;
 use App\GUI\grid\traits\DelegateInterface;
 use App\GUI\grid\traits\TCellDelegator;
 use Gui\Components\ContainerObjectInterface;
@@ -11,7 +12,7 @@ use Gui\Components\VisualObjectInterface;
 
 class WrapVisualObject implements VisualObjectInterface, DelegateInterface
 {
-    use TCellDelegator;
+    use TCellDelegator, TVisualObjectMethodAdapter;
 
     protected $component;
     protected $propertyContainer = [];
@@ -162,4 +163,10 @@ class WrapVisualObject implements VisualObjectInterface, DelegateInterface
     {
         return $this->call(__FUNCTION__, $visible);
     }
+
+    public function getValue()
+    {
+        return $this->callComponent(__FUNCTION__, []);
+    }
+
 }

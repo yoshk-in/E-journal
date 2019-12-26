@@ -49,6 +49,11 @@ class ProductMonthlyCounter implements ISubscriber
         return $self;
     }
 
+    public function isCountable(string $product): bool
+    {
+        return isset($this->monthlyCount[$product]);
+    }
+
 
     public function attachProduct(string $name)
     {

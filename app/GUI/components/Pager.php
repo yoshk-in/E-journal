@@ -5,6 +5,8 @@ namespace App\GUI\components;
 
 
 use App\GUI\factories\ButtonFactory;
+use App\GUI\factories\WrappingVisualObjectFactory;
+use Gui\Components\Button;
 use Gui\Components\Label;
 use function App\GUI\left;
 use function App\GUI\offset;
@@ -23,7 +25,7 @@ class Pager
 
 
 
-    public function __construct(ButtonFactory $bFactory)
+    public function __construct(WrappingVisualObjectFactory $bFactory)
    {
        $this->bFactory = $bFactory;
        $this->offsets = offset(100, 20);
@@ -31,10 +33,8 @@ class Pager
        $this->sizes = size(20, 20);
    }
 
-   public function addTitle()
+   public function prepare()
    {
-//       $offsets = $this->offsets;
-//       $offsets[IOffset::LEFT] = left($this->offsets) - 60;
        new Label([
           'text' => 'листы:',
           'left' => left($this->offsets) - 60,
@@ -42,11 +42,14 @@ class Pager
        ]);
    }
 
-   public function add(\Closure $onClick)
+   public function addButton(\Closure $onClickHandler)
    {
        $index = count($this->buttons) + 1;
-       $this->buttons[] = $button = $this->bFactory::create($this->offsets, $this->sizes, ['value' => $index]);
-       $button->on('mousedown', \Closure::fromCallable($onClick));
+       $this->buttons[] = $button = $this->bFactory->create(Button::class, $this->offsets, $this->sizes, ['value' => $index]);
+       $button->on('mousedown', function () use ($button, $onClickHandler)
+       {
+           $onClickHandler($button->getValue());
+       });
        $this->offsets[IOffset::LEFT] += width($this->sizes) + $this->betweenButtonSpace;
    }
 

@@ -6,6 +6,7 @@ namespace App\GUI\handlers;
 
 use App\base\AppMsg;
 use App\domain\CasualProcedure;
+use App\domain\PartialProcedure;
 use App\domain\Product;
 use App\GUI\ProductStateColorize;
 use App\GUI\tableStructure\CellRow;
@@ -21,54 +22,33 @@ class CellActivator
     private $proc;
     private $row;
 
-    public function __construct(Scheduler $scheduler)
+    public function __construct(Scheduler $scheduler, ProductStateColorize $colorant, Block $blocker)
     {
         $this->scheduler = $scheduler;
-        $this->block = Block::class;
-        $this->colorant = ProductStateColorize::class;
+        $this->block = $blocker;
+        $this->colorant = $colorant;
     }
 
     public function byProduct(CellRow $row, Product $product)
     {
-//        $this->handledProc = $proc = $product->getFirstUnfinishedProc() ?? $product->getCurrentProc();
-//        $this->handledRow = $row;
-//        if (get_class($proc) === CompositeProcedure::class && (!$proc->innersFinished() || $proc->isStarted())) {
-//            $this->byPartialProc();
-//            return;
-//        }
-//        $this->activateCell();
         $this->proc = $proc = $product->getActiveProc();
         $this->row = $row;
-        $this->proc instanceof CasualProcedure ? $this->activateCell() : $this->activatePartialCell();
-
+        $this->activateCell();
+        !($proc instanceof PartialProcedure && $proc->isStarted()) ?: $this->blockRowAndUpdateCellTask();
     }
-
-//    private function byCompositeProc()
-//    {
-//        if ($this->handledProc->areInnersFinished() || $this->handledProc->isNotStarted()) {
-//            $this->activateCell();
-//        } else {
-//            $this->byPartialProc();
-//        }
-//    }
 
     private function activateCell()
     {
-        $this->row->activateCellById($this->proc->getIdState(), $this->colorant::color($this->proc));
+        $this->row->activateCellById($this->proc->getIdState(), ($this->colorant)($this->proc));
     }
 
-    private function activatePartialCell()
+    private function blockRowAndUpdateCellTask()
     {
-//        $this->handledProc = $this->handledProc->getFirstUnfinishedProc();
-        $this->activateCell();
-
-        if (!$this->proc->isStarted()) return;
-
-        $this->block::rowAndActiveCell($this->row);
-        $this->scheduler->addTaskWithAlert(
+        $this->block->row($this->row);
+        $this->scheduler->addTask(
             $this->proc->beforeEnd(),
-            [\Closure::fromCallable([$this, 'updateProcInfo'])],
-            [\Closure::fromCallable([$this, 'successFullProcAlert'])]
+            \Closure::fromCallable([$this, 'updateProcInfo']),
+            $this->successFullProcAlert()
         );
     }
 

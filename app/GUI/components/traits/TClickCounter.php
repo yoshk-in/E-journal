@@ -6,8 +6,7 @@ namespace App\GUI\components\traits;
 
 trait TClickCounter
 {
-    private $clickCounter = 0;
-    private $defaultBorderColor;
+    private int $clickCounter = 0;
 
     public function getClickCounter()
     {

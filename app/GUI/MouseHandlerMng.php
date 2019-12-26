@@ -6,13 +6,12 @@ namespace App\GUI;
 
 class MouseHandlerMng
 {
-    private $currentStrategy;
+    private ?ClickHandler $currentStrategy;
 
-    public function __construct(NewClickHandler $currentStrategy)
+    public function __construct()
     {
-        $this->currentStrategy = $currentStrategy;
+        $this->currentStrategy = null;
     }
-
 
     public function changeHandler(ClickHandler $strategy): void
     {
@@ -23,4 +22,6 @@ class MouseHandlerMng
     {
         return $this->currentStrategy;
     }
+
+
 }

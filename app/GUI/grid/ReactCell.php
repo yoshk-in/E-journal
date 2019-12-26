@@ -9,6 +9,7 @@ use App\GUI\grid\traits\DelegateInterface;
 use App\GUI\grid\traits\RerenderInterface;
 use App\GUI\grid\traits\TCellDelegator;
 use App\GUI\grid\traits\TGridCellConstructor;
+use App\GUI\grid\traits\TReactToAttach;
 use App\GUI\grid\traits\TRerender;
 use function App\GUI\left;
 use function App\GUI\size;
@@ -16,7 +17,7 @@ use function App\GUI\top;
 
 class ReactCell extends AbstractGridCell implements DelegateInterface, RerenderInterface
 {
-    use TGridCellConstructor, TCreateGridCell, TCellDelegator, TOwnerable, TRerender;
+    use TGridCellConstructor, TCreateGridCell, TReactToAttach, TRerender;
 
     public function getMethod($prop, $name, array $arguments = [])
     {
@@ -32,7 +33,10 @@ class ReactCell extends AbstractGridCell implements DelegateInterface, RerenderI
     public function setVisible(bool $visible)
     {
         $this->callComponent(__FUNCTION__, [$visible]);
-        $this->setNewSizes($visible ? size($this->getWidth(), $this->getHeight()) : size(0,0));
+        $this->setNewSizes($visible ?
+            size($this->component->getWidth(), $this->component->getHeight())
+            :
+            size(0,0));
         $this->getOwner()->react($this);
     }
 
@@ -45,7 +49,7 @@ class ReactCell extends AbstractGridCell implements DelegateInterface, RerenderI
     public function rerender(array $newOffsets)
     {
         $this->_rerender($newOffsets);
-        $this->nextRender();
+        $this->nextRerender();
     }
 
 

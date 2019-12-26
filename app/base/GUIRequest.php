@@ -9,24 +9,34 @@ use App\domain\Product;
 class GUIRequest extends AbstractRequest
 {
     protected $env = AppMsg::GUI;
-    protected $blocks;
+    protected $blocks = [];
+    protected $doubleNumberBlocks = [];
 
 
-
-    public function addBlock(Product $block): void
+    public function addBlock(Product $product): void
     {
-        $this->blocks[$block->getNumber()] = $block->getNumber();
+        $this->blocks[$product->getNumber()] = $product->getNumber();
     }
 
-    public function removeBlock(Product $block)
+    public function addDoubleNumberBlock(Product $product)
     {
-        unset($this->blocks[$block->getNumber()]);
+        $this->doubleNumberBlocks[$product->getAdvancedNumber()] = $product->getNumber();
     }
 
-    public function prepareReq(string $command = AppMsg::PRODUCT_INFO)
+    public function removeDoubleNumberBlocks(Product $product)
     {
-        $this->blockNumbers = array_merge($this->blockNumbers, array_values($this->blocks ?? []));
-        $this->addCmd($command);
+        $this->doubleNumberBlocks[$product->getAdvancedNumber()];
+    }
+
+    public function removeBlock(Product $product)
+    {
+        unset($this->blocks[$product->getNumber()]);
+    }
+
+    public function prepareReqByBufferNumbers()
+    {
+        $this->blockNumbers = $this->blocks;
+        $this->doubleNumbers = $this->doubleNumberBlocks;
     }
 
     public function reset()
@@ -34,5 +44,6 @@ class GUIRequest extends AbstractRequest
         $this->commands = [];
         $this->blockNumbers = [];
         $this->blocks = [];
+        $this->doubleNumberBlocks = [];
     }
 }

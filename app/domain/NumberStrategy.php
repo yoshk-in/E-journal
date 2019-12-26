@@ -6,7 +6,7 @@ namespace App\domain;
 
 abstract class NumberStrategy
 {
-    abstract public function setProductNumber(Product $product, int $number);
+    abstract public function setProductNumber(Product $product, int $number, ?int $mainNumber);
 
     abstract public function getNumber(Product $product);
 

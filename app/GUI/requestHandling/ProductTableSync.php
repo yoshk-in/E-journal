@@ -1,23 +1,26 @@
 <?php
 
 
-namespace App\GUI\domainBridge;
+namespace App\GUI\requestHandling;
 
 
 use App\base\AppMsg;
 use App\domain\AbstractProcedure;
 use App\domain\PartialProcedure;
 use App\domain\Product;
+use App\events\TCasualSubscriber;
 use App\GUI\handlers\Block;
 use App\GUI\handlers\CellActivator;
 use App\GUI\handlers\GuiComponentDestroyer;
 use App\GUI\ProductStateColorize;
 use App\GUI\tableStructure\CellRow;
-use App\GUI\tableStructure\ProductTableComposer;
+use App\GUI\tableStructure\ProductTableMng;
 use App\events\ISubscriber;
 
 class ProductTableSync implements ISubscriber
 {
+    use TCasualSubscriber;
+
     private $tComposer;
     private $cellActivate;
     private $colorant;
@@ -38,7 +41,7 @@ class ProductTableSync implements ISubscriber
         $this->store = $store;
     }
 
-    public function attachTableComposer(ProductTableComposer $tComposer)
+    public function attachTableComposer(ProductTableMng $tComposer)
     {
         $this->tComposer = $tComposer;
     }
@@ -93,9 +96,6 @@ class ProductTableSync implements ISubscriber
         $this->notify($observable);
     }
 
-    public function subscribeOn(): array
-    {
-        return self::EVENTS;
-    }
+
 
 }

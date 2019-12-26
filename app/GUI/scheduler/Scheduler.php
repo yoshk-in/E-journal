@@ -17,7 +17,6 @@ class Scheduler implements IObservable
     private $loop;
     private $alert;
     private $channel;
-    const ALERT = true;
 
     public function __construct(LoopInterface $loop, EventChannel $channel)
     {
@@ -27,40 +26,20 @@ class Scheduler implements IObservable
     }
 
 
-    public function addTask(\DateInterval $time, array $callbacks)
+    public function addTask(\DateInterval $time,\Closure $closure, ?string $alert = null)
     {
-        $this->addTimer($time, \Closure::fromCallable(call_user_func([$this, 'doTasks'], $callbacks)));
+        $this->loop->addTimer($this->roundTime($time), function () use ($closure, $alert) {
+            $closure();
+            !$alert ?: $this->notify(Event::ALERT, $alert);
+        });
     }
 
-    public function addTaskWithAlert(\DateInterval $time, array $callbacks, array $alerts)
-    {
-        $this->addTimer($time, \Closure::fromCallable(call_user_func([$this, 'tasksWithAlerts'], $callbacks, $alerts)));
-    }
 
     public function asyncFutureTick(\Closure $closure)
     {
         $this->loop->futureTick($closure);
     }
 
-    private function tasksWithAlerts($tasks, $alerts)
-    {
-        $this->doTasks($tasks);
-        $this->doTasks($alerts, self::ALERT);
-    }
-
-    private function addTimer($time, \Closure $closure)
-    {
-        $this->loop->addTimer($this->roundTime($time), $closure);
-    }
-
-    private function doTasks($tasks, bool $isAlert = false)
-    {
-        foreach ($tasks as $task) {
-            assert(is_callable($task), ' task must be callable');
-            $msg = $task();
-            $isAlert ? $this->notify(Event::ALERT, $msg) : null;
-        }
-    }
 
     private function roundTime($time): int
     {

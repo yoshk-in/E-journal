@@ -1,7 +1,7 @@
 <?php
 
 use \App\domain\CasualNumberStrategy;
-use App\domain\CompositeNumberStrategy;
+use App\domain\DoubleNumberStrategy;
 
 return [
     'Г9' => [
@@ -11,6 +11,7 @@ return [
     ],
     'НР381Б-02' => [
         'monthly countable' => false,
-        'numberStrategy' => CompositeNumberStrategy::class
+        'numberStrategy' => DoubleNumberStrategy::class,
+        'mainNumberLength' => 6
     ]
 ];

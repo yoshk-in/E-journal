@@ -16,7 +16,7 @@ class ProductFactory
         $this->procedureFactory = $procedureFactory;
     }
 
-    public function create(string $productClass, string $product, int $number)
+    public function create(string $productClass, string $product, ?int $number)
     {
         $object = new $productClass($number, $product, $this->procedureFactory);
         return $object;

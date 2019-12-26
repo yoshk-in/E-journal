@@ -24,8 +24,9 @@ class CmdResolver
         AppMsg::GUI_INFO => GUIInfo::class,
         AppMsg::CREATE_PRODUCTS => CreateProducts::class,
         AppMsg::CURRENT_PROCEDURE_INFO => CurrentProcInfo::class,
-        AppMsg::CREATE_NEW_ONE_PRODUCT => CreateNewOneProduct::class,
-        AppMsg::STAT_INFO => StartedAndUnfinishedInfoProducts::class
+        AppMsg::CREATE_PRODUCT_OR_GENERATE => CreateProductOrGenerate::class,
+        AppMsg::STAT_INFO => StartedAndUnfinishedInfoProducts::class,
+        AppMsg::CHANGE_PRODUCT_MAIN_NUMBER => ChangeProductMainNumber::class,
     ];
 
     public function __construct(ContainerInterface $container, AbstractRequest $request)

@@ -13,11 +13,10 @@ use Psr\Container\ContainerInterface;
 abstract class Move extends Command
 {
 
-    protected $productRepository;
-    protected $orm;
+    protected ProductRepository $productRepository;
     const ERR_NOT_ARRIVED = 'данные блоки еше не поступали на настройку:';
-    private $container;
-    private $productMap;
+    private ContainerInterface $container;
+    protected ProductMap $productMap;
 
 
     public function __construct(ProductRepository $repository, AbstractRequest $request, ContainerInterface $container, ProductMap $productMap)

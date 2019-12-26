@@ -31,6 +31,11 @@ trait TNestingVisualObject
         return $this;
     }
 
+    public function getNested(): ?VisualObjectInterface
+    {
+        return $this->nested;
+    }
+
 
     protected function create(string $class,array $offsets, array $sizes, ?array $additions = null): VisualObjectInterface
     {

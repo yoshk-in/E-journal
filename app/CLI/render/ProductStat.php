@@ -24,7 +24,7 @@ class ProductStat
     }
 
 
-    public function getStat(): string
+    public function getComputed(): string
     {
         $this->renderStatBuffer();
         return $this->renderCountProducts() . $this->output;
@@ -33,19 +33,24 @@ class ProductStat
     public function makeStatForArray(array $products)
     {
         foreach ($products as $product) {
-            $this->oneProductStatStep($product);
+            $this->computeOne($product);
         }
     }
 
-    public function resetBuffer()
+    public function resetOutput()
     {
         $this->output = '';
-        $this->statBuffer = [];
-        $this->productCount = 0;
     }
 
+//    public function resetBuffer()
+//    {
+//        $this->output = '';
+//        $this->statBuffer = [];
+//        $this->productCount = 0;
+//    }
 
-    public function oneProductStatStep(Product $product)
+
+    public function computeOne(Product $product)
     {
         $this->statBuffer[$product->getCurrentProc()->getName()][] = $product->getNumber();
         ++$this->productCount;

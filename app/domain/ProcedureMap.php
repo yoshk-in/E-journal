@@ -27,7 +27,7 @@ class ProcedureMap
         return array_keys($this->procMap);
     }
 
-    public function proceduresForProduct(string $product): array
+    public function getProceduresFor(string $product): array
     {
         $this->inMapProductCheck($product);
         return $this->products[$product];
@@ -41,7 +41,7 @@ class ProcedureMap
 
     public function procForProduct(string $product, string $name)
     {
-        $procedures = $this->proceduresForProduct($product);
+        $procedures = $this->getProceduresFor($product);
         assert(isset($procedures[$name]), 'в файле конфигурации отсутствует процедура для продукта с данным именем');
         return $procedures[$name];
     }
@@ -87,7 +87,7 @@ class ProcedureMap
     public function getAllPartialNames(string $product, ?string $ru = null) : array
     {
         $names = [];
-        foreach ($this->proceduresForProduct($product) as $proc) {
+        foreach ($this->getProceduresFor($product) as $proc) {
             !($proc['inners'] ?? null) OR $names = array_merge($this->getPartialNames(
                 $product, $proc['name'], $ru
             ), $names);
@@ -108,7 +108,7 @@ class ProcedureMap
 
     public function getAllDoubleProcNames(string $product)
     {
-        foreach ($this->proceduresForProduct($product) as $proc) {
+        foreach ($this->getProceduresFor($product) as $proc) {
             $names[] = [$proc['short'], $proc['name']];
         }
         return $names;

@@ -59,7 +59,7 @@ class CellRow implements IOffset, ISize
             $additions,
             $this->getClass($classes, IVisualClass::WRAP)
         );
-        !isset($classes[IVisualClass::NEST]) ?: $this->nest($cell, $classes[IVisualClass::NEST] , $additions);
+        !isset($classes[IVisualClass::NEST]) ?: $this->nest($cell, $classes[IVisualClass::NEST] , $additions, [$additions['onNest'] ??= null]);
         $this->captureCell($cell);
         $this->offsets[IOffset::LEFT] += width($sizes);
         return $cell;
@@ -72,9 +72,9 @@ class CellRow implements IOffset, ISize
     }
 
 
-    public function nest(VisualObjectInterface $cell, string $nestingClass, array $additions)
+    public function nest(VisualObjectInterface $cell, string $nestingClass, array $additions, array $onNestingAction)
     {
-        $cell->nest($nestingClass, unsetKeys($additions, [Color::KEY, Color::BORDER, Color::BACKGROUND]));
+        $cell->nest($nestingClass, unsetKeys($additions, [Color::KEY, Color::BORDER, Color::BACKGROUND]), $onNestingAction);
     }
 
     public function getOffsets(): array

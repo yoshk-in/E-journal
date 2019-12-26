@@ -49,7 +49,7 @@ class DBLayer
         return $this->docRep->findBy($criteria, $order);
     }
 
-    public function findOneWhere(array $criteria, array $order)
+    public function findOneWhere(array $criteria, ?array $order = null)
     {
         return $this->docRep->findOneBy($criteria, $order);
     }

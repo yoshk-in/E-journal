@@ -13,7 +13,18 @@ abstract class AbstractRequest
     protected $partialProcName;
     protected $productName;
     protected $env;
+    protected $doubleNumbers = [];
+    protected $changingNumbers = [];
 
+    public function addChangingNumber($advancedNumber, $mainNumber)
+    {
+        $this->changingNumbers[$advancedNumber] = $mainNumber;
+    }
+
+    public function getChangingNumbers(): array
+    {
+        return $this->changingNumbers;
+    }
 
     public function getEnv(): string
     {
@@ -39,13 +50,18 @@ abstract class AbstractRequest
 
     public function addCmd(string $command): void
     {
-        $this->commands[] = $command;
+        $this->commands[$command] = $command;
     }
 
 
-    public function getBlockNumbers()
+    public function getBlockNumbers(): array
     {
         return $this->blockNumbers;
+    }
+
+    public function getBlockDoubleNumbers(): array
+    {
+        return $this->doubleNumbers;
     }
 
 

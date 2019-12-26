@@ -8,8 +8,7 @@ use App\base\CLIRequest;
 use App\base\GUIRequest;
 use App\controller\CLIController;
 use App\controller\Controller;
-use App\controller\GUIController;
-use App\GUI\GUIManager;
+use App\GUI\GUIController;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 
@@ -44,7 +43,7 @@ class App
     {
         $container = self::bootstrap();
         $container->set(AbstractRequest::class, $container->get(GUIRequest::class));
-        $gui = $container->get(GUIManager::class);
+        $gui = $container->get(GUIController::class);
         $gui->run();
     }
 
@@ -60,7 +59,7 @@ class App
             throw new \Exception('assertion has failed');
         }
         ini_set('xdebug.max_nesting_level', '150');
-        ini_set('xdebug.var_display_max_depth', '4');
+        ini_set('xdebug.var_display_max_depth', '2');
         ini_set('xdebug.var_display_max_children', '256');
         ini_set('xdebug.var_display_max_data', '1024');
         ini_set('error_reporting', E_ALL);

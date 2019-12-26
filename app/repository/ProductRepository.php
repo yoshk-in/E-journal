@@ -5,6 +5,7 @@ namespace App\repository;
 
 
 use App\base\AppMsg;
+use App\base\exceptions\WrongInputException;
 use App\domain\Product;
 use App\domain\ProductFactory;
 use App\events\Event;
@@ -29,6 +30,7 @@ class ProductRepository implements ISubscriber
     const NUMBER_FIELD = 'number';
     const FINISHED_FIELD = 'finished';
     const STARTED_FIELD = 'started';
+    const ADVANCED_FIELD = 'advancedNumber';
 
     const SUBSCRIBE_ON = [
         AppMsg::ARRIVE,
@@ -59,7 +61,8 @@ class ProductRepository implements ISubscriber
 
     public function createProducts(array $numbers, string $productName): array
     {
-        [,$not_found] = $this->findByNumbers($productName, $numbers);
+        [$found,$not_found] = $this->findByNumbers($productName, $numbers);
+        if (!empty($found)) throw new WrongInputException('передан на создание номер, о котором уже существует запись в журнале');
         foreach ($not_found as $number) {
             $objects[] =  $this->pFactory->create($this->domainClass, $productName, $number);
         }
@@ -83,7 +86,12 @@ class ProductRepository implements ISubscriber
         return [$found, $not_found];
     }
 
-    public function findUnfinished(string $productName): array
+    public function findUnfinishedByAdvancedNumber(string $productName, $advancedNumber): array
+    {
+        return $this->orm->findWhere([self::NAME_FIELD => $productName, self::FINISHED_FIELD => false, self::ADVANCED_FIELD => $advancedNumber], [self::ADVANCED_FIELD => 'ASC']);
+    }
+
+    public function findUnfinished(string $productName)
     {
         return $this->orm->findWhere([self::NAME_FIELD => $productName, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'ASC']);
     }

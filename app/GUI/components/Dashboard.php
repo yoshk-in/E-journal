@@ -3,160 +3,160 @@
 
 namespace App\GUI\components;
 
-use App\GUI\domainBridge\RequestManager;
-use App\GUI\factories\ButtonFactory;
-use App\GUI\factories\InputFactoryWrapping;
-use App\GUI\factories\LabelFactory;
-use App\GUI\GUIManager;
-use App\GUI\handlers\Alert;
-use App\GUI\handlers\GuiStat;
+
+use App\events\EventChannel;
+use App\GUI\components\traits\IRerenderable;
+use App\GUI\components\wrappers\WrapWrongConstructorVisualObject;
+use App\GUI\requestHandling\RequestManager;
+use App\GUI\grid\Grid;
+use App\GUI\grid\ReactGrid;
+use App\GUI\grid\ReactCell;
+use App\GUI\grid\ReactSpace;
+use App\GUI\handlers\GuiProductStat;
+use App\GUI\handlers\ProductCounter;
+use Gui\Components\Button;
+use Gui\Components\InputNumber;
+use Gui\Components\Label;
+use Gui\Components\Select;
+use Gui\Components\VisualObjectInterface;
+use function App\GUI\{color, offset, size, text, value};
 
 class Dashboard
 {
 
-    protected $bFactory;
-    protected $app;
-    protected $offset = 30;
-    protected $topOffset = 30;
-    protected $leftOffset;
-    protected $buttonHeight = 70;
-    protected $buttonWidth = 300;
-    protected $lFactory;
-    protected $analytic;
-    protected $iFactory;
-    protected $productSelect;
-    protected $inputText;
+    protected $productSelector;
+    protected $grid;
     private $requestMng;
-    private $alert;
-    private $widthInputLabel = 50;
-    private $title = 'счетчик от ежемесячной отгрузки продукции:';
-    private $titleHeight = 20;
-    private $margin = 20;
-
+    private $productChanger;
+    private $productNumberInput;
+    private $addProductButton;
+    private $submitButton;
+    private GuiProductStat $productStatistic;
+    private Rerender $rerender;
+    private ProductCounter $productCounter;
+    private EventChannel$channel;
+    private array $productSpecifics = [];
 
     public function __construct(
-        GUIManager $app,
-        GuiStat $analytic,
-        ProductSelect $productSelect,
-        RequestManager $requestMng,
-        Alert $alert,
-        ButtonFactory $bFactory,
-        LabelFactory $lFactory,
-        InputFactory $iFactory
-    )
+                                RequestManager $requestManager,
+                                ProductSelectEmitter $productChanger,
+                                Rerender $rerender,
+                                GuiProductStat $statistic,
+                                ProductCounter $counter,
+                                EventChannel $channel
+                                )
     {
-        $this->bFactory = $bFactory;
-        $this->app = $app;
-        $this->lFactory = $lFactory;
-        $this->analytic = $analytic;
-        $this->iFactory = $iFactory;
-        $this->productSelect = $productSelect;
-        $this->requestMng = $requestMng;
-        $this->alert = $alert;
+        $this->requestMng = $requestManager;
+        $this->channel = $channel;
+        $this->productChanger = $productChanger;
+        $this->rerender = $rerender;
+        $this->channel->subscribe($this->productStatistic = $statistic);
+        $this->productCounter = $counter;
+        $this->productSpecifics = [$this->productCounter, $this->productStatistic];
     }
 
     public function create()
     {
-        [, , $width,] = $this->app->getWindowSizes();
-        $this->leftOffset = $width - $this->offset - $this->buttonWidth;
-        $this->createProductSelect();
-        $this->createInputNumber();
-        $this->createAddProductButton();
-        $this->createSubmitButton();
-        $this->analytic->createStat($this);
-//        $this->createStatLayer();
+        $startCell = $this->productSelector()->toDown(
+            $this->productNumberInput()->toDown(
+                (new ReactSpace(size(0, 50)))->toDown(
+                    $this->addProductButton()
+                        ->toDown(
+                            (new ReactSpace(size(0, 50)))->toDown(
+                                $this->submitButton()->toDown(
+                                    (new ReactSpace(size(0, 50)))->toDown(
+                                        $this->rerender->getStatComponent()
+                                    )
+                                )
+                            )
+                        )
+                )
+            )
+        );
+
+        $this->grid = new ReactGrid($startCell, offset(1200, 50));
+        $this->grid->on(ReactGrid::EVENT['render'], function () {
+            $this->productStatistic->updateStat();
+            $this->productCounter->updateOutput();
+            $this->productSelector->setOptions($this->productChanger->getOptions())->setReadOnly(true);
+            $this->productNumberInput->setMax(130000)->setValue(120100);
+        });
+        $this->grid->render();
+
+
     }
 
-    protected function createProductSelect()
+
+
+    protected function productSelector()
     {
-        [$left, $top] = $this->updateCreateLine($this->buttonHeight, $this->buttonWidth);
-        $this->lFactory::createByLeftTop('Продукт:', $left, $top);
-        $this->productSelect->create($left, $top + $this->offset);
+        $label = new ReactCell(
+            Label::class,
+            size(50, 70),
+            text('Продукт:'),
+        );
+
+        $this->productSelector = new ReactCell(
+            Select::class,
+            size(200, 70),
+            [],
+            ['change' => function (VisualObjectInterface $selector) {
+                $this->productChanger->emitChangeProductEvent($selector->getChecked());
+                $this->channel->subscribeArray($this->productSpecifics);
+                if ($updateStatBlock = $this->rerender->updateStatBlock()) {
+                    $this->submitButton->toDown($updateStatBlock);
+                }
+                $this->productStatistic->updateStat();
+                $this->productCounter->updateOutput();
+                $this->productNumberInput->setValue(120100);
+
+            }],
+        );
+
+        return $label->toRight((new ReactSpace(size(10, 0)))->toRight($this->productSelector));
     }
 
-    protected function createInputNumber()
+    protected function productNumberInput()
     {
-        [$left, $top] = $this->updateCreateLine($this->buttonHeight, $this->buttonWidth);
-        $this->lFactory::createbyLeftTop('Номер:', $left, $top);
-        $this->inputText = $this->iFactory::createTextInput($left, $top + $this->offset);
+        $label = new ReactCell(
+            Label::class,
+            size(50, 50),
+            text('Номер:'),
+        );
+
+        $this->productNumberInput = new ReactCell(
+            InputNumber::class,
+            size(200, 50),
+            [],
+            [],
+            WrapWrongConstructorVisualObject::class
+        );
+
+        return $label->toRight((new ReactSpace(size(13, 0)))->toRight($this->productNumberInput));
     }
 
-
-//    protected function createStatLayer()
-//    {
-//        $width = $this->buttonWidth;
-//        $height = $this->buttonHeight;
-//        [$left, $top] = $this->updateCreateLine($height, $width);
-//        $this->makeStatLayer($height, $width, $left, $top);
-//    }
-
-//    protected function makeStatLayer(int $height, int $width, int $left, int $top)
-//    {
-//        $label = $this->lFactory::createBlank($left - 3 * $this->buttonHeight, $top);
-//        $this->analytic->attachOutput($label);
-//    }
-    public function setStatAnalytic(GuiStat $analytic)
+    protected function addProductButton()
     {
-        $this->analytic = $analytic;
+        $this->addProductButton = new ReactCell(
+            Button::class,
+            size(263, 50),
+            value(' +  ДОБАВИТЬ НОМЕР'),
+            ['mousedown' => function () {
+                $this->requestMng->addProduct($this->productNumberInput->getValue());
+            }]
+        );
+        return $this->addProductButton;
     }
 
-    public function createStatLabel(): LabelWrapper
+    protected function submitButton()
     {
-        [$left, $top] = $this->updateCreateLine($this->buttonHeight, $this->buttonWidth);
-        return $this->lFactory::createBlank($left - 3 * $this->buttonHeight, $top);
-    }
-
-    protected function createSubmitButton()
-    {
-        $this->createButton('ЗАПИСАТЬ', \Closure::fromCallable([$this->requestMng, 'moveProduct']));
-    }
-
-    protected function createAddProductButton()
-    {
-        $this->createButton('+   ДОБАВИТЬ  ', \Closure::fromCallable([$this, 'addProductByInput']));
-    }
-
-    protected function addProductByInput()
-    {
-        $input = $this->inputText->getValue();
-        $this->inputText->setValue('');
-        $this->requestMng->addProduct($input);
-    }
-
-    protected function createButton(string $text, \Closure $on)
-    {
-        $callFactoryMethod = function ($text, $left, $top, $height, $width) use ($on) {
-            $this->bFactory::createWithOn($text, $left, $top, $height, $width, $on);
-        };
-        $this->createElement($text, $this->buttonHeight, $this->buttonWidth, $callFactoryMethod);
-    }
-
-    protected function createElement(string $text, int $elHeight, int $elWidth, \Closure $createMethod)
-    {
-        [$left, $top] = $this->updateCreateLine($elHeight, $elWidth);
-        $createMethod($text, $left, $top, $elHeight, $elWidth);
-    }
-
-    protected function updateCreateLine(int $elHeight, int $elWidth): array
-    {
-        $top = $this->topOffset;
-        $this->topOffset += $this->offset + $elHeight;
-        return [$this->leftOffset, $top];
-    }
-
-    protected function getCurrentLeftTopOffsets(): array
-    {
-        return [$this->leftOffset, $this->topOffset];
-    }
-
-    public function createNumberCounterLayer(): array
-    {
-        [$left, $top] = $this->getCurrentLeftTopOffsets();
-        $this->lFactory::createByHeight($this->title, $left, $top, $this->titleHeight);
-        $top += $this->titleHeight;
-        $input = $this->iFactory::createByWidth($left, $top, $this->widthInputLabel);
-        $productNumberLabel = $this->lFactory::createBlank($left + $this->margin + $this->widthInputLabel, $top);
-        return [$input, $productNumberLabel];
+        $this->submitButton = new ReactCell(
+            Button::class,
+            size(263, 50),
+            value('ЗАПИСАТЬ ИЗМЕНЕНИЯ'),
+            ['mousedown' => fn () => $this->requestMng->moveProductOrPersist()]
+        );
+        return $this->submitButton;
     }
 
 

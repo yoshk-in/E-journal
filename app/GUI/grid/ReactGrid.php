@@ -8,8 +8,8 @@ use App\GUI\grid\traits\RerenderInterface;
 
 class ReactGrid extends Grid
 {
-    protected $cells = [];
-    protected $cellExistErr = ' cell not found at grid';
+    protected array $cells = [];
+    protected string $cellExistErr = ' cell not found at grid';
 
 
     public function react(AbstractGridCell $cell)

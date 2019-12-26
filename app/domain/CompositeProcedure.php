@@ -84,6 +84,7 @@ class CompositeProcedure extends CasualProcedure
             if ($inner->isFinished()) continue;
             return $inner;
         }
+        return null;
     }
 
 

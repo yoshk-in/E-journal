@@ -10,11 +10,14 @@ use App\GUI\components\ISize;
 use App\GUI\ClickTransmitter;
 use App\GUI\Color;
 use App\GUI\Debug;
+use App\GUI\helpers\TVisualAggregator;
 use Gui\Components\VisualObjectInterface;
 use function App\GUI\{getColor, color, height, top, left, width};
 
 class Table implements IOffset, ISize
 {
+    use TVisualAggregator;
+
     private $currentRow;
     private $defaultColor;
     private $rows = [];
@@ -46,14 +49,12 @@ class Table implements IOffset, ISize
         return count($this->rows);
     }
 
-    public function setVisible(bool $bool): self
+
+    protected function getVisualComponents(): array
     {
-        foreach ($this->rows as $row)
-        {
-            $row->setVisible($bool);
-        }
-        return $this;
+        return $this->rows;
     }
+
 
     public function unsetRow($key): self
     {
@@ -99,8 +100,6 @@ class Table implements IOffset, ISize
         $compositeShape = ($this->parentRow = $this->getRow())->addCell($classes, color($compositeColor),null, $compSizes);
         $newCellSizes[ISize::WIDTH] = $partsCount ? (width($compSizes) - 2 * left($newOffsets)) / $partsCount :  width($prevSizes) + 2 * left($newOffsets);
         $newCellSizes[ISize::HEIGHT] = height($prevSizes) - 2 * top($newOffsets);
-//        $partsCount ? ($partsSizes = SizeComputer::reduceSizesOnOffsets(size(width($compSizes), height($prevSizes)), $newOffsets, 2))  && ($partsSizes[ISize::WIDTH] /= $partsCount ) :
-//                        $partsSizes = SizeComputer::reduceHeightAndIncreaseWidthOnOffset($prevSizes, $newOffsets, 2);
         $newRowOffset = SizeComputer::plusOffsets($newOffsets, $prevOffsets);
         $this->currentRow = new CellRow($newRowOffset, $newCellSizes);
         return $compositeShape;

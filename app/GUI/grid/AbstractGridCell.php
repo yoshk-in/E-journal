@@ -8,15 +8,18 @@ use App\GUI\components\IOffset;
 
 abstract class AbstractGridCell implements GridCellInterface, IOffset
 {
-    protected $toRight;
-    protected $toDown;
-    protected $neighborCells = [];
-    protected $sizes;
-    protected $cellId;
+    protected ?GridCellInterface $toRight;
+    protected ?GridCellInterface $toDown;
+    protected array $neighborCells = [];
+    protected array $sizes;
+    protected ?int $cellId;
 
     public function __construct(array $sizes)
     {
         $this->sizes = $sizes;
+        $this->toRight = null;
+        $this->toDown = null;
+        $this->cellId = null;
     }
 
 

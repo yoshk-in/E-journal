@@ -5,7 +5,7 @@ namespace App\controller;
 
 
 use App\base\GUIRequest;
-use App\GUI\GUIManager;
+use App\GUI\GUIController as gui;
 
 class GUIController implements IController
 {
@@ -16,7 +16,7 @@ class GUIController implements IController
 
 
     public function __construct(
-        GUIManager $GUIManager,       
+        GUIController $GUIManager,
         GUIRequest $request
     ) {        
         $this->request = $request;

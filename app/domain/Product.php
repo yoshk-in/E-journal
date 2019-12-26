@@ -61,13 +61,18 @@ class Product implements IObservable
     {
         $this->name = $name;
         $this->procCollection = new ArrayCollection($factory->createProcedures($this));
+        self::$numberStrategy->setProductNumber($this, $number,  $this->number);
         $this->notify(AppMsg::PERSIST_NEW);
-        self::$numberStrategy->setProductNumber($this, $number);
     }
 
     public static function setNumberStrategy(NumberStrategy $strategy)
     {
         self::$numberStrategy = $strategy;
+    }
+
+    public function isDoubleNumber():bool
+    {
+        return (bool)self::$numberStrategy instanceof DoubleNumberStrategy;
     }
 
     public function nextNumber(): ?int
@@ -88,15 +93,16 @@ class Product implements IObservable
 
     public function setNumbers(?int $number, int $advancedNumber)
     {
-        assert(get_called_class() instanceof NumberStrategy, ' bad usage for product numbering');
         $this->number = $number;
         $this->advancedNumber = $advancedNumber;
+        $this->notify(self::$changeState);
     }
 
     public function getName(): string
     {
         return $this->name;
     }
+
 
     public function getNumbersToStrategy(): array
     {
@@ -229,6 +235,13 @@ class Product implements IObservable
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function getFullId()
+    {
+        $number = $this->getNumber();
+        if (is_null($number)) throw new \Exception(' product has not full number');
+        return $this->getName() . $number;
     }
 
     protected function isNotFinishedCheck()

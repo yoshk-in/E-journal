@@ -30,6 +30,11 @@ class ProductMap
         return $this->getProductProps($product)['monthly countable'] ?? false;
     }
 
+    public function isDoubleNumbering(string $product): bool
+    {
+        return DoubleNumberStrategy::class === $this->getNumberStrategy($product);
+    }
+
     public function getNumberStrategy(string $product): string
     {
         return $this->getProductProps($product)['numberStrategy'];

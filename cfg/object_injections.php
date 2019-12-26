@@ -7,7 +7,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Setup;
 use App\domain\ProductMonthlyCounter;
-use function DI\{create, get};
+use function DI\{create, get, factory};
 
 return [
 

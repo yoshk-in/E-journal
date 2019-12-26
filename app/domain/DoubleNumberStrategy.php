@@ -4,20 +4,20 @@
 namespace App\domain;
 
 
-class CompositeNumberStrategy extends NumberStrategy
+class DoubleNumberStrategy extends NumberStrategy
 {
 
-    public function setProductNumber(Product $product, int $number)
+    public function setProductNumber($product, $number, $mainNumber)
     {
         $product->setNumbers(null, $number);
     }
 
-    public function getNumber(Product $product)
+    public function getNumber(Product $product): ?int
     {
         return $product->getNumbersToStrategy()[0];
     }
 
-    public function nextNumber(Product $product)
+    public function nextNumber(Product $product): ?int
     {
         if ($product->getNumbersToStrategy()[0] === null) {
             return null;
@@ -26,7 +26,7 @@ class CompositeNumberStrategy extends NumberStrategy
         }
     }
 
-    public function getAdvancedNumber(Product $product)
+    public function getAdvancedNumber(Product $product): int
     {
         return $product->getNumbersToStrategy()[1];
     }

@@ -3,6 +3,8 @@
 
 namespace App\events;
 
+use App\base\AppMsg;
+
 class EventChannel implements IEventChannel
 {
 
