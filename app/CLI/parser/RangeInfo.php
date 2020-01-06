@@ -9,9 +9,9 @@ use App\base\AppMsg;
 class RangeInfo extends Parser
 {
 
-    protected function doParse($request)
+    protected function doParse()
     {
-        $request->addCmd(AppMsg::RANGE_INFO);
+        $this->request->addCmd(AppMsg::RANGE_INFO);
     }
 
 

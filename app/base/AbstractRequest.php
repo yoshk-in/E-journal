@@ -7,14 +7,12 @@ namespace App\base;
 abstract class AbstractRequest
 {
 
-    protected $commands = [];
-    protected $blockNumbers = [];
-    protected $partNumber;
-    protected $partialProcName;
-    protected $productName;
-    protected $env;
-    protected $doubleNumbers = [];
-    protected $changingNumbers = [];
+    protected array $commands = [];
+    protected array $blockNumbers = [];
+    protected ?string $partialProcName = null;
+    protected string $productName;
+    protected array $doubleNumbers = [];
+    protected array $changingNumbers = [];
 
     public function addChangingNumber($advancedNumber, $mainNumber)
     {
@@ -26,10 +24,6 @@ abstract class AbstractRequest
         return $this->changingNumbers;
     }
 
-    public function getEnv(): string
-    {
-        return $this->env;
-    }
 
     public function getProduct(): string
     {
@@ -71,11 +65,6 @@ abstract class AbstractRequest
     }
 
 
-    public function getParty()
-    {
-        return $this->partNumber;
-    }
-
 
     public function setParty($partNumber): void
     {
@@ -83,7 +72,7 @@ abstract class AbstractRequest
     }
 
 
-    public function getPartial()
+    public function getPartial(): ?string
     {
         return $this->partialProcName;
     }

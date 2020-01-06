@@ -4,15 +4,14 @@
 namespace App\CLI\parser;
 
 
-use App\base\CLIRequest;
 
 class EndParse extends Parser
 {
-    public function parse(CLIRequest $request)
+    public function parse()
     {
     }
 
-    protected function doParse($request)
+    protected function doParse()
     {
 
     }

@@ -5,154 +5,50 @@ namespace App\GUI;
 use App\GUI\components\ISize;
 use App\GUI\components\IOffset;
 use App\GUI\components\IText;
+use App\GUI\grid\style\BasicVisualStyle;
+use App\GUI\grid\style\Style;
 
-function offset(?int $left = 0, ?int $top = 0): array
+
+
+function sizeStyle(BasicVisualStyle $style, ?int $width = 0, ?int $height = 0): BasicVisualStyle
 {
-    return [IOffset::LEFT => $left, IOffset::TOP => $top];
+    $style->width = $width;
+    $style->height = $height;
+    return $style;
 }
 
-function size(?int $width = 0, ?int $height = 0): array
+function offsetStyle(BasicVisualStyle $style, ?int $left = 0, ?int $top = 0): BasicVisualStyle
 {
-    return [ISize::WIDTH => $width, ISize::HEIGHT => $height];
+    $style->left = $left;
+    $style->top = $top;
+    return $style;
 }
 
-function text(?string $text = '', ?string $fontColor = null, ?int $fontSize = null): array
+function cellStyle(BasicVisualStyle$style, $left, $top, $width, $height): BasicVisualStyle
 {
-    return [IText::TEXT => $text, IText::FONT_COLOR => ($fontColor ?? Color::WHITE), IText::FONT_SIZE => ($fontSize ?? 10)];
-}
-
-function value(string $value): array
-{
-    return [IText::VALUE => $value];
-}
-
-function textAndColor(string $text, string $color, ?string $fontColor = null, ?int $fontSize = null): array
-{
-    $textArr = text($text, $fontColor, $fontSize);
-    $textArr[Color::KEY] = $color;
-    return $textArr;
-}
-
-function color(string $color): array
-{
-    return [Color::KEY => $color];
-}
-
-function sumTops(array $offset1, array $offset2 = null): array
-{
-    $offset1[IOffset::TOP] = $offset1[IOffset::TOP] + $offset2[IOffset::TOP];
-    return $offset1;
-}
-
-function sumLefts(array $offset1, array $offset2 = null): array
-{
-    $offset1[IOffset::LEFT] = $offset1[IOffset::LEFT] + $offset2[IOffset::LEFT];
-    return $offset1;
-}
-
-function toWidth(array &$sizes, int $value): array
-{
-    $sizes[ISize::WIDTH] = $value;
-    return $sizes;
-}
-
-function height(?array $sizes): ?int
-{
-    return $sizes[ISize::HEIGHT]?? null;
-}
-
-function width(?array $sizes): ?int
-{
-    return $sizes[ISize::WIDTH] ?? null;
-}
-
-function setWidth(array $sizes, int $value): array
-{
-    $sizes[ISize::WIDTH] = $value;
-    return $sizes;
-}
-
-function left(?array $offsets): ?int
-{
-    return $offsets[IOffset::LEFT] ?? null;
-}
-
-function top(?array $offsets): ?int
-{
-    return $offsets[IOffset::TOP] ?? null;
-}
-
-function getText(array $additions): ?string
-{
-    return $additions[IText::TEXT] ?? null;
-}
-
-function getFontColor(array $additions): ?string
-{
-    return $additions[IText::FONT_COLOR] ?? null;
-}
-
-function getFontSize(array $additions): ?string
-{
-    return $additions[IText::FONT_SIZE] ?? null;
+    return sizeStyle(offsetStyle($style, $left, $top), $width, $height);
 }
 
 
-function getColor(array $additions): ?string
+function textStyle(Style $style, $text = null, ?string $fontColor = null, ?int $fontSize = null): Style
 {
-    return $additions[Color::KEY] ?? null;
+    $style = $style ?? new Style();
+    $style->value = $text ?? '';
+    is_null($fontColor) ?: $style->fontColor = $fontColor;
+    is_null($fontSize) ?: $style->fontSize = $fontSize;
+    return $style;
+}
+
+function colorStyle(Style $style, ?string $color = null, ?string $backgroundColor = null, ?string $borderColor = null): Style
+{
+    is_null($color) ?: $style->color = $color;
+    is_null($backgroundColor) ?: $style->backgroundColor = $backgroundColor;
+    is_null($borderColor) ?: $style->borderColor = $borderColor;
+    return $style;
 }
 
 
-//arrays
-function unsetKeys(array $arr, array $keys): array
-{
-    foreach ($keys as $key)
-    {
-        unset($arr[$key]);
-    }
-    return $arr;
-}
 
-function push(array $arr, array $keyValue): array
-{
-    $arr[$keyValue[array_key_first($keyValue)]] = $keyValue[0];
-    return $arr;
-}
 
-function pushLeftToWidth(array $offsets, array $sizes): array
-{
-    $offsets[IOffset::LEFT] = $offsets[IOffset::LEFT] + $sizes[ISize::WIDTH];
-    return $offsets;
-}
 
-function pushWidthToLeft(array $sizes, array $offsets): array
-{
-    $sizes[ISize::WIDTH] = $sizes[ISize::WIDTH] + $offsets[IOffset::LEFT];
-    return $sizes;
 
-}
-
-function pullHeightToTop(array $sizes, array $offsets): array
-{
-    $sizes[ISize::HEIGHT] = $sizes[ISize::HEIGHT] - $offsets[IOffset::TOP];
-    return $sizes;
-}
-
-function pullWidthToLeft(array &$sizes, array &$offsets, int $multiple = 1): array
-{
-    $sizes[ISize::WIDTH] = $sizes[ISize::WIDTH] - $multiple * $offsets[IOffset::LEFT];
-    return $sizes;
-}
-
-function multipleTop(array $offsets, int $howMuch): array
-{
-    $offsets[IOffset::TOP] = $howMuch * $offsets[IOffset::TOP];
-    return $offsets;
-}
-
-function inverseTop(array $offsets): array
-{
-    $offsets[IOffset::TOP] = -$offsets[IOffset::TOP];
-    return $offsets;
-}

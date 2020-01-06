@@ -6,18 +6,17 @@ namespace App\repository;
 
 use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
+use App\domain\AbstractProcedure;
 use App\domain\Product;
 use App\domain\ProductFactory;
 use App\events\Event;
 use App\events\ISubscriber;
-use Exception;
-use ReflectionClass;
 
 class ProductRepository implements ISubscriber
 {
 
-    private $orm;
-    private $domainClass = Product::class;
+    private DBLayer $orm;
+    private string $domainClass = Product::class;
 
     const FIELD = [
         'name' => 'name',
@@ -33,13 +32,13 @@ class ProductRepository implements ISubscriber
     const ADVANCED_FIELD = 'advancedNumber';
 
     const SUBSCRIBE_ON = [
-        AppMsg::ARRIVE,
-        AppMsg::DISPATCH,
+        Event::PROCEDURE_CHANGE_STATE,
+        Event::PRODUCT_STARTED,
         Event::PRODUCT_CHANGE_STATE,
-        AppMsg::PERSIST_NEW
+        Event::PERSIST_NEW
     ];
 
-    private $pFactory;
+    private ProductFactory $pFactory;
 
     public function __construct(DBLayer $orm, ProductFactory $pFactory)
     {
@@ -51,39 +50,29 @@ class ProductRepository implements ISubscriber
 
     private function checkMetadataDomainClass()
     {
-        $reflection = $reflection = new ReflectionClass($this->domainClass);
+        $reflection = $reflection = new \ReflectionClass($this->domainClass);
         $props = array_keys($reflection->getDefaultProperties());
         foreach (self::FIELD as $require) {
             if (!in_array($require, $props))
-                throw new Exception('table cache and class properties must be same');
+                throw new \Exception('table cache and class properties must be same');
         }
     }
 
-    public function createProducts(array $numbers, string $productName): array
+    public function createProducts(array $numbers, string $productName): \Iterator
     {
-        [$found,$not_found] = $this->findByNumbers($productName, $numbers);
+        [$found, $not_found] = $this->findByNumbers($productName, $numbers);
         if (!empty($found)) throw new WrongInputException('передан на создание номер, о котором уже существует запись в журнале');
         foreach ($not_found as $number) {
-            $objects[] =  $this->pFactory->create($this->domainClass, $productName, $number);
+            yield $this->pFactory->create($this->domainClass, $productName, $number);
         }
-        return $objects ?? [];
     }
 
     public function findByNumbers(string $productName, array $numbers): array
     {
-        $found = $this->orm->findWhere(
+        return $this->orm->findWhere(
             [self::NAME_FIELD => $productName, self::NUMBER_FIELD => $numbers],
             [self::NUMBER_FIELD => 'ASC']
         );
-
-        $not_found = array_filter($numbers, function ($number) use ($found) {
-            foreach ($found as $product) {
-                if ($product->getNumber() == $number) return false;
-            }
-            return true;
-        });
-
-        return [$found, $not_found];
     }
 
     public function findUnfinishedByAdvancedNumber(string $productName, $advancedNumber): array

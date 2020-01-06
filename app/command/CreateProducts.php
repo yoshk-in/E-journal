@@ -6,7 +6,7 @@ namespace App\command;
 
 use App\base\AppMsg;
 
-class CreateProducts extends Move
+class CreateProducts extends ByProductProperties
 {
 
     protected function doExecute(string $productName, array $numbers, ?string $procedure)

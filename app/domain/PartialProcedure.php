@@ -3,67 +3,45 @@
 
 namespace App\domain;
 
-use App\base\AppMsg;
-use DateInterval;
-use DateTimeImmutable;
+
+use App\domain\traits\IBeforeEndProcedure;
+use App\domain\traits\IProcedureOwner;
+use App\domain\traits\TIntervalProcedure;
 
 /**
  * @Entity
  *
  */
-class PartialProcedure extends AbstractProcedure implements IBeforeEnd
+class PartialProcedure extends AbstractProcedure implements IBeforeEndProcedure
 {
-    use TBeforeEnd;
+    use TIntervalProcedure{TIntervalProcedure::__construct as interval__construct;}
 
-    /** @ManyToOne(targetEntity="CasualProcedure") */
-    protected $owner;
-    /** @Column(type="string", name="`interval`") */
-    protected $interval;
+    /**
+     * @ManyToOne(targetEntity="CompositeProcedure")
+     * @var IProcedureOwner|CompositeProcedure $owner;
+     */
+    protected IProcedureOwner $owner;
 
 
 
-    public function __construct(string $name, int $idState, CasualProcedure $ownerProc, string $interval)
+    public function __construct(string $name, int $idState, CompositeProcedure $ownerProc, string $interval)
     {
         parent::__construct($name, $idState, $ownerProc);
-        $this->interval = $interval;
+        $this->interval__construct($interval);
+        $this->willProcessingOwner = $ownerProc;
     }
 
-    public function start(?string  $partial = null)
-    {
-        parent::_setStart();
-        $this->setEnd();
-        $this->changeStateToStart();
-    }
 
-    protected function setEnd() : DateTimeImmutable
-    {
-        $start = clone $this->start;
-        return $this->end = $start->add(new DateInterval($this->interval));
-    }
+
 
     public function getProduct(): Product
     {
-        return $this->getOwner()->getProduct();
-    }
-
-    public function isFinished(): bool
-    {
-        if ($this->state === self::STAGE['end']) return true;
-        if ($this->end && (new DateTimeImmutable('now') > $this->end)){
-            $this->state = self::STAGE['end'];
-            return true;
-        };
-        return false;
-    }
-
-    public function getState() : int
-    {
-        if ($this->state === self::STAGE['end']) return parent::getState();
-        if ($this->end && (new DateTimeImmutable('now') > $this->end)) {
-            $this->state = self::STAGE['end'];
-            return parent::getState();
+        $owner = $this->owner;
+        while (!$owner instanceof Product) {
+            $owner = $this->owner->getOwner();
         }
-        return parent::getState();
+        return $owner;
     }
+
 
 }

@@ -6,6 +6,9 @@ namespace App\GUI\grid;
 
 use App\GUI\components\IOffset;
 use App\GUI\components\ISize;
+use App\GUI\grid\coordinate\GridPosition;
+use App\GUI\grid\style\BasicVisualStyle;
+use App\GUI\grid\style\Style;
 use App\GUI\grid\traits\TEventEmitter;
 use function App\GUI\offset;
 use function App\GUI\size;
@@ -14,35 +17,36 @@ class Grid implements IOffset, ISize
 {
     use TEventEmitter;
 
-    protected $grid = [];
+    protected GridPosition $grid;
+    protected int $xLine = -1;
+    protected int $yLine = -1;
+    protected BasicVisualStyle $windowSize;
+    protected Grid $aligning;
 
-    protected $wrongKey = 'wrong offset or size array index name';
-    protected $startCell;
-    protected $offsets;
-    protected $cellCounter = -1;
 
-    const DIRECTION_TO_OFFSET = [
-          'right' => IOffset::LEFT,
-          'down' => IOffset::TOP
-    ];
-
-    const OFFSET_TO_SIZE = [
-        IOffset::LEFT => ISize::WIDTH,
-        IOffset::TOP => ISize::HEIGHT
-    ];
 
     const EVENT = [
         'render' => 'render',
     ];
 
-    public function __construct(GridCellInterface $cell, array $offsets = [IOffset::LEFT => 0, IOffset::TOP => 0])
+    public function __construct(BasicVisualStyle $style, BasicVisualStyle $windowSize)
     {
-        $this->startCell = $cell;
-        $this->offsets = $offsets;
-
-        $this->grid[$this->cellCounter] = [$offsets, size(0,0) ];
-
+        $this->grid = new GridPosition();
+        $style->width = 0;
+        $style->height = 0;
+        $this->windowSize = $windowSize;
     }
+
+    protected function putInX(Style $style)
+    {
+        $this->grid->x[++$this->xLine] = $style;
+    }
+
+    protected function putInY(Style $style)
+    {
+        $this->grid->y[++$this->yLine] = $style;
+    }
+
 
     public function render()
     {

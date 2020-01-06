@@ -7,8 +7,8 @@ namespace App\domain;
 
 class ProductFactory
 {
-    private $map;
-    private $procedureFactory;
+    private ProductMap$map;
+    private ProcedureFactory $procedureFactory;
 
     public function __construct(ProductMap $map, ProcedureFactory $procedureFactory)
     {
@@ -18,8 +18,7 @@ class ProductFactory
 
     public function create(string $productClass, string $product, ?int $number)
     {
-        $object = new $productClass($number, $product, $this->procedureFactory);
-        return $object;
+        return new $productClass($number, $product, $this->procedureFactory);
     }
 
 }

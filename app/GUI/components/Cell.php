@@ -4,35 +4,21 @@
 namespace App\GUI\components;
 
 
-use App\GUI\Color;
-use App\GUI\components\traits\TNestingVisualObject;
-use App\GUI\components\traits\TVisualObjectWrapConstruct;
 use App\GUI\components\traits\TClickCounter;
-use App\GUI\components\traits\TOwnerable;
+use App\GUI\grid\style\Style;
 use Gui\Components\ContainerObjectInterface;
-use function App\GUI\offset;
-use function App\GUI\size;
 
 class Cell extends WrapVisualObject
 {
-    use TOwnerable;
     use TClickCounter;
-    use TVisualObjectWrapConstruct {
-        TVisualObjectWrapConstruct::__construct as visualObjectConstruct;
-    }
-    use TNestingVisualObject;
 
-    private $defaultBorderColor;
-    private $clickBlock = false;
+    private string $defaultBorderColor;
+    private bool $clickBlock = false;
 
-    public function __construct(string $class,
-                                array $defaultAttributes = [],
-                                ContainerObjectInterface $parent = null,
-                                $application = null,
-                                string $defaultBorderColor = Color::WHITE)
+    public function __construct(Style $style, ContainerObjectInterface $parent = null, $application = null)
     {
-        self::visualObjectConstruct($class, $defaultAttributes, $parent, $application);
-        $this->defaultBorderColor = $defaultBorderColor;
+        parent::__construct($style, $parent, $application);
+        $this->defaultBorderColor = $style->defaultBorderColor;
     }
 
     public function default()
@@ -40,21 +26,6 @@ class Cell extends WrapVisualObject
         $this->component->setBorderColor($this->defaultBorderColor);
     }
 
-    public function getData()
-    {
-        return $this->getOwner()->getData();
-    }
-
-
-    public function getOffsets(): array
-    {
-        return offset($this->getLeft(), $this->getTop());
-    }
-
-    public function getSizes(): array
-    {
-        return size($this->getWidth(), $this->getHeight());
-    }
 
 
     public function blockClick(bool $bool)

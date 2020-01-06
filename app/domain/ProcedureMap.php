@@ -4,120 +4,121 @@ namespace App\domain;
 
 
 
+use SebastianBergmann\FileIterator\Iterator;
+
+/**
+ * Class ProcedureMap
+ * @package App\domain
+ * @method  Iterator getAllDoublePartialNames(string $product)
+ * @method Iterator  getAllProductCompositeProc(string $product)
+ * @method Iterator getAllDoubleProcNames(string $product)
+ * @method Iterator getProcedureNames(string $product)
+ */
 class ProcedureMap
 {
-    private $products = [];
-    private $procMap;
-    const SHORT = true;
+    protected array $products = [];
+    protected array $procMap = [];
+    private \stdClass $objectMap;
+    protected array $cache = [];
+
 
 
     public function __construct(array $procedureMap)
     {
         $this->procMap = $procedureMap;
-        foreach ($this->procMap as $product => $procMap) {
-            foreach ($procMap as $procProps) {
-                $this->products[$product][$procProps['name']] = $procProps;
-            }
+        $this->objectMap = (object) $procedureMap;
+        $this->products = $this->procMap;
+    }
 
+    public function __call($name, $arguments): \Iterator
+    {
+        if (!method_exists($this, substr($name, 3))) throw new \Exception('undefined method');
+        if ($cache = $this->getCache($product = $arguments[0], 'get' . $name )) return $cache;
+        while ($res = $this->$name(...$arguments)) {
+            yield $this->setCache($product, $name, $res);
         }
     }
 
     public function getProducts(): array
     {
-        return array_keys($this->procMap);
+        return $this->products;
     }
 
-    public function getProceduresFor(string $product): array
+
+    public function getProcedures(string $product): array
     {
         $this->inMapProductCheck($product);
         return $this->products[$product];
     }
 
+
     public function partialsCount(string $product, string $name): int
     {
-        assert($this->isComposite($product, $name), ' non composite procedure ');
-        return count($this->procForProduct($product, $name)['inners']);
+        return count($this->procForProduct($product, $name)['inners']) ?? 0;
     }
 
     public function procForProduct(string $product, string $name)
     {
-        $procedures = $this->getProceduresFor($product);
-        assert(isset($procedures[$name]), 'в файле конфигурации отсутствует процедура для продукта с данным именем');
-        return $procedures[$name];
+        return  $this->getProcedures($product)[$name] ?? false;
     }
 
-    public function proceduresForFactory(string $product)
-    {
-        $this->inMapProductCheck($product);
-        return $this->procMap[$product];
-    }
 
-    public function getProcedureNames(string $product): array
+    protected function ProcedureNames(string $product): \Generator
     {
         foreach ($this->procMap[$product] as $proc) {
-            $names[] = $proc['name'];
+            yield $proc;
         }
-        return $names;
     }
 
     public function isComposite(string $product, string $name): bool
     {
         $procedure = $this->procForProduct($product, $name);
-        return (isset($procedure['inners']) ? true : false);
+        return isset($procedure['inners']);
     }
 
-    public function getPartials(string $product, string $procedure): array
+
+    protected function AllProductCompositeProc(string $product): \Generator
     {
-        $procedures = $this->procMap[$product];
-        foreach ($procedures as $key => $proc) {
-            $found = ($proc['name'] !== $procedure) ?: $key;
-            break;
+        foreach ($this->procMap[$product] as $proc => $properties) {
+            if (!($comps = $properties['inners'] ?? null)) continue;
+            yield $comps;
         }
-        return $procedures[$found]['inners'] ?? null;
     }
 
-    public function getPartialNames(string $product, ?string $procedure, ?string $ru): array
+    protected function AllDoublePartialNames(string $product): \Generator
     {
-        foreach ($this->getPartials($product, $procedure) as $partial) {
-            $names[] = $ru ? $partial['short'] : $partial['name'];
+        foreach ($this->getAllProductCompositeProc($product) as $procedure => $property)
+        {
+            if (!($inners = $property['inners'] ?? null)) continue;
+            foreach ($inners as $inner_name => $inner_properties) {
+                yield [$inner_properties['short'], $inner_name];
+            }
         }
-        return $names;
     }
 
-    public function getAllPartialNames(string $product, ?string $ru = null) : array
+    protected function AllDoubleProcNames(string $product): \Generator
     {
-        $names = [];
-        foreach ($this->getProceduresFor($product) as $proc) {
-            !($proc['inners'] ?? null) OR $names = array_merge($this->getPartialNames(
-                $product, $proc['name'], $ru
-            ), $names);
-
+        foreach ($this->getProcedures($product) as $proc_name => $proc) {
+            yield [$proc['short'], $proc_name];
         }
-        return $names;
-    }
-
-    public function getAllDoublePartialNames(string $product) : array
-    {
-        $shortNames = $this->getAllPartialNames($product, self::SHORT);
-        $fullNames = $this->getAllPartialNames($product);
-        foreach ($shortNames as $key => $name) {
-            $result[] = [$name, $fullNames[$key]];
-        }
-        return $result;
-    }
-
-    public function getAllDoubleProcNames(string $product)
-    {
-        foreach ($this->getProceduresFor($product) as $proc) {
-            $names[] = [$proc['short'], $proc['name']];
-        }
-        return $names;
     }
 
     private function inMapProductCheck(string $product)
     {
-        assert(isset($this->products[$product]), 'в файле конфигурации отсутствует продукт с данным именем');
+        assert(isset($this->procMap[$product]), 'в файле конфигурации отсутствует продукт с данным именем');
     }
+
+
+    protected function getCache(string $product, string $functionName)
+    {
+        return $this->cache[$product][$functionName] ?? null;
+    }
+
+    protected function setCache(string $product, string $functionName, $value)
+    {
+        return $this->cache[$product][$functionName][] = $value;
+    }
+
 
 }
 

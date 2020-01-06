@@ -68,7 +68,7 @@ class GUIController  implements ISubscriber
     {
         $this->container->set(Application::class, $this->gui);
         $this->container->set(LoopInterface::class, $this->gui->getLoop());
-        $this->container->get(MouseHandlerMng::class)->changeHandler($this->container->get(DefaultClickHandler::class));
+        $this->container->get(UserActionMng::class)->changeHandler($this->container->get(DefaultClickHandler::class));
         $this->channel->subscribeArray([$this->container->get(ProductTableSync::class), $this]);
         $this->requestMng = $this->container->get(RequestManager::class);
         $this->requestMng->changeProduct($product = $this->productMap->first());

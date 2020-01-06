@@ -24,5 +24,8 @@ class NotFoundWrapper implements IObservable
         return $this->numbers;
     }
 
-
+    public function report()
+    {
+        $this->notify(AppMsg::NOT_FOUND);
+    }
 }

@@ -2,102 +2,87 @@
 
 return [
     'Г9' => [                    //product name
-        [
-            'name' => 'настройка',              //name
-            'short' => 'настрой',            //ru name
-            'next' => 'прическа',             //next_ru_state
-        ],
-        [
-            'name' => 'техтренировка',      //name
-            'short' => 'тт',          //ru name
-            'next' => 'механика ОТК',           //next_ru_state
-            'inners' =>
-                [                         //partial procedures
-                    [
-                        'name' => 'вибропрочность',                //name
-                        'short' => 'вибро',                //ru name
-                        'interval' => 'PT1S',                  //interval
-                        'relax' => false
+        'настройка' =>                              //procedure name
+            [
+                'short' => 'настрой',            //short name
+                'next' => 'прическа',             //next_state
+            ],
+        'техтренировка' =>                      //procedure name
+            [
+                'short' => 'тт',                    //short name
+                'next' => 'механика ОТК',           //next_state
+                'inners' =>
+                    [                         //partial procedures
+                        'вибропрочность' =>                         //procedure name
+                            [
+                                'short' => 'вибро',                //short name
+                                'interval' => 'PT1S',                  //interval
+                                'relax' => false
+                            ],
+                        'прогон' =>                                 //procedure name
+                            [
+                                'short' => 'прогон',               //short name
+                                'interval' => 'PT1S',                  //interval
+                                'relax' => false
+                            ],
+                        'морозоустойчивость' =>                     //procedure name
+                            [
+                                'short' => 'мороз',                //short name
+                                'interval' => 'PT1S',                 //interval
+                                'relax' => true,                   //required relax
+                            ],
+                        'теплоустойчивость' =>                  //procedure name
+                            [
+                                'short' => 'жара',                 //short name
+                                'interval' => 'PT1S',                 //interval
+                                'relax' => true                    //required relax
+                            ],
                     ],
-                    [
-                        'name' => 'прогон',               //name
-                        'short' => 'прогон',               //ru name
-                        'interval' => 'PT1S',                  //interval
-                        'relax' => false
-                    ],
-                    [
-                        'name' => 'морозоустойчивость',                //name
-                        'short' => 'мороз',                //ru name
-                        'interval' => 'PT1S',                 //interval
-                        'relax' => true,                   //required relax
-                    ],
-                    [
-                        'name' => 'теплоустойчивость',                 //name
-                        'short' => 'жара',                 //ru name
-                        'interval' => 'PT1S',                 //interval
-                        'relax' => true                    //required relax
-                    ],
-                ],
-            'PT1S',                     //interval to relax
-        ],
-        [
-            'name' => 'электрика ОТК',         //name
-            'short' => 'ОТК',        //ru name
-            'next' => 'механика ПЗ',          //next_ru_state
-        ],
-        [
-            'name' => 'электрика ПЗ',          //name
-            'short' => 'ПЗ',         //ru name
-            'next' => 'склад',                //next_ru_state
-        ],
+                'relax' => 'PT1S',               //interval for tt procedure relax
+            ],
+        'электрика ОТК' =>                      //procedure name
+            [
+                'short' => 'ОТК',                   //short name
+                'next' => 'механика ПЗ',          //next_state
+            ],
+        'электрика ПЗ' =>                        //procedure name
+            [
+                'short' => 'ПЗ',                    //short name
+                'next' => 'склад',                //next_state
+            ],
     ],
 
 
     'НР381Б-02' => [
-        [
-            'name' => 'настройка',              //name
-            'short' => 'настрой',            //ru name
-            'next' => 'прическа',             //next_ru_state
-        ],
-        [
-            'name' => 'электрика ОТК',         //name
-            'short' => 'ОТК',        //ru name
-            'next' => 'механика ПЗ',          //next_ru_state
-            'inners' =>
-                [                         //partial procedures
-                    [
-                        'name' => 'вибропрочность',                //name
-                        'short' => 'вибро',                //ru name
-                        'interval' => 'PT1S',                  //interval
-                        'relax' => false
-                    ],
-                    [
-                        'name' => 'прогон',               //name
-                        'short' => 'прогон',               //ru name
-                        'interval' => 'PT1S',                  //interval
-                        'relax' => false
-                    ],
-                ],
-        ],
-        [
-            'name' => 'электрика ПЗ',          //name
-            'short' => 'ПЗ',         //ru name
-            'next' => 'склад',                //next_ru_state
-            'inners' =>
-                [                         //partial procedures
-                    [
-                        'name' => 'вибропрочность',                //name
-                        'short' => 'вибро',                //ru name
-                        'interval' => 'PT1S',                  //interval
-                        'relax' => false
-                    ],
-                    [
-                        'name' => 'прогон',               //name
-                        'short' => 'прогон',               //ru name
+        'настройка' =>                          //procedure name
+            [
+                'short' => 'настрой',            //short name
+                'next' => 'прическа',             //next_state
+            ],
+        'электрика ОТК' =>                      //procedure name
+            [
+            'short' => 'ОТК',                   //short name
+            'next' => 'механика ПЗ',          //next_state
+            $tt = 'inners' =>               //partial procedures
+                [
+                    'вибропрочность' =>                         //procedure name
+                        [
+                            'short' => 'вибро',                //short name
+                            'interval' => 'PT1S',                  //interval
+                            'relax' => false
+                        ],
+                    'прогон' => [                               //procedure name
+                        'short' => 'прогон',                    //short name
                         'interval' => 'PT1S',                  //interval
                         'relax' => false
                     ],
                 ],
+        ],
+        'электрика ПЗ' =>                       //procedure name
+            [
+            'short' => 'ПЗ',                    //short name
+            'next' => 'склад',                //next_state
+            $tt
         ],
     ]
 ];

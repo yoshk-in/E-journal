@@ -9,9 +9,9 @@ use App\domain\CasualProcedure;
 
 class ProcFormatter extends Formatter
 {
-    private $compositeFormatter;
-    private $casualFormatter;
-    private $partCollFormatter;
+    private CompositeProcFormatter $compositeFormatter;
+    private CasualProcFormatter $casualFormatter;
+    private CollFormatter $partCollFormatter;
 
 
     final function handle($processed): string
@@ -24,7 +24,7 @@ class ProcFormatter extends Formatter
                 break;
             case CompositeProcedure::class:
                 $buffer .= $this->compositeFormatter->handle($processed);
-                $buffer .= $this->partCollFormatter->handle($processed->getInners());
+                $buffer .= $this->partCollFormatter->handle($processed->getProcedures());
         }
         return $buffer;
     }

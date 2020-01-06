@@ -8,9 +8,8 @@ use App\domain\Product;
 
 class GUIRequest extends AbstractRequest
 {
-    protected $env = AppMsg::GUI;
-    protected $blocks = [];
-    protected $doubleNumberBlocks = [];
+    protected array $blocks = [];
+    protected array $doubleNumberBlocks = [];
 
 
     public function addBlock(Product $product): void

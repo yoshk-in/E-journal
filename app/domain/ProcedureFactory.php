@@ -7,7 +7,7 @@ namespace App\domain;
 
 class ProcedureFactory
 {
-    private $creationMap;
+    private ProcedureMap $creationMap;
 
     public function __construct(ProcedureMap $creationMap)
     {
@@ -16,27 +16,25 @@ class ProcedureFactory
 
     public function createProcedures(Product $product): array
     {
-        foreach ($this->creationMap->proceduresForFactory($product->getName()) as $idState => $procedure) {
-            $idState += $compositeInnersCount ?? 0;
-            switch (isset($procedure['inners'])) {
-                case true :
-                    $composite = new CompositeProcedure($procedure['name'], $idState, $product, $procedure['next'], $procedure['inners'], $this);
-                    $compositeInnersCount = $composite->getInnersCount();
-                    $array[] = $composite;
-                    break;
-                case false:
-                    $array[] = new CasualProcedure($procedure['name'], $idState, $product, $procedure['next']);
-            }
+        $orderNumber = 0;
+        foreach ($this->creationMap->getProcedures($product->getName()) as $idState => $proc) {
+            [$advanced, $class, $countPlus ] =
+                ($parts = &$proc['inners'] ?? null) ?
+                    [[$proc['next'], $parts, $this], CompositeProcedure::class, count($parts)]
+                    :
+                    [[], CasualProcedure::class, 0];
+
+            $array[] = new $class($proc['name'], ++$orderNumber, $product, ...$advanced);
+            $orderNumber += $countPlus;
         }
         return $array;
     }
 
-    public function createPartials(array $partials, CompositeProcedure $owner): array
+    public function createPartials(array $partials, CompositeProcedure $owner): \Generator
     {
-        $idOwner = $owner->getIdState();
-        foreach ($partials as $idState => $partial) {
-            $array[] = $new = new PartialProcedure($partial['name'], $idOwner + $idState + 1, $owner, $partial['interval']);
+        $orderNumber = $owner->getOrderNumber();
+        foreach ($partials as $partial) {
+            yield new PartialProcedure($partial['name'],  ++$orderNumber, $owner, $partial['interval']);
         }
-        return $array;
     }
 }

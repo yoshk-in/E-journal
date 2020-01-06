@@ -6,14 +6,15 @@ namespace App\CLI\render\event;
 
 use App\base\AbstractRequest;
 use App\CLI\render\Format;
+use App\CLI\render\IFormatter;
 
 abstract class AbstractInfoDispatcher
 {
-    protected $title;
-    protected $formatter;
-    protected $output = '';
-    protected $mainTitle = Format::PRODUCT_NAME . PHP_EOL . PHP_EOL;
-    private $request;
+    protected string $title;
+    protected IFormatter $formatter;
+    protected string $output = '';
+    protected string $mainTitle = Format::PRODUCT_NAME . PHP_EOL . PHP_EOL;
+    private AbstractRequest $request;
 
     public function __construct(AbstractRequest $request)
     {

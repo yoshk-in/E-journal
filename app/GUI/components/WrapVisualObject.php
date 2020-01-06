@@ -4,23 +4,34 @@
 namespace App\GUI\components;
 
 
+use App\GUI\components\traits\TOwnerable;
 use App\GUI\components\traits\TVisualObjectMethodAdapter;
+use App\GUI\grid\style\Style;
 use App\GUI\grid\traits\DelegateInterface;
 use App\GUI\grid\traits\TCellDelegator;
+use App\GUI\grid\traits\THierarchy;
+use App\GUI\tableStructure\TableRow;
 use Gui\Components\ContainerObjectInterface;
 use Gui\Components\VisualObjectInterface;
 
+/**
+ * Class WrapVisualObject
+ * @package App\GUI\components
+ * @method setRow(TableRow $row)
+ * @method TableRow getRow
+ */
+
 class WrapVisualObject implements VisualObjectInterface, DelegateInterface
 {
-    use TCellDelegator, TVisualObjectMethodAdapter;
+    use TCellDelegator, TVisualObjectMethodAdapter, THierarchy, TOwnerable;
 
-    protected $component;
-    protected $propertyContainer = [];
+    protected VisualObjectInterface $component;
+    protected array $propertyContainer = [];
 
-    public function __construct(string $class, array $defaultAttributes = [], ContainerObjectInterface $parent = null, $application = null)
+
+    public function __construct(Style $style, ?ContainerObjectInterface $parent = null, $application = null)
     {
-        $this->createComponent($class, $defaultAttributes, $parent, $application);
-        $this->propertyContainer = $defaultAttributes;
+        $this->adaptConstruct($style, $parent, $application);
     }
 
 

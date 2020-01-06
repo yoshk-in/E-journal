@@ -4,20 +4,21 @@ namespace App\command;
 
 use App\base\AbstractRequest;
 use App\base\AppMsg;
-use App\base\exceptions\AppException;
+use App\command\DBFindNumbers\MoveProductByRequest;
+use App\command\casual\{ClearJournal, Party};
 use Psr\Container\ContainerInterface;
+use App\command\DBFindNumbers\{RangeInfo, CurrentProcInfo};
 
 class CmdResolver
 {
-    private $defaultCmd = Info::class;
-    private $request;
-    private $container;
+    private string $defaultCmd = Info::class;
+    private AbstractRequest $request;
+    private ContainerInterface $container;
 
     const CMD_MAP = [
         AppMsg::RANGE_INFO => RangeInfo::class,
         AppMsg::PRODUCT_INFO => Info::class,
-        AppMsg::DISPATCH => Dispatch::class,
-        AppMsg::ARRIVE => Arrive::class,
+        AppMsg::MOVE_PRODUCT => MoveProductByRequest::class,
         AppMsg::PARTY => Party::class,
         AppMsg::CLEAR_JOURNAL => ClearJournal::class,
         AppMsg::FORWARD => Forward::class,
@@ -26,7 +27,7 @@ class CmdResolver
         AppMsg::CURRENT_PROCEDURE_INFO => CurrentProcInfo::class,
         AppMsg::CREATE_PRODUCT_OR_GENERATE => CreateProductOrGenerate::class,
         AppMsg::STAT_INFO => StartedAndUnfinishedInfoProducts::class,
-        AppMsg::CHANGE_PRODUCT_MAIN_NUMBER => ChangeProductMainNumber::class,
+        AppMsg::CHANGE_PRODUCT_MAIN_NUMBER => ChangeProductNumber::class,
     ];
 
     public function __construct(ContainerInterface $container, AbstractRequest $request)

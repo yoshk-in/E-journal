@@ -4,16 +4,11 @@
 namespace App\GUI\grid;
 
 
-use App\GUI\components\traits\TOwnerable;
 use App\GUI\grid\traits\DelegateInterface;
 use App\GUI\grid\traits\RerenderInterface;
-use App\GUI\grid\traits\TCellDelegator;
 use App\GUI\grid\traits\TGridCellConstructor;
 use App\GUI\grid\traits\TReactToAttach;
 use App\GUI\grid\traits\TRerender;
-use function App\GUI\left;
-use function App\GUI\size;
-use function App\GUI\top;
 
 class ReactCell extends AbstractGridCell implements DelegateInterface, RerenderInterface
 {

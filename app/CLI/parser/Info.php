@@ -9,8 +9,8 @@ use App\base\AppMsg;
 class Info extends Parser
 {
 
-    protected function doParse($request)
+    protected function doParse()
     {
-        $request->addCmd(AppMsg::PRODUCT_INFO);
+        $this->request->addCmd(AppMsg::PRODUCT_INFO);
     }
 }

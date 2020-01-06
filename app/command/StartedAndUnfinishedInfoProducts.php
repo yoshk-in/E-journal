@@ -6,7 +6,7 @@ namespace App\command;
 
 use App\base\AppMsg;
 
-class StartedAndUnfinishedInfoProducts extends Move
+class StartedAndUnfinishedInfoProducts extends ByProductProperties
 {
 
     protected function doExecute(string $productName, array $numbers, ?string $procedure)

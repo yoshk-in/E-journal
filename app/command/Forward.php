@@ -5,7 +5,7 @@ namespace App\command;
 
 
 
-class Forward extends Move
+class Forward extends ByProductProperties
 {
 
     protected function doExecute(string $productName, array $numbers, ?string $procedure)

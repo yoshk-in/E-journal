@@ -14,7 +14,8 @@ class AutoGenCollection
 
     private ContainerInterface $container;
     private GeneratingProps $staticProps;
-    private ?GeneratingProps $dynamicProps;
+    private GeneratingProps $dynamicProps;
+    const CLASS_REQUIRED_ERR = ' class collection required';
 
 
     public function __construct(ContainerInterface $container, GeneratingProps $genProps = null)
@@ -30,21 +31,15 @@ class AutoGenCollection
 
     public function gen($key, ?GeneratingProps $dynamicProps = null)
     {
-        $this->dynamicProps = $dynamicProps;
+        $this->dynamicProps = $dynamicProps ?? self::getBlank();
+        if (!$class = $dynamicProps->class ?? $this->staticProps->class) throw new \Exception(self::CLASS_REQUIRED_ERR);
 
-        $class = $dynamicProps->class ?? $this->staticProps->class;
-        assert(!is_null($class), ' class collection required');
+        [$target, $afterGenCall] = isset($this->store[$class][$key]) ?
+            [$this->store[$class][$key], $this->staticProps->get]
+            :
+            [$this->generateToCollection($class, $key), $this->staticProps->make];
 
-        if (isset($this->store[$class][$key])) {
-            $target = $this->getFromCollection($class, $key);
-            $afterClosure = $this->staticProps->get ?? null;
-        } else {
-            $target = $this->addGeneratingToCollection($class, $key);
-            $afterClosure = $this->staticProps->make ?? null;
-        }
-
-        is_callable($afterClosure) ? $afterClosure($target) :
-            (is_null($afterClosure) ?: assert(false, "expected closure " . gettype($afterClosure) . " got" ) );
+        is_null($afterGenCall) ?: $afterGenCall($target);
 
         return $target;
     }
@@ -54,15 +49,10 @@ class AutoGenCollection
         return count($this->store);
     }
 
-    protected function getFromCollection($class, $key)
+    protected function generateToCollection(string $class, $key)
     {
-        return $this->store[$class][$key];
-    }
-
-    protected function addGeneratingToCollection(string $class, $key)
-    {
-        $injects = $this->createInjections(array_merge($this->staticProps->inject ?? [], $this->dynamicProps->inject ?? []));
-        $scalars = array_merge($this->staticProps->scalar ?? [], $this->dynamicProps->scalar ?? []);
+        $injects = $this->createInjections(array_merge($this->staticProps->inject, $this->dynamicProps->inject));
+        $scalars = array_merge($this->staticProps->scalar, $this->dynamicProps->scalar);
         $createParameters = array_merge($scalars, $injects);
         return $this->store[$class][$key] = $this->container->make($class, $createParameters);
     }

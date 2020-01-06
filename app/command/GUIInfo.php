@@ -6,7 +6,7 @@ namespace App\command;
 
 use App\base\AppMsg;
 
-class GUIInfo extends Move
+class GUIInfo extends ByProductProperties
 {
     protected function doExecute(string $productName, array $numbers, ?string $procedure)
     {

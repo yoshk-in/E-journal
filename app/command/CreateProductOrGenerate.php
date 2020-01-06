@@ -7,7 +7,7 @@ namespace App\command;
 use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
 
-class CreateProductOrGenerate extends Move
+class CreateProductOrGenerate extends ByProductProperties
 {
     protected function doExecute(string $productName, array $numbers, ?string $procedure)
     {

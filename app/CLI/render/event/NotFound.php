@@ -8,11 +8,11 @@ use App\CLI\render\Format;
 
 class NotFound extends AbstractInfoDispatcher
 {
-    protected $title = 'не найдено информации по данным номерам:';
+    protected string $title = 'не найдено информации по данным номерам:';
 
     protected function doRender($reporter)
     {
-        $this->output = implode($reporter->getNumbers(), Format::COMMA);
+        $this->output = implode( Format::COMMA, $reporter->getNumbers());
     }
 
     protected function initFormatter(): void

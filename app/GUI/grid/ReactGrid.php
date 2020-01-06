@@ -15,7 +15,7 @@ class ReactGrid extends Grid
     public function react(AbstractGridCell $cell)
     {
         $this->setNewCellSizes($cell, $cell->getSizes());
-        foreach ($cell->getChild() as $yieldChild) {
+        foreach ($cell->getChildren() as $yieldChild) {
             $direction = array_key_first($yieldChild);
             $child = $yieldChild[$direction];
             $this->updateOffsets($child, $direction);

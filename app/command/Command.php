@@ -8,17 +8,12 @@ use App\base\exceptions\WrongInputException;
 
 abstract class Command
 {
-    protected $request;
 
-    public function __construct(AbstractRequest $request)
-    {
-        $this->request = $request;
-    }
+    abstract public function execute();
 
-    protected function ensureRightInput(bool $condition, string $msg = '', ?array $numbers = null)
+    protected function checkInput(bool $condition, string $msg = '', ?array $numbers = null)
     {
-        $numb_str = '';
-        if ($numbers) foreach ($numbers as $number) $numb_str .= $number . "\n";
+        $numb_str = $numbers ? implode("\n", $numbers). "\n": '';
         if (!$condition) throw new WrongInputException("неверно заданы параметры запроса: $msg\n $numb_str");
     }
 

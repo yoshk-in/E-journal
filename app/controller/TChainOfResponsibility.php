@@ -6,7 +6,7 @@ namespace App\controller;
 
 trait TChainOfResponsibility
 {
-    private $next;
+    private self $next;
 
     public function setNextHandler($handler)
     {

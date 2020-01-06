@@ -4,6 +4,10 @@
 namespace App\domain;
 
 use App\base\AppMsg;
+use App\controller\TChainOfResponsibility;
+use App\domain\traits\IProcedureOwner;
+use App\domain\traits\TChangeNameAfterEndProcedure;
+use App\domain\traits\TManualEndingProcedure;
 use DateTimeImmutable;
 
 /**
@@ -16,40 +20,22 @@ use DateTimeImmutable;
  */
 class CasualProcedure extends AbstractProcedure
 {
-
+    use TManualEndingProcedure, TChangeNameAfterEndProcedure {TManualEndingProcedure::end as manual_end;}
     /**
      * @ManyToOne(targetEntity="Product")
      **/
-    protected $owner;
+    protected IProcedureOwner $owner;
 
-    /** @Column(type="string") */
-    protected $nameAfterEnd;
 
-    public function __construct(string $name, int $idState, object $owner, string $nameAfterEnd)
+    public function end(): AbstractProcedure
     {
-        parent::__construct($name, $idState, $owner);
-        $this->nameAfterEnd = $nameAfterEnd;
-    }
-
-    public function start()
-    {
-        if ($this->isFinished()) {
-            $this->getProduct()->nextProc($this);
-            return;
-        }
-        parent::start();
-    }
-
-    public function end()
-    {
-        $this->checkInput((bool)$this->getStart(), ' событие еще не начато');
-        $this->checkInput(!$end = $this->getEnd(), ' coбытие уже отмечено');
-        $this->end = new DateTimeImmutable('now');
+        $this->manual_end();
         $this->name = $this->nameAfterEnd;
-        $this->getProduct()->procEnd($this);
-        $this->changeStateToEnd();
+        return $this;
     }
 
-
-
+    protected function concreteProcStart(?string $partial = null)
+    {
+        return $this;
+    }
 }

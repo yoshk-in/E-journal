@@ -19,12 +19,11 @@ use DI\Container;
 class RenderMng
 {
 
-    private ?ProductTableMng        $currentTComposer;
+    private ?ProductTableMng        $currentTableMng = null;
     private RequestManager          $requestMng;
     private ProductMap              $productMap;
     private Dashboard               $dashboard;
     private AutoGenCollection       $tableComposersColl;
-
 
 
     public function __construct(RequestManager $requestMng,
@@ -36,33 +35,7 @@ class RenderMng
         $this->requestMng = $requestMng;
         $this->productMap = $productMap;
         $this->dashboard = $dashboard;
-        $this->currentTComposer = null;
         $this->tableComposersColl = new AutoGenCollection($container, $this->initTableMngCollectionProps($channel));
-    }
-
-
-
-    protected function initTableMngCollectionProps(EventChannel $channel)
-    {
-        $props = AutoGenCollection::getBlank();
-        $props->class = ProductTableMng::class;
-        $props->inject = ['pager' => Pager::class];
-
-        $props->get = \Closure::fromCallable([$this, 'changeCurrentTable']);
-
-        $props->make = function (ProductTableMng $newCurrent) use ($channel) {
-            $this->changeCurrentTable($newCurrent);
-            $channel->subscribe($newCurrent);
-            $newCurrent->prepareTable();
-            $this->requestMng->newProductRequest();
-        };
-        return $props;
-    }
-
-    protected function changeCurrentTable(ProductTableMng $newCurrent)
-    {
-        is_null($this->currentTComposer) ?: $this->currentTComposer->setVisible(false);
-        ($this->currentTComposer = $newCurrent) && $newCurrent->setVisible(true);
     }
 
 
@@ -86,6 +59,29 @@ class RenderMng
 
         $dynProps->scalar = ['product' => $product];
         $this->tableComposersColl->gen($product, $dynProps);
+    }
+
+    protected function initTableMngCollectionProps(EventChannel $channel)
+    {
+        $props = AutoGenCollection::getBlank();
+        $props->class = ProductTableMng::class;
+        $props->inject = ['pager' => Pager::class];
+
+        $props->get = \Closure::fromCallable([$this, 'changeCurrentTable']);
+
+        $props->make = function (ProductTableMng $newCurrent) use ($channel) {
+            $this->changeCurrentTable($newCurrent);
+            $channel->subscribe($newCurrent);
+            $newCurrent->prepareTable();
+            $this->requestMng->newProductRequest();
+        };
+        return $props;
+    }
+
+    protected function changeCurrentTable(ProductTableMng $newCurrent)
+    {
+        is_null($this->currentTableMng) ?: $this->currentTableMng->setVisible(false);
+        ($this->currentTableMng = $newCurrent) && $newCurrent->setVisible(true);
     }
 
 

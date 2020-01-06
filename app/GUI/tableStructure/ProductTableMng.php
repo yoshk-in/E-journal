@@ -8,12 +8,13 @@ use App\base\AppMsg;
 use App\domain\Product;
 use App\events\ISubscriber;
 use App\GUI\components\Pager;
+use App\GUI\grid\style\RowStyle;
 use App\GUI\requestHandling\ProductTableSync;
 use App\GUI\requestHandling\RowStore;
 use App\GUI\helpers\TVisualAggregator;
 use App\helpers\AutoGenCollection;
 use Psr\Container\ContainerInterface;
-use function App\GUI\{offset, size};
+use function App\GUI\cellStyle;
 
 class ProductTableMng implements ISubscriber
 {
@@ -23,7 +24,7 @@ class ProductTableMng implements ISubscriber
     protected Table                     $currentTable;
     private ContainerInterface          $container;
     private int                         $productsPerPage;
-    private CellRow                     $header;
+    private TableRow                     $header;
     private Pager                       $pager;
     private ?Table                      $visibleTable;
     private RowStore                    $store;
@@ -58,24 +59,18 @@ class ProductTableMng implements ISubscriber
         $this->visibleTable = null;
     }
 
-    protected function initTableProps(): \stdClass
-    {
-        $tableProps = new \stdClass();
-        $tableProps->sizes = size(100, 50);
-        $tableProps->offsets = offset(20, 60);
-        return $tableProps;
-    }
+
 
     protected function initTableCollection()
     {
         $tableCollProps = AutoGenCollection::getBlank();
         $tableCollProps->class = Table::class;
-        $tableCollProps->scalar = (array)$this->initTableProps();
-        $tableCollProps->get = \Closure::fromCallable([$this, 'switchVisibleTableTo']);
-        $tableCollProps->make = function (Table $currentTable) {
+        $tableCollProps->scalar = ['style' => cellStyle(new RowStyle(), 100, 50, 20, 60)];
+        $tableCollProps->get = fn (Table $switchingTable) => $this->switchVisibleTableTo($switchingTable);
+        $tableCollProps->make = function (Table $newTable) {
             $this->pager->addButton(fn($pageNumber) => $this->tableColl->gen($pageNumber - 1));
-            $this->switchVisibleTableTo($currentTable);
-            $this->currentTable = $currentTable;
+            $this->switchVisibleTableTo($newTable);
+            $this->currentTable = $newTable;
         };
         return $tableCollProps;
     }
@@ -87,9 +82,9 @@ class ProductTableMng implements ISubscriber
         $this->productTableComponents = [$this->pager, $this->header, $this->currentTable];
     }
 
-    public function unsetRow(CellRow $row)
+    public function unsetRow(TableRow $row)
     {
-        $table = $row->getOwner();
+        $table = $row->getParent();
         $table->unsetRow($row->getData()->getNumber());
     }
 
@@ -117,7 +112,7 @@ class ProductTableMng implements ISubscriber
 
     protected function updateTable(Product $product): self
     {
-        $this->currentTable->rowCount() < $this->productsPerPage ?: $this->createNewPage();
+        $this->currentTable->rootRowCount() < $this->productsPerPage ?: $this->createNewPage();
         $this->createProductRow($product);
         return $this;
     }

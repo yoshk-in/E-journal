@@ -16,8 +16,8 @@ use App\CLI\render\ProductStat;
 
 class Info extends AbstractInfoDispatcher
 {
-    protected $title = 'текущая статистика:';
-    protected $statBuffer = [];
+    protected string $title = 'текущая статистика:';
+    protected array $statBuffer = [];
 
 
     protected function doRender($product)

@@ -4,14 +4,15 @@ namespace App\base;
 
 class CLIRequest extends AbstractRequest
 {
-    protected $env = AppMsg::CLI;
+    protected int $partNumber;
+    protected string $moveProductMethod;
+    protected array $consoleArgs = [];
 
     public function __construct()
     {
         $this->setCLIArgs();
     }
 
-    protected $consoleArgs = [];
 
     public function getCLIArgs(): array
     {
@@ -23,7 +24,20 @@ class CLIRequest extends AbstractRequest
         $this->consoleArgs = $_SERVER['argv'];
     }
 
+    public function getParty()
+    {
+        return $this->partNumber;
+    }
 
+    public function setMoveProductMethod(string $move)
+    {
+        $this->moveProductMethod = $move;
+    }
+
+    public function getMoveProductMethod()
+    {
+        return $this->moveProductMethod;
+    }
 
 }
 

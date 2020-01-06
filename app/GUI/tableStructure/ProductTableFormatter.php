@@ -4,183 +4,130 @@
 namespace App\GUI\tableStructure;
 
 
-use App\domain\CasualProcedure;
-use App\domain\DoubleNumberStrategy;
+use App\domain\AbstractProcedure;
 use App\domain\CompositeProcedure;
-use App\domain\PartialProcedure;
 use App\domain\ProcedureMap;
 use App\domain\Product;
 use App\domain\ProductMap;
-use App\GUI\components\Cell;
-use App\GUI\components\computers\SizeComputer;
-use App\GUI\IVisualClass;
-use App\GUI\MouseHandlerMng;
-use App\GUI\ProductStateColorize;
-use Gui\Components\InputText;
-use Gui\Components\Label;
-use Gui\Components\Shape;
-use Gui\Components\VisualObjectInterface;
-use function App\GUI\color;
-use function App\GUI\height;
-use function App\GUI\offset;
-use function App\GUI\size;
-use function App\GUI\text;
-use function App\GUI\textAndColor;
-use function App\GUI\width;
+use App\GUI\grid\style\Style;
+use App\GUI\ProductStateColorant;
+use Doctrine\Common\Collections\Collection;
+use function App\GUI\colorStyle;
+use function App\GUI\textStyle;
 
 class ProductTableFormatter
 {
-    protected array $textCell = [
-        IVisualClass::WRAP => Cell::class,
-        IVisualClass::MAIN => Shape::class,
-        IVisualClass::NEST => Label::class
-    ];
-
-    protected array $casualCell = [
-        IVisualClass::WRAP => Cell::class,
-        IVisualClass::MAIN => Shape::class,
-    ];
-
-    protected array $inputNumberCell = [
-        IVisualClass::WRAP => Cell::class,
-        IVisualClass::MAIN => Shape::class,
-        IVisualClass::NEST => InputText::class
-    ];
-
-    protected ProductStateColorize $colorize;
-    private int $compositeWidth;
-    private array $cellSize;
-    private string $onCellClickEvent = 'mousedown';
-    private MouseHandlerMng $click;
+    protected ProductStateColorant $colorize;
     private Table $handledTable;
-    private ProductMap $productMap;
     private ProcedureMap $procedureMap;
     private string $handledProduct;
+    private Style $cellStyle;
+    private Style $compositeStyle;
+    private Style $textCellStyle;
+    private Style $inputCellStyle;
+    public \Closure $createCasualProcCell;
+    public \Closure $createPartialProcCell;
+    protected array $procStyleStack = [];
+    private \Closure $createCell;
 
-    public function __construct(ProductStateColorize $colorize, MouseHandlerMng $click, ProductMap $productMap, ProcedureMap $procedureMap)
+    public function __construct(ProductStateColorant $colorize, ProcedureMap $procedureMap, CellStyleInitializer $stylist)
     {
-        $this->colorize = $colorize;
-        $this->cellSize = size(100, 50);
-        $this->compositeWidth = 150;
-        $this->click = $click;
-        $this->productMap = $productMap;
         $this->procedureMap = $procedureMap;
+        $this->procStyleStack[] = $this->cellStyle = $stylist->getCommonCellStyle();
+        $this->procStyleStack[] = $this->compositeStyle = $stylist->getCompositeCellStyle();
+        $this->procStyleStack[] = $this->textCellStyle = $stylist->getTextCellStyle();
+        $this->inputCellStyle = $stylist->getInputCellStyle();
+        $this->procCellCreatorsInit($colorize);
     }
 
-    protected function textInMiddleCell()
+    protected function procCellCreatorsInit(ProductStateColorant $color)
     {
-        Cell::setNestingAligner(function (array $offsets, array $sizes, array $additions) {
-            return SizeComputer::textInMiddle($offsets, $sizes, $additions);
-        });
+        $this->createCell = fn($proc, $cellStyle) => $this->table()->addCell($color->style($cellStyle, $proc));
+        $this->createCasualProcCell =
+            fn(AbstractProcedure $proc, $cellStyle, $compStyle, $partStyle) => ($proc->isComposite()) ?
+                $this->compositeCell($proc, $partStyle, $compStyle)
+                :
+                ($this->createCell)($proc, $cellStyle);
+
+        $this->createPartialProcCell = fn(AbstractProcedure $proc, $cellStyle) => $this->table()->addCell(
+            $color->style(textStyle($cellStyle, $proc->getName()), $proc)
+        );
     }
 
-    public function createHeaderRow(string $product, Table $table): CellRow
+
+    public function createHeaderRow(string $product, Table $table): TableRow
     {
-        $this->textInMiddleCell();
         $this->handledTable = $table;
         $this->handledProduct = $product;
+        /** @var object $map */
+        $map = new class() {
+            public ProcedureMap $procMap;
+            public string $product;
+
+            public function __call($name, $arguments) {
+                $this->procMap->$name($this->product, ...$arguments);
+            }
+        };
+        $map->procMap = $this->procedureMap;
+        $map->product = $this->handledProduct;
         //xy header - first cell
-        $header = $this->table()->getRow();
-        $this->table()->addCell($this->textCell, text('номера'));
+        $header = $this->table()->getCurrentRow();
+        $this->table()->addCell(textStyle(clone $this->cellStyle, 'номера',));
 
         //rest headers
-        foreach ($this->procedureMap->getProceduresFor($product) as $proc) {
-            $cellWidth = isset($proc['inners']) ?
-                $this->procedureMap->partialsCount($this->product(), $proc['name']) * $this->compositeWidth
-                :
-                width($this->cellSize);
+        $headerStyle = clone $this->textCellStyle;
+        $headerStyle->on = [];
+        $compositeHeaderStyle = clone $headerStyle;
 
-            $this->addClickHandler($this->table()->addCell(
-                $this->textCell,
-                text($proc['name']),
-                size($cellWidth, height($this->cellSize)))
-            );
+        foreach ($map->getProcedures() as $proc) {
+            if ($map->isComposite($proc)) {
+                $compositeHeaderStyle->width =
+                    $this->compositeStyle->byDefer('width', $map->partialsCount($proc), $headerStyle->width);
+                $cellStyle = $compositeHeaderStyle;
+            } else $cellStyle = $headerStyle;
+            $this->table()->addCell(textStyle($cellStyle, $proc));
         }
         return $header;
     }
 
-    public function createProductRow(Product $product, Table $table): CellRow
+    public function createProductRow(Product $product, Table $table): TableRow
     {
         $this->handledTable = $table;
-        $row = $table->newRow($product->getId(), $product);
-        $this->createProductNumberCell($product);
-        $this->createProcedureRow($product);
+        $row = $table->newDataRow($product->getId(), $product);
+        //product number cell
+        $cellStyle = ($text = $product->getNumber()) ? textStyle($this->textCellStyle, $text) : $this->inputCellStyle;
+        $this->table()->addCell($cellStyle);
+        //rest cells
+        $this->createProcedureRow($this->createCasualProcCell, $product->getProcedures(), $this->procStyleStack);
         return $row;
+    }
+
+
+
+    protected function createProcedureRow(\Closure $createCell, Collection $procedures, array $cellStyleStack)
+    {
+        array_map(fn(AbstractProcedure $proc) => $createCell($proc->getName(), ...$cellStyleStack), $procedures->toArray());
+    }
+
+
+    protected function compositeCell(CompositeProcedure $procedure, Style $textStyle, Style $compStyle)
+    {
+        $parts = $procedure->getProcedures();
+        $compStyle->width = $this->compositeStyle->byDefer('width', $parts->count(), $textStyle->width);
+        $textStyle = clone $textStyle;
+        $textStyle->height = $compStyle->height - 2 * $compStyle->padding;
+        $textStyle->width -= 2 * $compStyle->padding;
+        return ($this->createCell)($procedure, $compStyle)
+            //create inner cells
+            ->nestInCellNewRow(
+                fn() => $this->createProcedureRow($this->createPartialProcCell, $parts, [$textStyle]),
+                $this->table()->getRow($this->table()->rootRowCount() - 1, 0)
+            );
     }
 
     protected function table(): Table
     {
         return $this->handledTable;
-    }
-
-    protected function product(): string
-    {
-        return $this->handledProduct;
-    }
-
-
-    protected function createProductNumberCell(Product $product)
-    {
-        if ($text = $product->getNumber() ?? '') {
-            $cell = $this->textCell;
-            $addition = [];
-        }
-        else {
-            $cell = $this->inputNumberCell;
-            $addition['onNest'] = null;
-        }
-        $this->addClickHandler($created_cell = $this->table()->addCell(
-            $cell,
-            array_merge(textAndColor($text, $this->colorize->productColor($product)), $addition)
-        ));
-        ($cell !== $this->inputNumberCell) ?: $created_cell->getNested()
-            ->on('change',
-                fn() => $this->click->getHandler()->handleInputNumber($created_cell)
-            );
-    }
-
-
-    protected function createProcedureRow(Product $product)
-    {
-        foreach ($product->getProcedures() as $procedure) {
-            $this->addClickHandler(
-                $procedure instanceof CompositeProcedure ?
-                    $this->compositeCell($procedure)
-                    :
-                    $this->casualCell($procedure)
-            );
-        }
-    }
-
-    protected function casualCell(CasualProcedure $procedure): VisualObjectInterface
-    {
-        return $this->table()->addCell($this->casualCell, color(($this->colorize)($procedure)));
-    }
-
-    protected function compositeCell(CompositeProcedure $procedure): VisualObjectInterface
-    {
-        $parts = $procedure->getInners();
-        $compSizes = size($this->compositeWidth * $parts->count(), height($this->cellSize));
-        $partsOffset = offset(10, 10);
-        $cell = $this->table()->beginCompositeCell($this->casualCell, ($this->colorize)($procedure), $partsOffset, $compSizes, $parts->count());
-
-        //create inner cells
-        array_map(fn($part) => $this->addClickHandler($this->partialCell($part)), $parts->toArray());
-
-        $this->table()->finishCompositeCell();
-        return $cell;
-    }
-
-    protected function partialCell(PartialProcedure $part): VisualObjectInterface
-    {
-        $cell = $this->table()->addCell($this->textCell, textAndColor($part->getName(), ($this->colorize)($part)));
-        $cell->catchNestingActions([$this->onCellClickEvent]);
-        return $cell;
-    }
-
-    protected function addClickHandler(VisualObjectInterface $cell)
-    {
-        $cell->on($this->onCellClickEvent, fn() => $this->click->getHandler()->handle($cell));
     }
 
 

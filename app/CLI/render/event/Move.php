@@ -8,7 +8,7 @@ use App\CLI\render\CasualProcFormatter;
 
 class Move extends AbstractInfoDispatcher
 {
-    protected $title = 'Отмечены следующие события';
+    protected string $title = 'Отмечены следующие события';
 
     protected function doRender($procedure)
     {        

@@ -9,8 +9,8 @@ use App\base\AppMsg;
 class ClearJournal extends Parser
 {
 
-    protected function doParse($request)
+    protected function doParse()
     {
-        $request->addCmd(AppMsg::CLEAR_JOURNAL);
+        $this->request->addCmd(AppMsg::CLEAR_JOURNAL);
     }
 }

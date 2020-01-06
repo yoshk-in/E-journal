@@ -10,7 +10,7 @@ abstract class Formatter implements IFormatter
 {
     use TChainOfResponsibility;
 
-    protected $result = '';
+    protected string $result = '';
 
     public function handle($processed): string
     {

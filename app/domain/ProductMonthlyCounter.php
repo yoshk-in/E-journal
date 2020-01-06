@@ -5,6 +5,7 @@ namespace App\domain;
 
 
 use App\base\AppMsg;
+use App\events\Event;
 use App\events\ISubscriber;
 use App\repository\DBLayer;
 
@@ -24,7 +25,7 @@ class ProductMonthlyCounter implements ISubscriber
     private $events = [];
     private static $dbLayer;
 
-    const EVENT = AppMsg::PRODUCT_STARTED;
+    const EVENT = Event::PRODUCT_STARTED;
 
     private function __construct()
     {

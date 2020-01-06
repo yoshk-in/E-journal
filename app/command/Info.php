@@ -7,7 +7,7 @@ namespace App\command;
 use App\base\AppMsg;
 use Doctrine\Common\Collections\Collection;
 
-class Info extends Move
+class Info extends ByProductProperties
 {
     protected function doExecute($productName, $numbers, $procedure) {
 

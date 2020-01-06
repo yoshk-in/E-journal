@@ -18,7 +18,7 @@ use App\events\TObservable;
 use App\GUI\Debug;
 use App\GUI\handlers\Alert;
 use App\GUI\inputValidate\NumberValidator;
-use App\GUI\MouseHandlerMng;
+use App\GUI\UserActionMng;
 
 class RequestManager implements IObservable, Event
 {
@@ -29,7 +29,7 @@ class RequestManager implements IObservable, Event
     private $currentProduct;
 
     private $channel;
-    private MouseHandlerMng $mouseMng;
+    private UserActionMng $mouseMng;
     private AddProductToRequestStrategy $addProductStrategy;
     private AddCasualProduct $addCasualProduct;
     private AddDoubleNumberProduct $addDoubleNumberProduct;
@@ -41,7 +41,7 @@ class RequestManager implements IObservable, Event
                                 GUIRequest $request,
                                 Controller $backend,
                                 EventChannel $channel,
-                                MouseHandlerMng $mouseMng)
+                                UserActionMng $mouseMng)
     {
         $this->request = $request;
         $this->backend = $backend;

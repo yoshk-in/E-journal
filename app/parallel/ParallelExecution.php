@@ -8,7 +8,7 @@ use App\events\{ISubscriber};
 
 class ParallelExecution implements ISubscriber
 {
-    public function update(Object $observable, string $event)
+    public function update($observable, string $event)
     {
         if ($observable instanceof PartialProcedure) {
             echo 'there is need to parallel execution' . PHP_EOL;

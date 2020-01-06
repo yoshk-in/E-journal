@@ -4,53 +4,42 @@
 namespace App\GUI\components;
 
 
-use App\GUI\factories\ButtonFactory;
 use App\GUI\factories\WrappingVisualObjectFactory;
+use App\GUI\grid\style\Style;
 use Gui\Components\Button;
 use Gui\Components\Label;
-use function App\GUI\left;
-use function App\GUI\offset;
-use function App\GUI\size;
-use function App\GUI\top;
-use function App\GUI\width;
+use Gui\Components\VisualObjectInterface;
+use function App\GUI\cellStyle;
 
 class Pager
 {
-    private $bFactory;
-    private $betweenButtonSpace = 20;
-    private $buttons = [];
-    private $pagerOffset;
-    private $offsets = [];
-    private $sizes = [];
+    private array $buttons = [];
+    private Style $buttonStyle;
 
 
-
-    public function __construct(WrappingVisualObjectFactory $bFactory)
+    public function __construct()
    {
-       $this->bFactory = $bFactory;
-       $this->offsets = offset(100, 20);
-       $this->pagerOffset = $this->offsets[IOffset::LEFT];
-       $this->sizes = size(20, 20);
+       $this->buttonStyle = cellStyle(new Style(Button::class), 100, 20, 20, 20);
+       $this->buttonStyle->margin = 20;
+       $this->buttonStyle->createCall = fn (Style $style) => WrappingVisualObjectFactory::create($style);
    }
 
    public function prepare()
    {
        new Label([
           'text' => 'листы:',
-          'left' => left($this->offsets) - 60,
-           'top' => top($this->offsets)
+          'left' => $this->buttonStyle->left - 60,
+           'top' => $this->buttonStyle->top
        ]);
    }
 
    public function addButton(\Closure $onClickHandler)
    {
        $index = count($this->buttons) + 1;
-       $this->buttons[] = $button = $this->bFactory->create(Button::class, $this->offsets, $this->sizes, ['value' => $index]);
-       $button->on('mousedown', function () use ($button, $onClickHandler)
-       {
-           $onClickHandler($button->getValue());
-       });
-       $this->offsets[IOffset::LEFT] += width($this->sizes) + $this->betweenButtonSpace;
+       $this->buttonStyle->value = $index;
+       $this->buttonStyle->on = ['mousedown', fn (VisualObjectInterface $button) => $onClickHandler($button->getValue())];
+       $this->buttons[] = $button = $this->buttonStyle->create();
+       $this->buttonStyle->left += $this->buttonStyle->width + $this->buttonStyle->margin;
    }
 
    public function setVisible(bool $bool)

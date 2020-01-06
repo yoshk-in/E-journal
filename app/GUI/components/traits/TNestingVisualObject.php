@@ -4,7 +4,7 @@
 namespace App\GUI\components\traits;
 
 
-use App\GUI\components\computers\SizeComputer;
+use App\GUI\components\computer\StyleComputer;
 use App\GUI\factories\GuiComponentFactory;
 use App\GUI\factories\WrappingVisualObjectFactory;
 use Gui\Components\VisualObjectInterface;
@@ -23,7 +23,7 @@ trait TNestingVisualObject
     public function nest(string $class, array $additions, ?array $onActions = null): self
     {
         $nestingAligner = self::$nestingAligner ?? function (array $offsets, array $sizes, array $additions) {
-                return SizeComputer::inMiddle($offsets, $sizes, $additions);
+                return StyleComputer::inMiddle($offsets, $sizes, $additions);
             };
         [$offsets, $sizes, $additions] = ($nestingAligner)($this->getOffsets(), $this->getSizes(), $additions);
         $this->nested = $this->create($class, $offsets, $sizes, $additions);

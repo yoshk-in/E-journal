@@ -6,7 +6,7 @@ namespace App\events;
 
 trait TObservable
 {
-    static private $eventChannel;
+    static private IEventChannel $eventChannel;
 
     static function attachToEventChannel(IEventChannel $channel)
     {

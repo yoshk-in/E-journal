@@ -6,18 +6,21 @@ namespace App\domain;
 
 class DoubleNumberStrategy extends NumberStrategy
 {
-
-    public function setProductNumber($product, $number, $mainNumber)
+    private function __construct()
     {
-        $product->setNumbers(null, $number);
     }
 
-    public function getNumber(Product $product): ?int
+    public static function setProductNumber($product, $number, $mainNumber)
+    {
+        $product->setNumbers( null, $number);
+    }
+
+    public static function getNumber(Product $product): ?int
     {
         return $product->getNumbersToStrategy()[0];
     }
 
-    public function nextNumber(Product $product): ?int
+    public static function nextNumber(Product $product): ?int
     {
         if ($product->getNumbersToStrategy()[0] === null) {
             return null;
@@ -26,8 +29,14 @@ class DoubleNumberStrategy extends NumberStrategy
         }
     }
 
-    public function getAdvancedNumber(Product $product): int
+    public static function getAdvancedNumber(Product $product): int
     {
         return $product->getNumbersToStrategy()[1];
+    }
+
+
+    static function isDoubleNumber(): bool
+    {
+        return true;
     }
 }

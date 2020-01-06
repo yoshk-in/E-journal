@@ -21,6 +21,6 @@ abstract class ProcedureFormatter implements IFormatter
         return $proc->getStart()? $proc->getStart()->format(self::TIME) : self::HYPHEN;
     }
 
-    abstract function handle($processed): string;
+    abstract function handle(AbstractProcedure $processed): string;
 
 }

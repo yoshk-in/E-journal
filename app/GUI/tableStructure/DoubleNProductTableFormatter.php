@@ -6,7 +6,7 @@ namespace App\GUI\tableStructure;
 
 use App\domain\Product;
 use App\GUI\components\Cell;
-use App\GUI\components\computers\SizeComputer;
+use App\GUI\components\computer\StyleComputer;
 use function App\GUI\text;
 use function App\GUI\textAndColor;
 
@@ -21,7 +21,7 @@ class DoubleNProductTableFormatter extends ProductTableFormatter
         $this->textInMiddleCell();
     }
 
-    public function createHeaderRow(string $product, Table $table): CellRow
+    public function createHeaderRow(string $product, Table $table): TableRow
     {
         $row =  parent::createHeaderRow($product, $table);
         //advanced number header column
@@ -40,7 +40,7 @@ class DoubleNProductTableFormatter extends ProductTableFormatter
     protected function inputCoverCell()
     {
         Cell::setNestingAligner(function (array $offsets, array $sizes, array $additions) {
-            return SizeComputer::inMiddle($offsets, $sizes, $additions);
+            return StyleComputer::inMiddle($offsets, $sizes, $additions);
         });
     }
 

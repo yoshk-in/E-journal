@@ -26,7 +26,7 @@ class CLIController implements IController
 
     public function run()
     {
-        $this->consoleParser->parse($this->request);
+        $this->consoleParser->parse();
         $this->next->run();
         $this->infoManager->dispatch();
     }

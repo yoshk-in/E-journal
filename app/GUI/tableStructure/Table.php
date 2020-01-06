@@ -4,47 +4,70 @@
 namespace App\GUI\tableStructure;
 
 
-use App\GUI\components\computers\SizeComputer;
-use App\GUI\components\IOffset;
-use App\GUI\components\ISize;
-use App\GUI\ClickTransmitter;
-use App\GUI\Color;
-use App\GUI\Debug;
+use App\GUI\components\computer\StyleComputer;
+use App\GUI\grid\style\RowStyle;
+use App\GUI\grid\style\Style;
 use App\GUI\helpers\TVisualAggregator;
-use Gui\Components\VisualObjectInterface;
-use function App\GUI\{getColor, color, height, top, left, width};
 
-class Table implements IOffset, ISize
+class Table
 {
     use TVisualAggregator;
 
-    private $currentRow;
-    private $defaultColor;
-    private $rows = [];
-    private $parentRow;
+    protected TableRow $currentRow;
+    protected array $rows = [];
+    protected int $rowDepth = 0;
+    protected int $rowOrder = 0;
+    protected array $dataRows = [];
+    protected int $topOffset = 0;
+    protected Style $currentCellStyle;
+    protected RowStyle $style;
+    protected TableRow $rootRow;
+    public \Closure $createNewRowStyle;
+    public \Closure $createNestingRowStyle;
+    public TableRow $header;
 
-    private $offsets = [];
-    private $sizes = [];
-
-    public function __construct(array $offsets, array $sizes, $defaultColor = Color::BLACK)
+    public function __construct(RowStyle $style)
     {
-        $this->currentRow = new CellRow($offsets, $sizes);
-        $this->defaultColor = $defaultColor;
-        $this->offsets = $offsets;
-        $this->sizes = $sizes;
+        $this->rootRow = $this->header = $this->createCurrentRow($style);
+        $this->style = clone $style;
+        $this->topOffset = $style->top;
+        $this->createNewRowStyle = function (RowStyle $style, int $topOffset) {
+            $style->top = $topOffset;
+            $style->increaseLeftTopOn($style->margin);
+        };
+        $this->createNestingRowStyle = function (Style $parentCell, $attachToRow): RowStyle {
+            ($newRowStyle = new RowStyle($this->currentCellStyle))
+            ->increaseLeftTopOn($this->currentCellStyle->padding)
+                ->parentRow = $attachToRow;
+            return $newRowStyle;
+        };
     }
 
-    public function getRow(): CellRow
+
+    protected function createCurrentRow(RowStyle $style): TableRow
+    {
+        $style->table = $this;
+        return $this->currentRow = new TableRow($style);
+    }
+
+    protected function createCurrentDataRow(RowStyle $style, $data): TableRow
+    {
+        return $this->createCurrentRow($style)->setData($data);
+    }
+
+    public function getCurrentRow(): TableRow
     {
         return $this->currentRow;
     }
 
-    public function getRowById($key): CellRow
+
+    public function getRow(int $orderNumber, int $depthNumber): TableRow
     {
-        return $this->rows[$key];
+        return $this->rows[$depthNumber][$orderNumber];
     }
 
-    public function rowCount(): int
+
+    public function rootRowCount(): int
     {
         return count($this->rows);
     }
@@ -56,73 +79,72 @@ class Table implements IOffset, ISize
     }
 
 
-    public function unsetRow($key): self
+    public function unsetRowByKey($key): self
     {
-        $this->rowsUpTo($key);
-        unset($this->rows[$key]);
+        [$depth, $order] = $this->dataRows[$key];
+        $this->moveRowsUpTo($depth, $order);
+        unset($this->rows[$depth][$order]);
+        unset($this->dataRows[$key]);
         return $this;
     }
 
-    public function getSizes(): array
+    public function addCell(Style $style): self
     {
-        return $this->getRow()->getSizes();
-    }
-
-    public function getOffsets(): array
-    {
-        return $this->getRow()->getOffsets();
-    }
-
-    public function addCell(array $classes, array $additions, ?array $customSizes = null): VisualObjectInterface
-    {
-        $sizes =  $this->getRow()->getSizes();
-        $sizes = $customSizes ?? $sizes;
-        getColor($additions) ?: $additions[Color::KEY] = $this->defaultColor;
-        return $this->getRow()->addCell($classes, $additions,null, $sizes);
-    }
-
-
-    public function newRow(string $key, $data): CellRow
-    {
-        [$offsets, $sizes] = [$this->getOffsets(), $this->getSizes()];
-        $offsets[IOffset::LEFT] = left($this->offsets);
-        $offsets[IOffset::TOP] += height($sizes);
-        $this->currentRow = new CellRow($offsets, $sizes, $this);
-        $this->rows[$key] = $this->getRow();
-        $this->getRow()->setData($data);
-        return $this->getRow();
-    }
-
-    public function beginCompositeCell(array $classes, string $compositeColor, ?array $newOffsets = null, ?array $compSizes = null, ?int $partsCount = null): VisualObjectInterface
-    {
-        [$prevOffsets, $prevSizes] = [$this->getOffsets(), $this->getSizes()];
-        $compSizes = $compSizes ?? $this->sizes;
-        $compositeShape = ($this->parentRow = $this->getRow())->addCell($classes, color($compositeColor),null, $compSizes);
-        $newCellSizes[ISize::WIDTH] = $partsCount ? (width($compSizes) - 2 * left($newOffsets)) / $partsCount :  width($prevSizes) + 2 * left($newOffsets);
-        $newCellSizes[ISize::HEIGHT] = height($prevSizes) - 2 * top($newOffsets);
-        $newRowOffset = SizeComputer::plusOffsets($newOffsets, $prevOffsets);
-        $this->currentRow = new CellRow($newRowOffset, $newCellSizes);
-        return $compositeShape;
-    }
-
-    public function finishCompositeCell()
-    {
-        $this->parentRow->mergeCells($this->getRow());
-        $this->currentRow = $this->parentRow;
-        $this->parentRow = null;
-    }
-
-    private function rowsUpTo($key): self
-    {
-        $key += 1;
-        $arr_keys = array_keys($this->rows);
-        $offset = array_search($key, $arr_keys);
-        $up = array_slice($this->rows, $offset);
-        array_map(\Closure::fromCallable([$this, 'moveRow']), $up);
+        $style = clone $style;
+        $style->top = $this->topOffset + $style->margin;
+        $this->currentRow->addCell($this->currentCellStyle = $style);
         return $this;
     }
 
-    private function moveRow(CellRow $row)
+    public function newDataRow(string $userKey, $data): TableRow
+    {
+        $this->setUserKeyToRowPosition($userKey);
+        return $this->newRow()->setData($data);
+    }
+
+    protected function setUserKeyToRowPosition($key): self
+    {
+        $this->dataRows[$key] = [$this->rowDepth, $this->rowOrder];
+        return $this;
+    }
+
+    public function newRow(): TableRow
+    {
+        $style = $this->currentRow->getStyle();
+        $newRowStyle = ($this->createNewRowStyle)(clone $style, $this->topOffset);
+        return $this->rows[$this->rowDepth][++$this->rowOrder] = $this->createCurrentRow($newRowStyle);
+    }
+
+    public function nestInCellNewRow(\Closure $closure, ?TableRow $attachToRow = null): self
+    {
+        return $this->nestInCellRow(fn (RowStyle $style) => $this->createCurrentRow($style), $closure, $attachToRow);
+    }
+
+    public function nestInCellNewDataRow(\Closure $closure, string $key, $data, ?TableRow $attachToRow = null): self
+    {
+        $this->nestInCellRow(fn (RowStyle $style) => $this->createCurrentDataRow($style, $data), $closure, $attachToRow);
+        return $this->setUserKeyToRowPosition($key);
+    }
+
+    protected function nestInCellRow(\Closure $createRowClosure, \Closure $nestingAction, ?TableRow $attachNestingCellsToRow = null): self
+    {
+        $newRowStyle = ($this->createNestingRowStyle)($this->currentCellStyle, $attachNestingCellsToRow);
+        ++$this->rowDepth;
+        $prevRow = $this->currentRow;
+        $nestingAction($createRowClosure($newRowStyle), clone $this->currentCellStyle);
+        $this->currentRow = $prevRow;
+        --$this->rowDepth;
+        return $this;
+    }
+
+    private function moveRowsUpTo(int $depth, int $order): self
+    {
+        $rowsMovingUpArr = array_slice($this->rows[$depth], ++$order);
+        array_map(fn ($row) => $this->moveRow($row), $rowsMovingUpArr);
+        return $this;
+    }
+
+    private function moveRow(TableRow $row)
     {
         $row->reduceTopOnOneHeight();
     }

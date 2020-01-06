@@ -5,88 +5,92 @@ namespace App\domain;
 
 
 use App\base\AppMsg;
-use App\base\exceptions\WrongInputException;
-use App\events\{IObservable,  TObservable};
-use DateTimeImmutable;
+use App\domain\exception\TProcCheckInput;
+use App\domain\traits\IProcedureOwner;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use App\events\{Event, IObservable, TObservable};
 
 
 abstract class AbstractProcedure implements IObservable
 {
-    use TObservable;
+    use TObservable, TProcCheckInput;
 
-    /** @Column(type="datetime_immutable", nullable=true)    */
-    protected $start;
+    /** @Column(type="datetime_immutable", nullable=true) */
+    protected \DateTimeImmutable $start;
 
-    /** @Column(type="datetime_immutable", nullable=true)   */
+    /** @Column(type="datetime_immutable", nullable=true) */
 
-    protected $end;
+    protected \DateTimeImmutable $end;
 
-    /** @Column(type="string")                              */
-    protected $name;
+    /** @Column(type="string") */
+    protected string $name;
 
-    /** @Column(type="integer")                             */
-    protected $idState;
+    /** @Column(type="integer") */
+    protected int $procedureOrderNumber;
 
-    /** @Column(name="state", type="integer")               */
-    protected $state = self::STAGE['not_start'];
+    /** @Column(type="integer") */
+    protected int $state = self::NOT_STARTED;
 
     /**
      * @Id @Column(type="integer")
      * @GeneratedValue
      */
-    protected $id;
+    protected int $id;
 
-    const STAGE = [
-        'not_start' => 0,
-        'start' => 1,
-        'end' => 2
-    ];
+    /** @var IProcedureOwner|CompositeProcedure|Product */
+    protected IProcedureOwner $owner;
 
-    protected static $startEvent = AppMsg::ARRIVE;
-    protected static $endEvent = AppMsg::DISPATCH;
+    const NOT_STARTED = 0;
+    const STARTED = 1;
+    const ENDED = 2;
 
-    protected $owner;
 
-    public function __construct(string $name, int $idState, object $owner)
+    const PROC_CHANGE_STATE = Event::PROCEDURE_CHANGE_STATE;
+
+    public function __construct(string $name, int $idState, IProcedureOwner $owner)
     {
         $this->name = $name;
-        $this->idState = $idState;
+        $this->procedureOrderNumber = $idState;
         $this->owner = $owner;
-        $this->notify(AppMsg::PERSIST_NEW);
+        $this->notify(Event::PERSIST_NEW);
     }
 
-    public function start()
+    public function start(?string $partialName = null): self
     {
-        $this->_setStart();
-        $this->getProduct()->procStart($this);
-        $this->changeStateToStart();
+        if ($this->isEnded()) {
+            $this->owner->nextProc($this);
+            return $this;
+        }
+        $this->checkInputCondition(is_null($this->start), 'событие уже отмечено');
+        $this->start = new \DateTimeImmutable('now');
+        $this->concreteProcStart($partialName);
+        return $this;
     }
 
-    public function getProduct(): Product
+
+
+    public function getOrderNumber(): int
     {
-        return $this->getOwner();
+        return $this->procedureOrderNumber;
     }
 
-    public function getIdState(): int
+
+    public function isEnded(): bool
     {
-        return $this->idState;
+        return $this->getState() === self::ENDED;
     }
 
-    public function isFinished(): bool
+
+    public function isStarted(): bool
     {
-        return $this->state === self::STAGE['end'];
+        return $this->getState() === self::STARTED;
     }
 
     public function isNotStarted(): bool
     {
-        return $this->getState() === self::STAGE['not_start'];
+        return $this->getState() === self::NOT_STARTED;
     }
-
-    public function isStarted(): bool
-    {
-        return $this->getState() === self::STAGE['start'];
-    }
-
 
     public function getName(): string
     {
@@ -104,49 +108,76 @@ abstract class AbstractProcedure implements IObservable
         return $this->end;
     }
 
-    public function getState() : int
+    public function getState(): int
     {
         return $this->state;
     }
 
-    final protected function changeStateToStart()
+
+    public function getProduct(): Product
     {
-        $this->state = self::STAGE['start'];
-        $this->notify(self::$startEvent);
+        return $this->getOwner();
     }
 
-    final protected function changeStateToEnd()
-    {
-        $this->state = self::STAGE['end'];
-        $this->notify(self::$endEvent);
-    }
-
-
-    protected function getOwner()
+    /**
+     * @return IProcedureOwner|CompositeProcedure|Product
+     */
+    public function getOwner(): IProcedureOwner
     {
         return $this->owner;
     }
 
-    protected function _setStart()
+    public function getInnersCount(): int
     {
-        $this->checkInput(is_null($this->start), 'coбытие уже отмечено');
-        $this->start = new DateTimeImmutable('now');
+        return 0;
     }
 
-
-    protected function checkInput(bool $condition, $msg = null): ?\Exception
+    public function getProcessingOrNextProc(): ?AbstractProcedure
     {
-        try {
-            [$product, $number] = $this->getProduct()->getNameAndNumber();
-            if (!$condition) throw new WrongInputException(
-                printf("ошибка, операция не выполнена: блок %s, номер %s, процедура '%s': %s \n", $product, $number, $this->getName(), $msg)
-            );
-        } catch (\Exception $e) {
-            exit;
-        }
-
         return null;
     }
+
+    public function getFirstUnfinishedProcName(): ?string
+    {
+        return null;
+    }
+
+    public function getInnerByName(string $name): ?AbstractProcedure
+    {
+        return null;
+    }
+
+    public function getEndedProcedures(): ?Collection
+    {
+        return null;
+    }
+
+    public function getNotEndedProcedures(): ?Collection
+    {
+        return null;
+    }
+
+    public function innersEnded(): bool
+    {
+        return true;
+    }
+
+    public function getProcedures(): Collection
+    {
+        return new ArrayCollection();
+    }
+
+    public function isComposite(): bool
+    {
+        return false;
+    }
+
+
+
+    abstract protected function concreteProcStart(?string $partial = null);
+
+
+
 
 
 }

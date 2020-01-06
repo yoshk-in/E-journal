@@ -4,11 +4,12 @@
 namespace App\GUI\components\traits;
 
 
+use App\GUI\grid\style\Style;
 use Gui\Components\Label;
 
 trait TVisualObjectMethodAdapter
 {
-    protected $adaptableMethods = [
+    protected array $adaptMethods = [
         Label::class => 'Text'
     ];
 
@@ -20,24 +21,27 @@ trait TVisualObjectMethodAdapter
 
     public function getValue()
     {
-        return $this->adapt('get',__FUNCTION__);
+        return $this->propertyContainer['value'] ?? $this->adapt('get',__FUNCTION__);
     }
 
-    protected function getAdaptableMethod(string $componentClass): string
+    protected function isAdapt()
     {
-        return $this->adaptableMethods[$componentClass];
-    }
-
-    protected function isAdaptable()
-    {
-        return isset($this->adaptableMethods[$class = get_class($this->getComponent())]) ? $class : false;
+        return $this->adaptMethods[get_class($this->getComponent())] ?? false;
     }
 
     protected function adapt($setGet, $methodName, $value = null)
     {
-        return ($class = $this->isAdaptable()) ?
-            $this->component->{$setGet . $this->getAdaptableMethod($class)}($value)
+        return ($class = $this->isAdapt()) ?
+            $this->component->{$setGet . $this->adaptMethods[$class]}($value)
             :
             $this->component->{$methodName}($value);
+    }
+
+    protected function adaptConstruct(Style $style, $parent, $application)
+    {
+        $defaultAttributes = $style->getVisualProps();
+        !$this->isAdapt() ?: (!$style->value ?: $defaultAttributes['text'] = $style->value);
+        $this->createComponent($style->guiComponentClass, $defaultAttributes, $parent, $application);
+        $this->propertyContainer = $defaultAttributes;
     }
 }

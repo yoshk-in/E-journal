@@ -26,12 +26,15 @@ class Scheduler implements IObservable
     }
 
 
-    public function addTask(\DateInterval $time,\Closure $closure, ?string $alert = null)
+    public function addTask(\DateInterval $time,\Closure $closure)
     {
-        $this->loop->addTimer($this->roundTime($time), function () use ($closure, $alert) {
-            $closure();
-            !$alert ?: $this->notify(Event::ALERT, $alert);
-        });
+        $this->loop->addTimer($this->roundTime($time), fn () => $closure()
+        );
+    }
+
+    public function alert(string $msg)
+    {
+        $this->notify(Event::ALERT, $msg);
     }
 
 

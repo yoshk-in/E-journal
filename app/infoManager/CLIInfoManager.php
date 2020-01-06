@@ -5,18 +5,18 @@ namespace App\infoManager;
 
 
 use App\base\AppMsg;
+use App\events\Event;
 use App\events\EventChannel;
 use App\events\ISubscriber;
 
 
 class CLIInfoManager implements ISubscriber
 {
-    private $dispatchResolver;
-    private $events = [];
+    private DispatchResolver $dispatchResolver;
+    private array $events = [];
 
     const SUBSCRIBE_ON = [
-        AppMsg::DISPATCH,
-        AppMsg::ARRIVE,
+        Event::PROCEDURE_CHANGE_STATE,
         AppMsg::PRODUCT_INFO,
         AppMsg::RANGE_INFO,
         AppMsg::NOT_FOUND,

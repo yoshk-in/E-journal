@@ -4,6 +4,8 @@ namespace App\domain;
 
 use App\base\AppMsg;
 use App\base\exceptions\WrongInputException;
+use App\domain\traits\IProcedureOwner;
+use App\domain\traits\TManualEndingProcedure;
 use App\events\{Event, IObservable, TObservable};
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -13,7 +15,7 @@ use Doctrine\Common\Collections\Collection;
  * @Entity
  *
  */
-class Product implements IObservable
+class Product implements IObservable, IProcedureOwner
 {
     use TObservable;
 
@@ -21,58 +23,61 @@ class Product implements IObservable
      * @Id @Column(type="integer")
      * @GeneratedValue
      */
-    protected $id;
+    protected int $id;
 
     /**
      * @OneToMany(targetEntity="CasualProcedure", mappedBy="owner", fetch="EAGER")
      * @OrderBy({"idState" = "ASC"})
      */
-    protected $procCollection;
+    protected Collection $procedures;
 
-    /**     @Column(type="integer", nullable = true)     */
-    protected $number;
+    /**     @Column(type="integer") */
+    protected int $number;
 
-    /**     @Column(type="integer", nullable = true)     */
-    protected $advancedNumber;
+    /**     @Column(type="integer") */
+    protected int $advancedNumber;
 
-    /**     @Column(type="string")                      */
-    protected $name;
+    /**     @Column(type="string") */
+    protected string $name;
 
-    /**     @OneToOne(targetEntity="CasualProcedure")    */
-    protected $currentProc;
+    /**     @OneToOne(targetEntity="CasualProcedure") */
+    protected AbstractProcedure $currentProc;
 
-    /**     @Column(type="boolean")                      */
-    protected $finished = false;
+    /**     @Column(type="boolean") */
+    protected bool $ended = false;
 
-    /**     @Column(type="boolean")                       */
-    protected $started = false;
+    /**     @Column(type="boolean") */
+    protected bool $started = false;
 
-    protected $isEndLastProd = false;
+    /**
+     * @var string|NumberStrategy $numberStrategy
+     */
+    protected static string $numberStrategy;
+    const PRODUCT_CHANGE_STATE = Event::PRODUCT_CHANGE_STATE;
+    const PRODUCT_STARTED = Event::PRODUCT_STARTED;
+    const PERSIST = Event::PERSIST_NEW;
+    const PRODUCT_CHANGED_NUMBER = 'product_change_number';
 
-    protected static $numberStrategy;
-
-    protected static $changeState = Event::PRODUCT_CHANGE_STATE;
-    protected static $procChangeState = AppMsg::PRODUCT_MOVE;
-    protected static $productStarted = AppMsg::PRODUCT_STARTED;
-
-
+    const PRODUCT_FINISHED_ERR = 'ошибка: операция не выполнена: блок уже на складе ';
 
     public function __construct(int $number, string $name, ProcedureFactory $factory)
     {
         $this->name = $name;
-        $this->procCollection = new ArrayCollection($factory->createProcedures($this));
-        self::$numberStrategy->setProductNumber($this, $number,  $this->number);
-        $this->notify(AppMsg::PERSIST_NEW);
+        $this->procedures = new ArrayCollection($factory->createProcedures($this));
+        self::$numberStrategy::setProductNumber($this, $number, $this->number);
+        $this->currentProc = $this->procedures->first();
+        $this->notify(self::PERSIST);
     }
 
-    public static function setNumberStrategy(NumberStrategy $strategy)
+    public static function setNumberStrategy(string $strategy)
     {
+        assert(is_a($strategy, $expected = NumberStrategy::class), "expected $expected, $strategy given");
         self::$numberStrategy = $strategy;
     }
 
-    public function isDoubleNumber():bool
+    public function isDoubleNumber(): bool
     {
-        return (bool)self::$numberStrategy instanceof DoubleNumberStrategy;
+        return (bool)self::$numberStrategy::isDoubleNumber();
     }
 
     public function nextNumber(): ?int
@@ -93,9 +98,10 @@ class Product implements IObservable
 
     public function setNumbers(?int $number, int $advancedNumber)
     {
+        assert(is_a($caller = get_called_class(), $expected = NumberStrategy::class), "expected $expected, $caller given");
         $this->number = $number;
         $this->advancedNumber = $advancedNumber;
-        $this->notify(self::$changeState);
+        $this->notify(self::PRODUCT_CHANGED_NUMBER);
     }
 
     public function getName(): string
@@ -117,104 +123,95 @@ class Product implements IObservable
     public function forward()
     {
         $current_proc = $this->getCurrentProc();
-        $state = $current_proc->getState();
-
-        if ($state === AbstractProcedure::STAGE['not_start'] || $state === AbstractProcedure::STAGE['end']) {
-            $this->startProcedure();
-        } else {
-
-            if (($current_proc instanceof CompositeProcedure) && ($state === AbstractProcedure::STAGE['start'] && !$current_proc->innersFinished())) {
-
-                $this->startProcedure($current_proc->getUncompletedProcedures()->first()->getName());
-            } else {
-                $this->endProcedure();
-            }
-        }
+        $current_proc->getState() !== $current_proc::STARTED ?
+            $this->startProcedure($current_proc->getFirstUnfinishedProcName())
+            :
+            $this->endProcedure();
     }
 
 
     public function startProcedure(?string $partial = null)
     {
-        $this->move(function ($partial) {
-            $this->getCurrentProc()->start($partial);
-        }, $partial);
+        $started_proc = $this->move(fn () => $this->getCurrentProc()->start($partial));
+        $this->currentProc = $started_proc;
+        if ($started_proc === $this->procedures->first()) {
+            $this->started = true;
+            $this->notify($this->getStartedEvent());
+        }
+        $this->notify(self::PRODUCT_CHANGE_STATE);
+        $started_proc->notify($started_proc::PROC_CHANGE_STATE);
 
     }
 
-    public function procStart(CasualProcedure $proc)
+    public function nextProcStart(AbstractProcedure $proc)
     {
-       if ($this->isFirstProc()) $this->productStarted() && $this->notify(self::$changeState);
+        $this->procedures[$this->currentProc + 1]->start();
     }
 
 
-    public function nextProc(CasualProcedure $proc)
+    protected function move(\Closure $move): AbstractProcedure
     {
-        $key = $this->procCollection->indexOf($proc);
-        $this->currentProc = $this->procCollection[$key + 1];
-        $this->notify(self::$changeState);
-        $this->startProcedure();
-    }
-
-    public function getCompletedProcedures(): Collection
-    {
-        return $this->procCollection->filter(function ($el) {
-            return $el->isFinished();
-        });
-    }
-
-    public function getUncompletedProcedures(): Collection
-    {
-        return $this->procCollection->filter(function ($el) {
-            return !$el->isFinished();
-        });
-    }
-
-    protected function move(\Closure $move, ?string $partial = null)
-    {
-        $this->isNotFinishedCheck();
-        $move($partial);
-        $this->notify(self::$procChangeState);
+        if ($this->ended) throw new WrongInputException(self::PRODUCT_FINISHED_ERR . $this->number);
+        return $move();
     }
 
 
     public function endProcedure()
     {
-        $this->move(function () {
-            $this->getCurrentProc()->end();
-        });
+        $ended_proc = $this->move(fn () =>  $this->getCurrentProc()->end());
+        if ($ended_proc === $this->procedures->last()) {
+            $this->ended = true;
+            $this->notify(self::PRODUCT_CHANGE_STATE);
+        }
+        $ended_proc->notify($ended_proc::PROC_CHANGE_STATE);
     }
 
-    public function procEnd(CasualProcedure $procedure)
+    public function getEndedProcedures(): array
     {
-        if ($this->isLastProc()) ($this->finished = true) && $this->notify(self::$changeState);
+        return $this->procedures->slice(0, $this->getProcessingProcedureKey());
+    }
+
+    public function getNotEndedProcedures(): array
+    {
+        return $this->procedures->slice($this->getProcessingProcedureKey());
     }
 
     public function getCurrentProc(): CasualProcedure
     {
-        return $this->currentProc = $this->currentProc ?? $this->procCollection->first();
+        return $this->currentProc;
+    }
+
+    public function getCurrentProcessedProc(?string $partial = null)
+    {
+        $proc = $this->getCurrentProc();
+        return $proc->isComposite() ? $proc->getInnerByName($partial) : $proc;
     }
 
     // get current procedure or next if current is finished
 
-    public function getFirstUnfinishedProc(): ?AbstractProcedure
+    public function getFirstNotEndedProc(): ?AbstractProcedure
     {
-        $current_proc = $this->getCurrentProc();
-        $key = $this->procCollection->indexOf($current_proc);
-        $res = $current_proc->isFinished() ? $this->procCollection[$key + 1] : $current_proc;
-        return $res;
+        return $this->procedures[$this->getProcessingProcedureKey()];
     }
 
-    public function getActiveProc(): ?AbstractProcedure
+    protected function getProcessingProcedureKey()
     {
-        $unfinished = $this->getFirstUnfinishedProc();
-        if ($unfinished instanceof CompositeProcedure && $unfinished->isStarted()) return $unfinished->getFirstUnfinishedProc() ?? $unfinished;
-        return $unfinished;
+        $current_proc = $this->getCurrentProc();
+        $current_key = $this->procedures->indexOf($current_proc);
+        return $current_proc->isEnded() ? $current_key + 1 : $current_key;
+    }
+
+    public function getProcessingProc(): ?AbstractProcedure
+    {
+        $processing = $this->getFirstNotEndedProc();
+        if ($processing->getProcedures() && $processing->isStarted()) return $processing->getProcessingOrNextProc() ?? $processing;
+        return $processing;
     }
 
 
     public function getProcedures(): Collection
     {
-        return $this->procCollection;
+        return $this->procedures;
     }
 
     public function report(string $typeReport)
@@ -222,9 +219,9 @@ class Product implements IObservable
         $this->notify($typeReport);
     }
 
-    public function isFinished(): bool
+    public function isEnded(): bool
     {
-        return $this->finished;
+        return $this->ended;
     }
 
     public function isStarted(): bool
@@ -237,44 +234,21 @@ class Product implements IObservable
         return $this->id;
     }
 
-    public function getFullId()
+    public function getStartedEvent(): string
     {
-        $number = $this->getNumber();
-        if (is_null($number)) throw new \Exception(' product has not full number');
-        return $this->getName() . $number;
+        return $this->name . self::PRODUCT_STARTED;
     }
 
-    protected function isNotFinishedCheck()
+    public function getEndedEvent(): string
     {
-        if ($this->finished) throw new WrongInputException('ошибка: операция не выполнена: блок уже на складe ' . $this->number);
-    }
-
-    protected function isFirstProc(): bool
-    {
-        if ($this->currentProc === $this->procCollection->first())
-        {
-            return true;
-        }
-        return false;
-    }
-
-    protected function isLastProc(): bool
-    {
-        if ($this->currentProc === $this->procCollection->last())
-        {
-            return $this->isEndLastProd = true;
-        }
-        return false;
-    }
-
-    protected function productStarted()
-    {
-        $this->started = true;
-        $this->notify($this->name . self::$productStarted);
+        //@TODO
     }
 
 
-
+    function getInnerByName(string $name): AbstractProcedure
+    {
+        // TODO: Implement getInnerByName() method.
+    }
 }
 
 

@@ -11,7 +11,7 @@ use App\GUI\components\WrapVisualObject;
 use App\GUI\requestHandling\RequestManager;
 use App\GUI\requestHandling\RowStore;
 use App\GUI\handlers\Alert;
-use App\GUI\tableStructure\CellRow;
+use App\GUI\tableStructure\TableRow;
 use Gui\Components\VisualObjectInterface;
 
 class DefaultClickHandler extends ClickHandler
@@ -19,11 +19,10 @@ class DefaultClickHandler extends ClickHandler
     private RequestManager $requestMng;
     private Alert $alert;
     private Cell $active;
-    private CellRow $row;
     private RowStore $store;
-    private ProductStateColorize $colorize;
+    private ProductStateColorant $colorize;
 
-    public function __construct(RequestManager $requestMng, Alert $alert, RowStore $store, ProductStateColorize $colorize)
+    public function __construct(RequestManager $requestMng, Alert $alert, RowStore $store, ProductStateColorant $colorize)
     {
         $this->requestMng = $requestMng;
         $this->alert = $alert;
@@ -31,22 +30,21 @@ class DefaultClickHandler extends ClickHandler
         $this->colorize = $colorize;
     }
 
-    public function handle(Cell $emitter)
+    public function handle(TableRow $clickedRow)
     {
-        $this->row = $emitter->getOwner();
-        if ($this->row->isBlock()) {
-            $this->alert->alert($this->row->getData()->getConcreteUnfinishedProc()->getName() . ' не завершена');
+        if ($clickedRow->isBlock()) {
+            $this->alert->alert($clickedRow->getData()->getConcreteUnfinishedProc()->getName() . ' не завершена');
             return;
         }
 
-        $this->active = $this->row->getActiveCell();
+        $this->active = $clickedRow->getActiveCell();
         $this->active->plusClickCounter();
         $this->active->getClickCounter() % 2 === 0 ? $this->unselectCell($this->active) : $this->selectCell($this->active);
     }
 
-    public function handleInputNumber(Cell $cell)
+    public function handleInputNumber($cell)
     {
-        $this->requestMng->addChangedMainNumber($cell->getNested()->getValue(), $cell->getData());
+        $this->requestMng->addChangedMainNumber($cell->getChild()->getValue(), $cell->getRow()->getData());
     }
 
     public function selectCell(Cell $cell)
