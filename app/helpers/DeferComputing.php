@@ -5,13 +5,15 @@ namespace App\helpers;
 
 
 
+use Closure;
+
 class DeferComputing
 {
 
     private string $name;
-    private \Closure $deffer;
+    private Closure $deffer;
 
-    public function __construct(string $name, \Closure $deffer)
+    public function __construct(string $name, Closure $deffer)
     {
         $this->name = $name;
         $this->deffer = $deffer;

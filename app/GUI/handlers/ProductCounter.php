@@ -4,10 +4,10 @@
 namespace App\GUI\handlers;
 
 
-use App\base\AppMsg;
+use App\base\AppCmd;
 use App\CLI\render\ProductStat;
-use App\domain\ProductMonthlyCounter;
-use App\events\Event;
+use App\domain\procedures\ProductMonthlyCounter;
+use App\events\IEvent;
 use App\events\ISubscriber;
 use App\events\TCasualSubscriber;
 use App\GUI\components\Dashboard;
@@ -62,7 +62,7 @@ class ProductCounter implements ISubscriber
         $this->productCounter->changeMonthlyCount($this->getProductName(), $value);
     }
 
-    public function update($observable, string $event)
+    public function notify($observable, string $event)
     {
         $this->updateOutput();
     }

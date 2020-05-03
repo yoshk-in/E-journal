@@ -5,7 +5,9 @@
     "doctrine/orm": "^2.6",
     "php-di/php-di": "^6.0",
     "gabrielrcouto/php-gui": "^0.1.1",
-    "ext-json": "*"
+    "ext-json": "*",
+    "nette/utils": "^3.1",
+    "nette/php-generator": "^3.3"
   },
   "authors": [
     {
@@ -19,10 +21,12 @@
       "\\": "public/",
       "data\\": "cache/",
       "tests\\": "tests/",
-      "bootstrap\\": "bootstrap/"
+      "bootstrap\\": "bootstrap/",
+      "cfg\\": "cfg"
     },
     "files": [
-      "app/GUI/functions.php"
+      "app/GUI/functions.php",
+      "cfg/helpers.php"
     ]
   },
   "require-dev": {

@@ -4,20 +4,16 @@
 namespace App\GUI\requestHandling;
 
 
-use App\base\AppMsg;
-use App\domain\AbstractProcedure;
-use App\domain\PartialProcedure;
-use App\domain\Product;
-use App\events\Event;
+use App\domain\procedures\CasualProcedure;
 use App\events\TCasualSubscriber;
+use App\GUI\components\Cell;
 use App\GUI\handlers\RowHandler;
 use App\GUI\handlers\GuiDestroyer;
 use App\GUI\ProductStateColorant;
 use App\GUI\tableStructure\TableRow;
 use App\GUI\tableStructure\ProductTableMng;
-use App\events\ISubscriber;
 
-class ProductTableSync implements ISubscriber
+class ProductTableSync
 {
     use TCasualSubscriber;
 
@@ -27,10 +23,10 @@ class ProductTableSync implements ISubscriber
     private RowStore $store;
     private GuiDestroyer $destroyer;
 
-    const EVENTS = [
-        Event::PROCEDURE_CHANGE_STATE,
-        AppMsg::CURRENT_PROCEDURE_INFO
-    ];
+
+    /** @method callable updateRowOrDelete */
+    const UPDATE_ROW_OR_DELETE = 'updateRowOrDelete';
+    const UPDATE_ROW = 'updateRow';
 
     public function __construct(RowHandler $handler, GuiDestroyer $destroyer, RowStore $store, ProductStateColorant $colorant)
     {
@@ -45,44 +41,44 @@ class ProductTableSync implements ISubscriber
         $this->tableMng = $tableMng;
     }
 
-    public function notify(AbstractProcedure $proc)
+    public function updateRowOrDelete(CasualProcedure $proc)
     {
-        $product = $this->productByProc($proc);
-        if ($product->isEnded()) {
-            $this->destroyTableRow($product);
+        if ($proc->productIsEnded()) {
+            $this->destroyTableRow($proc);
             return;
         }
-        $row = $this->updateRowCellByProc($proc);
-        $this->activateRowCell($row, $product);
-
+        $this->updateRow($proc);
     }
 
-    public function activateRowCell(TableRow $row, Product $product)
+    public function updateRow(CasualProcedure $proc)
+    {
+        $row = $this->updateRowCellByProc($proc);
+        $this->activateRowCell($row, $proc);
+    }
+
+    public function activateRowCell(TableRow $row, CasualProcedure $product)
     {
         $this->rowHandler->byProduct($row, $product);
     }
 
-    private function destroyTableRow(Product $product)
+    private function destroyTableRow(CasualProcedure $procedure)
     {
-        $row = $this->store->pop($product->getId());
+        $row = $this->store->pop($procedure->getProductId());
         $this->destroyer->destroy($row->getCellsAndLabels());
         $this->tableMng->unsetRow($row);
     }
 
-    private function productByProc(AbstractProcedure $proc): Product
-    {
-        return $proc->getProduct();
-    }
 
-    private function updateRowCellByProc(AbstractProcedure $proc): TableRow
+
+    private function updateRowCellByProc(CasualProcedure $proc): TableRow
     {
-        $product = $this->productByProc($proc);
-        $row = $this->store->get($product->getId());
+        /** @var  Cell $cell */
+        $row = $this->store->get($proc->getProductId());
         $cell = $row->getCell($proc->getOrderNumber());
         $cell->resetClickCounter();
         $cell->setBackgroundColor($color = $this->colorant::color($proc));
 
-        if (!$proc instanceof PartialProcedure) $row->getHeadCell()->setBackgroundColor($color);
+        if (!$proc->isPartial()) $row->getHeadCell()->setBackgroundColor($color);
 
         if ($proc->isEnded()) {
             $this->rowHandler->unblockRow($row);
@@ -90,10 +86,7 @@ class ProductTableSync implements ISubscriber
         return $row;
     }
 
-    public function update($observable, string $event)
-    {
-        $this->notify($observable);
-    }
+
 
 
 

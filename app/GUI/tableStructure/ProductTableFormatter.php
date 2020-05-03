@@ -4,13 +4,14 @@
 namespace App\GUI\tableStructure;
 
 
-use App\domain\AbstractProcedure;
-use App\domain\CompositeProcedure;
-use App\domain\ProcedureMap;
-use App\domain\Product;
-use App\domain\ProductMap;
+use App\domain\procedures\CasualProcedure;
+use App\domain\procedures\CompositeProcedure;
+use App\domain\procedures\ProcedureMap;
+use App\domain\procedures\Product;
+use App\domain\procedures\ProductMap;
 use App\GUI\grid\style\Style;
 use App\GUI\ProductStateColorant;
+use Closure;
 use Doctrine\Common\Collections\Collection;
 use function App\GUI\colorStyle;
 use function App\GUI\textStyle;
@@ -25,10 +26,10 @@ class ProductTableFormatter
     private Style $compositeStyle;
     private Style $textCellStyle;
     private Style $inputCellStyle;
-    public \Closure $createCasualProcCell;
-    public \Closure $createPartialProcCell;
+    public Closure $createCasualProcCell;
+    public Closure $createPartialProcCell;
     protected array $procStyleStack = [];
-    private \Closure $createCell;
+    private Closure $createCell;
 
     public function __construct(ProductStateColorant $colorize, ProcedureMap $procedureMap, CellStyleInitializer $stylist)
     {
@@ -44,12 +45,12 @@ class ProductTableFormatter
     {
         $this->createCell = fn($proc, $cellStyle) => $this->table()->addCell($color->style($cellStyle, $proc));
         $this->createCasualProcCell =
-            fn(AbstractProcedure $proc, $cellStyle, $compStyle, $partStyle) => ($proc->isComposite()) ?
+            fn(CasualProcedure $proc, $cellStyle, $compStyle, $partStyle) => ($proc->isComposite()) ?
                 $this->compositeCell($proc, $partStyle, $compStyle)
                 :
                 ($this->createCell)($proc, $cellStyle);
 
-        $this->createPartialProcCell = fn(AbstractProcedure $proc, $cellStyle) => $this->table()->addCell(
+        $this->createPartialProcCell = fn(CasualProcedure $proc, $cellStyle) => $this->table()->addCell(
             $color->style(textStyle($cellStyle, $proc->getName()), $proc)
         );
     }
@@ -93,7 +94,7 @@ class ProductTableFormatter
     public function createProductRow(Product $product, Table $table): TableRow
     {
         $this->handledTable = $table;
-        $row = $table->newDataRow($product->getId(), $product);
+        $row = $table->newDataRow($product->getProductId(), $product);
         //product number cell
         $cellStyle = ($text = $product->getNumber()) ? textStyle($this->textCellStyle, $text) : $this->inputCellStyle;
         $this->table()->addCell($cellStyle);
@@ -104,15 +105,15 @@ class ProductTableFormatter
 
 
 
-    protected function createProcedureRow(\Closure $createCell, Collection $procedures, array $cellStyleStack)
+    protected function createProcedureRow(Closure $createCell, Collection $procedures, array $cellStyleStack)
     {
-        array_map(fn(AbstractProcedure $proc) => $createCell($proc->getName(), ...$cellStyleStack), $procedures->toArray());
+        array_map(fn(CasualProcedure $proc) => $createCell($proc->getName(), ...$cellStyleStack), $procedures->toArray());
     }
 
 
     protected function compositeCell(CompositeProcedure $procedure, Style $textStyle, Style $compStyle)
     {
-        $parts = $procedure->getProcedures();
+        $parts = $procedure->getInnerProcedures();
         $compStyle->width = $this->compositeStyle->byDefer('width', $parts->count(), $textStyle->width);
         $textStyle = clone $textStyle;
         $textStyle->height = $compStyle->height - 2 * $compStyle->padding;

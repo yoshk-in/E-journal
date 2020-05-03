@@ -4,23 +4,24 @@
 namespace App\CLI\render;
 
 
-use App\domain\Product;
+use App\domain\AbstractProduct;
 
 class ProductStat
 {
     const TITLE = Format::STAT_TITLE . Format::EOL;
     const INFO = Format::STAT . Format::EOL;
-    const DELIMITER = Format::COMMA;
-    private $statBuffer = [];
-    private $output = '';
-    private $productCount = 0;
+    const DELIMITER = Format::COUNT_DELIMITER;
+    private array  $statBuffer = [];
+    private string $output = '';
+    private int $productCount = 0;
+    protected string $title = "текущая статистика:\n";
 
 
-    public function renderStat(array $products): string
+    public function getOutput(array $products): string
     {
         $this->makeStatForArray($products);
         $this->renderStatBuffer();
-        return $this->renderCountProducts() . $this->output;
+        return $this->title . $this->renderCountProducts() . $this->output;
     }
 
 
@@ -42,17 +43,17 @@ class ProductStat
         $this->output = '';
     }
 
-//    public function resetBuffer()
-//    {
-//        $this->output = '';
-//        $this->statBuffer = [];
-//        $this->productCount = 0;
-//    }
-
-
-    public function computeOne(Product $product)
+    public function resetBuffer()
     {
-        $this->statBuffer[$product->getCurrentProc()->getName()][] = $product->getNumber();
+        $this->output = '';
+        $this->statBuffer = [];
+        $this->productCount = 0;
+    }
+
+
+    public function computeOne(AbstractProduct $product)
+    {
+        $this->statBuffer[$product->getProcessingInner()->getName()][] = $product->getProductNumber();
         ++$this->productCount;
     }
 

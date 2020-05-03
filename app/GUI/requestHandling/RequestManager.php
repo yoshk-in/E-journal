@@ -4,14 +4,14 @@
 namespace App\GUI\requestHandling;
 
 
-use App\base\AppMsg;
+use App\base\AppCmd;
 use App\base\exceptions\WrongInputException;
 use App\base\GUIRequest;
 use App\controller\Controller;
-use App\domain\CasualNumberStrategy;
-use App\domain\Product;
+use App\domain\AbstractProduct;
 use App\domain\ProductMap;
 use App\events\Event;
+use App\events\IEvent;
 use App\events\EventChannel;
 use App\events\IObservable;
 use App\events\TObservable;
@@ -19,8 +19,9 @@ use App\GUI\Debug;
 use App\GUI\handlers\Alert;
 use App\GUI\inputValidate\NumberValidator;
 use App\GUI\UserActionMng;
+use Closure;
 
-class RequestManager implements IObservable, Event
+class RequestManager implements IObservable, IEvent
 {
     use TObservable;
 
@@ -52,24 +53,24 @@ class RequestManager implements IObservable, Event
         $this->productMap = $productMap;
     }
 
-    public function addData(Product $product)
+    public function addData(AbstractProduct $product)
     {
         $this->addProductStrategy->addProductToRequestBuffer($product);
     }
 
-    public function addChangedMainNumber($number, Product $product)
+    public function addChangedMainNumber($number, AbstractProduct $product)
     {
         $this->addDoubleNumberProduct->addChangedMainNumber($this, $number, $product);
     }
 
     public function addChangeMainNumberCmd(int $advancedNumber, int $mainNumber)
     {
-        $this->request->addCmd(AppMsg::CHANGE_PRODUCT_MAIN_NUMBER);
+        $this->request->addCmd(AppCmd::CHANGE_PRODUCT_MAIN_NUMBER);
         $this->request->addChangingNumber($advancedNumber, $mainNumber);
     }
 
 
-    public function unsetData(Product $product)
+    public function unsetData(AbstractProduct $product)
     {
         $this->addProductStrategy->removeProductFromRequestBuffer($product);
     }
@@ -87,7 +88,7 @@ class RequestManager implements IObservable, Event
 
     public function newProductRequest()
     {
-        $this->doRequestByBufferNumbers(AppMsg::GUI_INFO);
+        $this->doRequestByBufferNumbers(AppCmd::FIND_UNFINISHED);
     }
 
     public function changeProduct(string $product)
@@ -106,9 +107,9 @@ class RequestManager implements IObservable, Event
     public function moveProductOrPersist()
     {
         if ($this->mouseMng->getHandler()->areSelectedCellsExists()) {
-            $this->doRequestByBufferNumbers(AppMsg::FORWARD);
+            $this->doRequestByBufferNumbers(AppCmd::FORWARD);
         } else {
-            $this->request->setProduct($this->getProduct());
+            $this->request->prepareProductRequest($this->getProduct());
             $this->catchWrongInput(fn() => $this->backend->run(), fn() => $this->resetRequestAndSelectedCells());
         }
 
@@ -133,30 +134,30 @@ class RequestManager implements IObservable, Event
 
     public function requestByNumber(string $cmd, array $number)
     {
-        $this->request->setBlockNumbers($number);
+        $this->request->setProductNumbers($number);
         $this->request($cmd);
     }
 
-    protected function request($cmd, \Closure $finally = null)
+    protected function request($cmd, Closure $finally = null)
     {
         $this->request->addCmd($cmd);
-        $this->request->setProduct($this->currentProduct);
+        $this->request->prepareProductRequest($this->currentProduct);
         $this->catchWrongInput(fn() => $this->backend->run(), $finally);
     }
 
     protected function resetRequestAndSelectedCells()
     {
         $this->request->reset();
-        $this->mouseMng->getHandler()->removeSelectedCells();
+        $this->mouseMng->getHandler()->resetSelectedCells();
     }
 
 
     public function alert(string $msg)
     {
-        $this->channel->notify($msg, Event::ALERT);
+        $this->channel->update(new Event($msg, $this));
     }
 
-    private function catchWrongInput(\Closure $action, \Closure $finally = null)
+    private function catchWrongInput(Closure $action, Closure $finally = null)
     {
         try {
             $action();

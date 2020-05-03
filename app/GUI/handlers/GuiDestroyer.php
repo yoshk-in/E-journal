@@ -5,6 +5,7 @@ namespace App\GUI\handlers;
 
 
 use App\GUI\components\WrapVisualObject;
+use Closure;
 use Gui\Application;
 use React\EventLoop\LoopInterface;
 
@@ -26,7 +27,7 @@ class GuiDestroyer
         if (is_null($this->lastCall)) {
             $this->destroyArrayOfArray($guiComponents);
         } else {
-            $this->loop->futureTick(\Closure::fromCallable(call_user_func([$this, 'throttledDestroy'], $guiComponents)));
+            $this->loop->futureTick(Closure::fromCallable(call_user_func([$this, 'throttledDestroy'], $guiComponents)));
         }
     }
 
@@ -47,7 +48,7 @@ class GuiDestroyer
     private function throttledDestroy(array $components)
     {
         $this->destroyArrayOfArray($components);
-        $this->loop->futureTick(\Closure::fromCallable([$this, 'resetLastCallClosure']));
+        $this->loop->futureTick(Closure::fromCallable([$this, 'resetLastCallClosure']));
     }
 
     private function destroyElement(WrapVisualObject $object)

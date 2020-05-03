@@ -5,8 +5,9 @@ namespace App\events;
 
 interface IObservable
 {
-    static function attachToEventChannel(IEventChannel $channel);
+    static function attachToStaticProperty(IEventChannel $channel);
 
-    public function notify(string $event);
+    public function update(Event $event);
+
 
 }

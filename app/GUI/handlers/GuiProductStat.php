@@ -3,8 +3,9 @@
 
 namespace App\GUI\handlers;
 
-use App\base\AppMsg;
+use App\base\AppCmd;
 use App\CLI\render\ProductStat;
+use App\events\IEvent;
 use App\events\ISubscriber;
 use App\GUI\components\Rerender;
 use App\GUI\components\traits\IRerenderable;
@@ -28,8 +29,8 @@ class GuiProductStat implements ISubscriber
     private AutoGenCollection $statisticColl;
 
     const EVENTS = [
-        AppMsg::GUI_INFO,
-        AppMsg::PRODUCT_MOVE,
+        IEvent::PROCESSING_PRODUCT_AND_NOT_STARTED_INFO,
+        AppCmd::PRODUCT_MOVE,
     ];
 
 
@@ -61,7 +62,7 @@ class GuiProductStat implements ISubscriber
         });
     }
 
-    public function update($product, string $event)
+    public function notify($product, string $event)
     {
         if ($product->isStarted()) {
             $this->currentStat->computeOne($product);
@@ -87,7 +88,7 @@ class GuiProductStat implements ISubscriber
 
     protected function productInfoEvent(): string
     {
-        return AppMsg::GUI_INFO . $this->getProductName();
+        return IEvent::PROCESSING_PRODUCT_AND_NOT_STARTED_INFO . $this->getProductName();
     }
 
 

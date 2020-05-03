@@ -4,8 +4,8 @@
 namespace App\GUI\requestHandling;
 
 
-use App\base\AppMsg;
-use App\domain\Product;
+use App\base\AppCmd;
+use App\domain\procedures\Product;
 
 class AddDoubleNumberProduct extends AddProductToRequestStrategy
 {
@@ -17,7 +17,7 @@ class AddDoubleNumberProduct extends AddProductToRequestStrategy
             $requestManager->alert($this->error);
             return;
         }
-        $requestManager->requestByNumber(AppMsg::CREATE_PRODUCT_OR_GENERATE, [$input]);
+        $requestManager->requestByNumber(AppCmd::CREATE_PRODUCT_OR_GENERATE, [$input]);
     }
 
     public function addChangedMainNumber(RequestManager $requestManager, $input, Product $product)

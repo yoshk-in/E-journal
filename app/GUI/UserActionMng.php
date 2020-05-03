@@ -33,6 +33,10 @@ class UserActionMng
         $this->currentStrategy->handleInputNumber($object);
     }
 
+    public function getHandler()
+    {
+        return $this->currentStrategy;
+    }
 
 
 

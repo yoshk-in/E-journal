@@ -4,28 +4,35 @@
 namespace App\domain;
 
 
-use App\base\AppMsg;
+use App\domain\productManager\ProductClassManager;
 use App\events\Event;
-use App\events\ISubscriber;
+use App\events\IEvent;
 use App\repository\DBLayer;
+use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\Entity;
+use Doctrine\ORM\Mapping\Id;
+
 
 /** @Entity */
 
-class ProductMonthlyCounter implements ISubscriber
+class ProductMonthlyCounter
 {
     /** @Column(type="array") */
-    private $lastStartedNumber = [];
+    private array $lastStartedNumber = [];
 
     /** @Column(type="array") */
-    private $monthlyCount = [];
+    private array $monthlyCount = [];
 
     /** @Id @Column(type="integer") */
-    private static $id = 1;
+    private static int $id = 1;
 
-    private $events = [];
-    private static $dbLayer;
+    private array $events = [];
+    private static DBLayer $dbLayer;
+    private static ?self $self = null;
 
-    const EVENT = Event::PRODUCT_STARTED;
+    const EVENT = IEvent::PRODUCT_STARTED;
+
+    const COUNT = 'count';
 
     private function __construct()
     {
@@ -33,15 +40,16 @@ class ProductMonthlyCounter implements ISubscriber
 
     public static function create(DBLayer $dbLayer): self
     {
+        if (self::$self) return self::$self;
         self::$dbLayer = $dbLayer;
         if (!($self = $dbLayer->findEntityById(self::class, self::$id))) {
            $self = new self;
         }
         self::$dbLayer->persist($self);
-        return $self;
+        return self::$self = $self;
     }
 
-    public static function creatAndAttachCountableProduct(DBLayer $DBLayer, ProductMap $map): self
+    public static function createAndAttachCountableProduct(DBLayer $DBLayer, ProductClassManager $map): self
     {
         $self = self::create($DBLayer);
         foreach ($map->getCountableProducts() as $product) {
@@ -58,18 +66,10 @@ class ProductMonthlyCounter implements ISubscriber
 
     public function attachProduct(string $name)
     {
-        $this->events[] = $name . self::EVENT;
+        exit('todo');
     }
 
-    public function update($observable, string $event)
-    {
-        $this->count($observable);
-    }
 
-    public function subscribeOn(): array
-    {
-        return $this->events;
-    }
 
     public function changeMonthlyCount(string $product, int $count)
     {
@@ -87,10 +87,12 @@ class ProductMonthlyCounter implements ISubscriber
         return $this->lastStartedNumber[$product]?? null;
     }
 
-    private function count(Product $product)
+    public function count(Event $eventOnProduct)
     {
-        $name = $product->getName();
-        $number = $product->getNumber();
+        /** @var AbstractProduct $product */
+        $product = $eventOnProduct->observable;
+        $name = $product->getProductName();
+        $number = $product->getProductNumber();
         $number < ($this->lastStartedNumber[$name] ?? 0) ?: $this->lastStartedNumber[$name] = $number;
         isset($this->monthlyCount[$name]) ? ++$this->monthlyCount[$name] : $this->monthlyCount[$name] = 1;
     }

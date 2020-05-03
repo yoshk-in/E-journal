@@ -7,6 +7,7 @@ namespace App\GUI\components\traits;
 use App\GUI\components\computer\StyleComputer;
 use App\GUI\factories\GuiComponentFactory;
 use App\GUI\factories\WrappingVisualObjectFactory;
+use Closure;
 use Gui\Components\VisualObjectInterface;
 
 trait TNestingVisualObject
@@ -43,7 +44,7 @@ trait TNestingVisualObject
         return $factory::create($class, $offsets, $sizes, $additions);
     }
 
-    public static function setNestingAligner(\Closure $closure)
+    public static function setNestingAligner(Closure $closure)
     {
         self::$nestingAligner = $closure;
     }

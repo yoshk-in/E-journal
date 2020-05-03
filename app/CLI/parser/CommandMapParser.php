@@ -8,23 +8,28 @@ use App\base\CLIRequest;
 use App\base\exceptions\WrongInputException;
 use App\CLI\parser\buffer\ParserBuffer;
 use App\controller\TChainOfResponsibility;
+use Closure;
 use Psr\Container\ContainerInterface;
 
 class CommandMapParser extends Parser implements CommandParseMap
 {
-    use TChainOfResponsibility;
-
     private ContainerInterface $appContainer;
-    const WRONG_INPUT = ' не соблюдён формат ввода';
     private Parser $endParse;
     private Parser $startParse;
-    private \Closure $creatParserCall;
+    private Closure $creatParserCall;
+    const WRONG_INPUT = ' не соблюдён формат ввода';
+
+    /** REGEX PATTERNS */
+    const FORMAT_PATTERN = '{^%s$}isu';
+    const NUMBER = '\d{3}|\d{6}';
+    const NUMBER_RANGE = '(-' . self::NUMBER . ')?';
+    const SEQUENCE_NUMBER_RANGE = '(,' . self::NUMBER . self::NUMBER_RANGE . ')*';
+    /* "(\d{3}|\d{6})(-(\d{3}|\d{6}))?(,(\d{3}|\d{6})(-(\d{3}|\d{6}))?)*" */
     protected array $cmdMap = [
-        '(\d{3}|\d{6})(-(\d{3}|\d{6}))?(,(\d{3}|\d{6})(-(\d{3}|\d{6}))?)*'
-        => CommandParseMap::BY_PRODUCT_NUMB_CMD,
-        '+|-' => CommandMapParser::MOVE_PRODUCT,
+        self::NUMBER . self::NUMBER_RANGE . self::SEQUENCE_NUMBER_RANGE => CommandParseMap::CONCRETE_PRODUCT_INFO,
+        '\+|-' => CommandMapParser::MOVE_PRODUCT,
         'очистка' => CommandParseMap::CLEAR_JOURNAL,
-        'партия' => CommandParseMap::PARTY,
+        'партия' => CommandParseMap::SET_PART_NUMBER,
     ];
 
 
@@ -45,7 +50,8 @@ class CommandMapParser extends Parser implements CommandParseMap
             $this->parserBuffer->cmdArg =  null;
         } else {
             foreach ($this->cmdMap as $pattern => $cmdChain) {
-                if (preg_match('#^' . $pattern . '$#su', $cmdArg)) {
+                $pattern_str = sprintf(self::FORMAT_PATTERN, $pattern);
+                if ($x = preg_match($pattern_str, $cmdArg)) {
                     $foundChain = $cmdChain;
                     $this->parserBuffer->cmdArg = $cmdArg;
                     break;
@@ -57,15 +63,15 @@ class CommandMapParser extends Parser implements CommandParseMap
         $restParsers[] = $this;
         foreach ($foundChain as $key => $decorator) {
             $next = $restParsers[] = ($this->creatParserCall)($decorator);
-            $restParsers[array_key_last($restParsers) - 1]->setNextHandler($next);
+            $restParsers[array_key_last($restParsers) - 1]->setNext($next);
         }
-        $next->setNextHandler($this->endParse);
+        $next->setNext($this->endParse);
         --self::$argN;
     }
 
     public function parseByChain()
     {
-        $this->startParse->setNextHandler($this);
+        $this->startParse->setNext($this);
         $this->startParse->parse();
     }
 

@@ -4,7 +4,7 @@
 namespace App\GUI\components;
 
 
-use App\domain\ProductMap;
+use App\domain\procedures\ProductMap;
 use App\GUI\components\traits\IRerenderable;
 use App\GUI\components\wrappers\WrapWrongConstructorVisualObject;
 use App\GUI\requestHandling\RequestManager;

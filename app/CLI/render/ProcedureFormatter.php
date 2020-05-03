@@ -4,23 +4,35 @@
 namespace App\CLI\render;
 
 
-use App\domain\AbstractProcedure;
+use App\domain\procedures\CasualProcedure;
+use App\domain\procedures\traits\IProductProcedure;
 
-abstract class ProcedureFormatter implements IFormatter
+class ProcedureFormatter implements IRender
 {
     const TIME = Format::TIME;
-    const HYPHEN = Format::HYPHEN;
+    const NONE = Format::NONE;
+    const FULL = Format::FULL;
 
-    protected function getEnd(AbstractProcedure $proc): string
+    protected string $pattern;
+
+    public function __construct(string $formatPattern = self::FULL)
     {
-        return $proc->getEnd() ? $proc->getEnd()->format(self::TIME) : self::HYPHEN;
+        $this->pattern = $formatPattern;
     }
 
-    protected function getStart(AbstractProcedure $proc): string
+    public function handle(CasualProcedure $processed): string
     {
-        return $proc->getStart()? $proc->getStart()->format(self::TIME) : self::HYPHEN;
+        return sprintf($this->pattern, $processed->getName(), $this->getStart($processed), $this->getEnd($processed));
     }
 
-    abstract function handle(AbstractProcedure $processed): string;
+    protected function getEnd(CasualProcedure $proc): string
+    {
+        return $proc->getEnd() ? $proc->getEnd()->format(self::TIME) : self::NONE;
+    }
+
+    protected function getStart(CasualProcedure $proc): string
+    {
+        return $proc->getStart()? $proc->getStart()->format(self::TIME) : self::NONE;
+    }
 
 }

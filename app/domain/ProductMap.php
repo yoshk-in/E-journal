@@ -1,67 +1,83 @@
 <?php
-
+declare(strict_types=1);
 
 namespace App\domain;
 
 
+use App\base\exceptions\WrongInputException;
+use Iterator;
+use App\domain\numberStrategy\DoubleNumberStrategy;
+
 class ProductMap
 {
-    private $map;
-    private $err = 'ошибка файла конфигурации: не удается прочитать свойства продукта';
+    private array $map;
+    private array $servicedProductMap;
+    const ERROR = 'ошибка файла конфигурации: не удается прочитать свойства продукта';
 
     public function __construct(array $map)
     {
         $this->map = $map;
+        assert(!empty($this->map), self::ERROR);
     }
 
     public function getProducts(): array
     {
-        assert(!empty($this->map), $this->err);
         return $this->map;
     }
 
-    public function getProductProps(string $product)
+    public function setServicedProduct(string $productName)
     {
-        return $this->map[$product];
+        $this->servicedProductMap = $this->map[$productName];
     }
 
-    public function isCountable(string $product): bool
+    public function getProductNames(): \Generator
     {
-        return $this->getProductProps($product)['monthly countable'] ?? false;
-    }
-
-    public function isDoubleNumbering(string $product): bool
-    {
-        return DoubleNumberStrategy::class === $this->getNumberStrategy($product);
-    }
-
-    public function getNumberStrategy(string $product): string
-    {
-        return $this->getProductProps($product)['numberStrategy'];
-    }
-
-    public function getCountableProducts(): \Iterator
-    {
-        foreach ($this->map as $product => $props) {
-            if ($this->isCountable($product)) yield $product;
+        foreach ($this->map as $productName => $props) {
+            yield $productName;
         }
     }
 
-    public function first(): string
+
+    public function getProductProps()
     {
-        assert(!empty($this->map), $this->err);
+        return $this->servicedProductMap;
+    }
+
+    public function isCountable(string $productName): bool
+    {
+        return $this->map[$productName]['monthly countable'];
+    }
+
+    public function isDoubleNumbering(): bool
+    {
+        return DoubleNumberStrategy::class === $this->getNumberStrategy();
+    }
+
+    public function getNumberStrategy(): string
+    {
+        return $this->servicedProductMap['numberStrategy'];
+    }
+
+
+    public function firstProductName(): string
+    {
         return array_key_first($this->map);
     }
 
-    public function getMainNumberLength(string $product): ?int
+    public function getMainNumberLength(): int
     {
-        $this->isRightName($product);
-        return $this->map[$product]['mainNumberLength'] ?? null;
+        return $this->servicedProductMap['mainNumber.length'];
     }
 
-    private function isRightName(string $product)
+    public function getPartNumberLength(): ?int
     {
-        assert(isset($this->map[$product]), ' в файле конфигигурации нет продукта с таким именем');
+        return $this->servicedProductMap['partNumber.length'];
     }
+
+    public function getPreNumberLength(): ?int
+    {
+        return $this->servicedProductMap['partNumber.length'];
+    }
+
 
 }

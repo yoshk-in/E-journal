@@ -4,6 +4,8 @@
 namespace App\GUI\grid\style;
 
 
+use Exception;
+
 class InvertWay
 {
     protected string $left = 'right';
@@ -27,6 +29,6 @@ class InvertWay
     public function __get($name): string
     {
         if (property_exists($this, $name)) return $this->$name;
-        throw new \Exception('undefined property');
+        throw new Exception('undefined property');
     }
 }

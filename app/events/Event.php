@@ -3,14 +3,72 @@
 
 namespace App\events;
 
+use App\events\traits\TObservable;
 
-interface Event
+/**
+ * Class Event
+ * @package App\events
+ * @property string $class;
+ * @property $observable;
+ * @property string $type
+ */
+class Event implements IEventType
 {
-    const PRODUCT_CHANGE_STATE = 'product changes the state';
-    const GUI_PRODUCT_CHANGED = 'another product has been selected';
-    const PRODUCT_STARTED = 'product has been processed';
-    const PROCEDURE_CHANGE_STATE = 'procedure changes the state';
-    const ALERT = 'GUI ALERT';
-    const PERSIST_NEW = 'persist new ones in database';
+    protected string $class;
+    protected $observable;
+    protected string $type;
+
+    protected static EventChannel $eventChannel;
+
+    public function __construct($observable, string $eventType)
+    {
+        $this->class = $observable::getClassMark();
+        $this->observable = $observable;
+        $this->type = $eventType;
+    }
+
+    public function __get($name)
+    {
+        return $this->$name;
+    }
+
+    public function __toString()
+    {
+        return EventChannel::subscriberKey($this->class) . $this->type;
+    }
+
+
+    public static function create($entity, $eventType = IEventType::ANY)
+    {
+        (self::$eventChannel)->update(new static($entity, (string) $eventType));
+    }
+
+    public static function startEvent($entity)
+    {
+        static::create($entity, IEventType::START);
+    }
+
+    public static function endEvent($entity)
+    {
+        static::create($entity, IEventType::END);
+    }
+
+    public static function report($entity)
+    {
+        static::create($entity, IEventType::REPORT);
+    }
+
+    public static function toDoEvent($entity)
+    {
+        // @TODO: create changeNumberEvent to Product
+        exit('todo event changeNumberProductEvent');
+
+    }
+
+    public static function connectToEventChannel(EventChannel $eventChannel)
+    {
+        self::$eventChannel = $eventChannel;
+    }
+
 
 }

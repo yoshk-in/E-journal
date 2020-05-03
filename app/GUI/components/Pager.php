@@ -6,6 +6,7 @@ namespace App\GUI\components;
 
 use App\GUI\factories\WrappingVisualObjectFactory;
 use App\GUI\grid\style\Style;
+use Closure;
 use Gui\Components\Button;
 use Gui\Components\Label;
 use Gui\Components\VisualObjectInterface;
@@ -33,7 +34,7 @@ class Pager
        ]);
    }
 
-   public function addButton(\Closure $onClickHandler)
+   public function addButton(Closure $onClickHandler)
    {
        $index = count($this->buttons) + 1;
        $this->buttonStyle->value = $index;

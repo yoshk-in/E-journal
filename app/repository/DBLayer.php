@@ -4,17 +4,16 @@
 namespace App\repository;
 
 
-use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
+use App\domain\AbstractProduct;
+use Doctrine\Persistence\ObjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 
 class DBLayer
 {
 
-    private $_em;
-    private $servicedEntity;
-    private $docRep;
+    private EntityManagerInterface $_em;
+    private ObjectRepository $currentRepository;
 
     public function __construct(EntityManagerInterface $entityManager)
     {
@@ -23,10 +22,13 @@ class DBLayer
 
     public function setServicedEntity($entity)
     {
-        $this->servicedEntity = $entity;
-        $this->docRep = $this->_em->getRepository($this->servicedEntity);
+        $this->currentRepository = $this->_em->getRepository($entity);
     }
 
+    public function remove($entity)
+    {
+        $this->_em->remove($entity);
+    }
 
     public function save()
     {
@@ -44,20 +46,20 @@ class DBLayer
     }
 
 
-    public function findWhere(array $criteria, array $order): array
+    public function findWhere(array $criteria, array $order, ?int $limit = null, ?int $offset = null): array
     {
-        return $this->docRep->findBy($criteria, $order);
+        return $this->currentRepository->findBy($criteria, $order, $limit, $offset);
     }
 
-    public function findOneWhere(array $criteria, ?array $order = null)
+    /**
+     * @param array $criteria
+     * @return object|null|AbstractProduct
+     */
+    public function findOneWhere(array $criteria)
     {
-        return $this->docRep->findOneBy($criteria, $order);
+        return $this->currentRepository->findOneBy($criteria);
     }
 
-    public function findAll(array $criteria, array $order): array
-    {
-        return $this->docRep->findBy($criteria, $order);
-    }
 
 
 }

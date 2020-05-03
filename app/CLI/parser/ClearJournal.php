@@ -4,13 +4,13 @@
 namespace App\CLI\parser;
 
 
-use App\base\AppMsg;
+use App\base\AppCmd;
 
 class ClearJournal extends Parser
 {
 
     protected function doParse()
     {
-        $this->request->addCmd(AppMsg::CLEAR_JOURNAL);
+        $this->request->addCmd(AppCmd::CLEAR_JOURNAL);
     }
 }

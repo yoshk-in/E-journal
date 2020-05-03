@@ -4,7 +4,7 @@
 namespace App\base;
 
 
-use App\domain\Product;
+use App\domain\AbstractProduct;
 
 class GUIRequest extends AbstractRequest
 {
@@ -12,36 +12,36 @@ class GUIRequest extends AbstractRequest
     protected array $doubleNumberBlocks = [];
 
 
-    public function addBlock(Product $product): void
+    public function addBlock(AbstractProduct $product): void
     {
-        $this->blocks[$product->getNumber()] = $product->getNumber();
+        $this->blocks[$product->getProductNumber()] = $product->getProductNumber();
     }
 
-    public function addDoubleNumberBlock(Product $product)
+    public function addDoubleNumberBlock(AbstractProduct $product)
     {
-        $this->doubleNumberBlocks[$product->getAdvancedNumber()] = $product->getNumber();
+        $this->doubleNumberBlocks[$product->getPreNumber()] = $product->getProductNumber();
     }
 
-    public function removeDoubleNumberBlocks(Product $product)
+    public function removeDoubleNumberBlocks(AbstractProduct $product)
     {
-        $this->doubleNumberBlocks[$product->getAdvancedNumber()];
+        $this->doubleNumberBlocks[$product->getPreNumber()];
     }
 
-    public function removeBlock(Product $product)
+    public function removeBlock(AbstractProduct $product)
     {
-        unset($this->blocks[$product->getNumber()]);
+        unset($this->blocks[$product->getProductNumber()]);
     }
 
     public function prepareReqByBufferNumbers()
     {
-        $this->blockNumbers = $this->blocks;
+        $this->productNumbers = $this->blocks;
         $this->doubleNumbers = $this->doubleNumberBlocks;
     }
 
     public function reset()
     {
         $this->commands = [];
-        $this->blockNumbers = [];
+        $this->productNumbers = [];
         $this->blocks = [];
         $this->doubleNumberBlocks = [];
     }

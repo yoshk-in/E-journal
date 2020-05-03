@@ -6,7 +6,7 @@ namespace App\events;
 
 interface ISubscriber
 {
-    public function update($observable, string $event);
+    public function notify(Event $event);
 
     public function subscribeOn(): array;
 }

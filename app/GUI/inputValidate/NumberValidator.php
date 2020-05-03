@@ -4,7 +4,7 @@
 namespace App\GUI\inputValidate;
 
 
-use App\domain\ProductMap;
+use App\domain\procedures\ProductMap;
 
 class NumberValidator
 {

@@ -4,7 +4,7 @@
 namespace App\GUI\render;
 
 
-use App\domain\ProductMap;
+use App\domain\procedures\ProductMap;
 use App\events\EventChannel;
 use App\GUI\components\Dashboard;
 use App\GUI\components\Pager;
@@ -13,6 +13,7 @@ use App\GUI\tableStructure\DoubleNProductTableFormatter;
 use App\GUI\tableStructure\ProductTableFormatter;
 use App\GUI\tableStructure\ProductTableMng;
 use App\helpers\AutoGenCollection;
+use Closure;
 use DI\Container;
 
 
@@ -42,10 +43,10 @@ class RenderMng
     public function run()
     {
         $this->dashboard->create();
-        $this->createOrChangeTableComposer();
+        $this->createOrChangeTableMng();
     }
 
-    public function createOrChangeTableComposer()
+    public function createOrChangeTableMng()
     {
         $product = $this->requestMng->getProduct();
         $dynProps = AutoGenCollection::getBlank();
@@ -67,7 +68,7 @@ class RenderMng
         $props->class = ProductTableMng::class;
         $props->inject = ['pager' => Pager::class];
 
-        $props->get = \Closure::fromCallable([$this, 'changeCurrentTable']);
+        $props->get = Closure::fromCallable([$this, 'changeCurrentTable']);
 
         $props->make = function (ProductTableMng $newCurrent) use ($channel) {
             $this->changeCurrentTable($newCurrent);

@@ -4,9 +4,9 @@
 namespace App\GUI\requestHandling;
 
 
-use App\base\AppMsg;
+use App\base\AppCmd;
 use App\base\GUIRequest;
-use App\domain\Product;
+use App\domain\procedures\Product;
 use App\GUI\inputValidate\NumberValidator;
 
 class AddCasualProduct extends AddProductToRequestStrategy
@@ -19,11 +19,11 @@ class AddCasualProduct extends AddProductToRequestStrategy
     {
         if (!empty($input)) {
             $this->validator->isValidMainNumber($requestManager->getProduct(), $input) ?
-                $requestManager->requestByNumber(AppMsg::CREATE_PRODUCT_OR_GENERATE, [$input])
+                $requestManager->requestByNumber(AppCmd::CREATE_PRODUCT_OR_GENERATE, [$input])
                 :
                 $requestManager->alert($this->err);
         } else {
-            $requestManager->doRequestByBufferNumbers(AppMsg::CREATE_PRODUCT_OR_GENERATE);
+            $requestManager->doRequestByBufferNumbers(AppCmd::CREATE_PRODUCT_OR_GENERATE);
         }
     }
 

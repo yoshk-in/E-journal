@@ -4,7 +4,7 @@
 namespace App\base\exceptions;
 
 
-class WrongModelException extends AppException
+class WrongModelException extends WrongInputException
 {
 
 }

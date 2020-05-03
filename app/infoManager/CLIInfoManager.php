@@ -4,48 +4,63 @@
 namespace App\infoManager;
 
 
-use App\base\AppMsg;
+use App\base\AbstractRequest;
+use App\base\exceptions\WrongInputException;
+use App\CLI\render\infoConstructor\AbstractInfoConstructor;
+use App\CLI\render\Format;
+use App\CLI\render\ProductStat;
 use App\events\Event;
+use App\events\IEvent;
 use App\events\EventChannel;
 use App\events\ISubscriber;
+use App\events\traits\TObservable;
 
 
-class CLIInfoManager implements ISubscriber
+class CLIInfoManager
 {
-    private DispatchResolver $dispatchResolver;
+
+    private InfoEventResolver $dispatchResolver;
     private array $events = [];
-
-    const SUBSCRIBE_ON = [
-        Event::PROCEDURE_CHANGE_STATE,
-        AppMsg::PRODUCT_INFO,
-        AppMsg::RANGE_INFO,
-        AppMsg::NOT_FOUND,
-    ];
+    private AbstractRequest $request;
 
 
-    public function __construct(DispatchResolver $dispatchResolver, EventChannel $channel)
+    public function __construct(InfoEventResolver $dispatchResolver, AbstractRequest $request)
     {
         $this->dispatchResolver = $dispatchResolver;
-        $channel->subscribe($this);
+        $this->request = $request;
     }
 
-    public function update($observable, string $event)
+    public function handleInfo($renderingSubject, $eventClass)
     {
-        $dispatcher = $this->dispatchResolver->getDispatcher($event);
-        $dispatcher->handle($observable);
-        $this->events[$event] = $dispatcher;
+        $dispatcher = $this->dispatchResolver->getEventHandler($eventClass);
+        $dispatcher->handle($renderingSubject);
+        $this->events[$eventClass] = $dispatcher;
     }
+
 
     public function dispatch()
     {
+        if (empty($this->events)) {
+            $this->emptyMessage();
+            return;
+        }
+        /** @var AbstractInfoConstructor $dispatcher */
         foreach ($this->events as $dispatcher) {
-            $dispatcher->flush();
+            echo $dispatcher->getOutput();
+        }
+        /** @var ProductStat $statisic */
+        $statistic = $this->dispatchResolver->getPostEventHandler(get_class($dispatcher));
+        if (!is_null($statistic)) {
+            echo PHP_EOL .
+                $statistic->getOutput($dispatcher->getObserverBuffer());
         }
     }
 
-
-    public function subscribeOn(): array
+    public function emptyMessage(array $numbers = [])
     {
-        return self::SUBSCRIBE_ON;
+        echo 'не найдено информации' . (
+        $numbers ?
+            " по данным номерам:" . implode(Format::COUNT_DELIMITER, $numbers)
+            : ' или блоков в работе нет' . PHP_EOL);
     }
 }

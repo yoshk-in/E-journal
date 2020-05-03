@@ -3,6 +3,7 @@
 
 namespace App\GUI;
 
+use Closure;
 use Gui\Application;
 use Psr\Container\ContainerInterface;
 
@@ -43,7 +44,7 @@ class Debug
     }
 
 
-    static function futureTick(\Closure $closure)
+    static function futureTick(Closure $closure)
     {
         self::$gui->getLoop()->futureTick($closure);
     }

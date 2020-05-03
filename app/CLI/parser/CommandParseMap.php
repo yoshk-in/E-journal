@@ -12,15 +12,13 @@ interface CommandParseMap
 
     const PARTIAL_MOVE_BLOCK = [MoveAtPartial::class, ProductNumberParser::class];
 
-    const RANGE_INFO = [ProductNumberParser::class, RangeInfo::class];
+    const CONCRETE_PRODUCT_INFO = [ProductNumberParser::class, ConcreteProductInfo::class];
 
-    const BY_PRODUCT_NUMB_CMD = self::RANGE_INFO;
-
-    const DEFAULT = [Info::class];
+    const DEFAULT = [ProcessingProductInfo::class];
 
     const CLEAR_JOURNAL = [ClearJournal::class];
 
-    const PARTY = [PartNumberCMD::class, PartNumberValidator::class];
+    const SET_PART_NUMBER = [SetPartNumber::class, PartNumberValidator::class];
 
 
 

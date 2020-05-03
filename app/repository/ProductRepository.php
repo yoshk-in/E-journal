@@ -4,127 +4,160 @@
 namespace App\repository;
 
 
-use App\base\AppMsg;
-use App\base\exceptions\WrongInputException;
-use App\domain\AbstractProcedure;
-use App\domain\Product;
-use App\domain\ProductFactory;
+use App\domain\data\AbstractProductData;
+use App\domain\data\ProductData;
+use App\domain\AbstractProduct;
 use App\events\Event;
-use App\events\ISubscriber;
+use Generator;
 
-class ProductRepository implements ISubscriber
+class ProductRepository
 {
 
     private DBLayer $orm;
-    private string $domainClass = Product::class;
+    protected RequestBuffer $requestBuffer;
 
-    const FIELD = [
-        'name' => 'name',
-        'number' => 'number',
-        'finished' => 'finished',
-        'started' => 'started'
-    ];
+    /** @var string | AfterRequestCallBuffer */
+    const PRE_SAVE_OPERATOR = AfterRequestCallBuffer::class;
 
-    const NAME_FIELD = 'name';
+
     const NUMBER_FIELD = 'number';
-    const FINISHED_FIELD = 'finished';
+    const FINISHED_FIELD = 'ended';
     const STARTED_FIELD = 'started';
-    const ADVANCED_FIELD = 'advancedNumber';
+    const AD_NUMBER_FIELD = 'advancedNumber';
+    const ID_FIELD = 'id';
 
-    const SUBSCRIBE_ON = [
-        Event::PROCEDURE_CHANGE_STATE,
-        Event::PRODUCT_STARTED,
-        Event::PRODUCT_CHANGE_STATE,
-        Event::PERSIST_NEW
-    ];
 
-    private ProductFactory $pFactory;
+    /** @var string | AbstractProductData */
+    const REQUESTING_SUBJECT_DATA = AbstractProductData::class;
 
-    public function __construct(DBLayer $orm, ProductFactory $pFactory)
+
+    public function __construct(DBLayer $orm, RequestBuffer $requestBuffer)
     {
         $this->orm = $orm;
-        $this->orm->setServicedEntity($this->domainClass);
-        $this->checkMetadataDomainClass();
-        $this->pFactory = $pFactory;
+        $this->requestBuffer = $requestBuffer;
+        DB::setRepository($this);
     }
 
-    private function checkMetadataDomainClass()
+
+    public function remove($entity)
     {
-        $reflection = $reflection = new \ReflectionClass($this->domainClass);
-        $props = array_keys($reflection->getDefaultProperties());
-        foreach (self::FIELD as $require) {
-            if (!in_array($require, $props))
-                throw new \Exception('table cache and class properties must be same');
+        $this->orm->remove($entity);
+    }
+
+
+    public function createProducts(array $productData): Generator
+    {
+        /** @var ProductData $data */
+        foreach ($productData as $data)  yield $data->createProduct();
+
+    }
+
+    public function findById(array $numbers): array
+    {
+        return $this->byId($numbers)->find();
+    }
+
+    public function byId(array $ids): self
+    {
+        $this->requestBuffer->where([self::ID_FIELD => $ids]);
+        return $this;
+    }
+
+    public function findByMainNumbers(array $numbers): array
+    {
+        return $this->byMainNumber($numbers)->find();
+    }
+
+    public function findByAllNumbers(array $mains, array $advanced, ?bool $state): array
+    {
+        return $this->byMainNumber($mains)->byAdvancedNumber($advanced)->find();
+    }
+
+    public function byMainNumber(array $numbers): self
+    {
+        $this->productByNumbers(self::NUMBER_FIELD, $numbers);
+        return $this;
+    }
+
+    protected function productByNumbers(string $field, array $numbers): self
+    {
+        $this->requestBuffer->where([$field => $numbers]);
+        return $this;
+    }
+
+    public function byAdvancedNumber(array $numbers): self
+    {
+        return $this->productByNumbers(self::AD_NUMBER_FIELD, $numbers);
+    }
+
+    public function findByUniqueProperties(array $data)
+    {
+        $this->orm->setServicedEntity((self::REQUESTING_SUBJECT_DATA)::getServicedClass());
+        $this->setCommonRequestingSubjectProps();
+        $this->requestBuffer->where([(self::REQUESTING_SUBJECT_DATA)::findBy() => $data]);
+        $this->requestBuffer->asc((self::REQUESTING_SUBJECT_DATA)::orderBy());
+        $found = $this->orm->findWhere(...$this->requestBuffer->getBuffer());
+        (self::REQUESTING_SUBJECT_DATA)::resetFinding();
+        $this->requestBuffer->reset();
+        return $found;
+    }
+
+
+    public function find(): array
+    {
+        $this->orm->setServicedEntity((self::REQUESTING_SUBJECT_DATA)::getServicedClass());
+        $this->setCommonRequestingSubjectProps();
+        $this->requestBuffer->asc((self::REQUESTING_SUBJECT_DATA)::orderBy());
+        $found = $this->orm->findWhere(...$this->requestBuffer->getBuffer());
+        (self::REQUESTING_SUBJECT_DATA)::resetFinding();
+        $this->requestBuffer->reset();
+        return $found;
+    }
+
+
+    public function setCommonRequestingSubjectProps(): self
+    {
+        foreach ((self::REQUESTING_SUBJECT_DATA)::getCommonRequestingProductProps() as $fieldName => $value) {
+            $this->requestBuffer->where([$fieldName => $value]);
         }
+        return $this;
     }
 
-    public function createProducts(array $numbers, string $productName): \Iterator
+
+    public function findNotEndedByAdvancedNumber($advancedNumber): array
     {
-        [$found, $not_found] = $this->findByNumbers($productName, $numbers);
-        if (!empty($found)) throw new WrongInputException('передан на создание номер, о котором уже существует запись в журнале');
-        foreach ($not_found as $number) {
-            yield $this->pFactory->create($this->domainClass, $productName, $number);
-        }
+        return $this->byAdvancedNumber($advancedNumber)->setCommonRequestingSubjectProps(false)->find();
     }
 
-    public function findByNumbers(string $productName, array $numbers): array
+
+    public function findLast(): ?AbstractProduct
     {
-        return $this->orm->findWhere(
-            [self::NAME_FIELD => $productName, self::NUMBER_FIELD => $numbers],
-            [self::NUMBER_FIELD => 'ASC']
-        );
+        [$criteria, $order] = $this->requestBuffer->getBuffer();
+        return $this->orm->findWhere($criteria, $order, $limit = 1)[0];
     }
 
-    public function findUnfinishedByAdvancedNumber(string $productName, $advancedNumber): array
-    {
-        return $this->orm->findWhere([self::NAME_FIELD => $productName, self::FINISHED_FIELD => false, self::ADVANCED_FIELD => $advancedNumber], [self::ADVANCED_FIELD => 'ASC']);
-    }
 
-    public function findUnfinished(string $productName)
-    {
-        return $this->orm->findWhere([self::NAME_FIELD => $productName, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'ASC']);
-    }
 
-    public function findLast(string $productName): ?Product
-    {
-        return $this->orm->findOneWhere([self::NAME_FIELD => $productName], [self::NUMBER_FIELD => 'DESC']);
-    }
-
-    public function findLastUnfinished(string $product): ?Product
-    {
-        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'DESC']);
-    }
-
-    public function findFirstUnfinished(string $product): ?Product
-    {
-        return $this->orm->findOneWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false], [self::NUMBER_FIELD => 'ASC']);
-    }
-
-    public function findStartedAndUnfinished(string $product): array
-    {
-        return $this->orm->findWhere([self::NAME_FIELD => $product, self::FINISHED_FIELD => false, self::STARTED_FIELD => true], [self::NUMBER_FIELD => 'ASC']);
-    }
 
     public function save()
     {
+        (self::PRE_SAVE_OPERATOR)::drop();
         $this->orm->save();
     }
 
-    public function update($observable, string $event)
+
+    public function persist($entity)
     {
-        $this->orm->persist($observable);
+
+        $this->orm->persist($entity);
     }
 
-    public function subscribeOn(): array
+    public function findAllByMainNumber(): array
     {
-        return self::SUBSCRIBE_ON;
+        return $this->find();
     }
 
 
-    public function findAll(string $productName): array
-    {
-        return $this->orm->findAll([self::NAME_FIELD => $productName], [self::NUMBER_FIELD => 'ASC']);
-    }
 
 
 }

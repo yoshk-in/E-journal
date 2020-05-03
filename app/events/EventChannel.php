@@ -3,64 +3,84 @@
 
 namespace App\events;
 
-use App\base\AppMsg;
 
 class EventChannel implements IEventChannel
 {
+    const FORKING_EVENTS = [
+        IEventType::ANY_MOVING => [IEventType::START, IEventType::END],
+        IEventType::ANY => [IEventType::REPORT, IEventType::START, IEventType::END],
+    ];
 
-    protected $channels = [];
 
-    public function __construct(array $subscribers, array $observables)
+
+    protected array $channels = [];
+
+    public function __construct()
     {
-        $this->subscribeArray($subscribers);
-        $this->attachArray($observables);
+        Event::connectToEventChannel($this);
     }
 
-    public function notify($object, string $event)
+    public function update(Event $event)
     {
-        if (!key_exists($event, $this->channels)) return;
-        foreach ($this->channels[$event] as $subscriber) {
-            $subscriber->update($object, $event);
+        $subscribers = ($this->channels[(string) $event] ??= []);
+        foreach ($subscribers as $closure) {
+            $closure($event->observable, $event->class);
         }
     }
 
-    public function subscribe(ISubscriber $subscriber)
-    {
-        foreach ($subscriber->subscribeOn() as $event) {
-            $this->channels[$event][$this->subscriberKey($subscriber)] = $subscriber;
-        };
-    }
 
-    public function unsubscribe(ISubscriber $subscriber, string $event)
+
+
+    public function subscribe(\stdClass $on)
     {
-        $key = $this->subscriberKey($subscriber);
-        if (isset($this->channels[$event][$key])) {
-            unset($this->channels[$event][$key]);
+        /** @var  $onEvents [$class, $event, $specialClassMark] */
+        $callKey = $this->subscriberKey($on->closure);
+        $call = [$callKey => $on->closure];
+        foreach (self::getForkingChannelKey($on->event) as $channelKey) {
+            $this->channels[$this->getChannelName([$on->observableClass, $channelKey])] = $call;
         }
     }
 
-    public function subscribeArray(array $subscribers)
+    protected function getChannelName(array $subChannels): string
     {
-        foreach ($subscribers as $subscriber) {
-            $this->subscribe($subscriber);
+        $res = '';
+        foreach ($subChannels as $subChannel) {
+            $res .= $subChannel;
+        }
+        return $res;
+    }
+
+//    protected static function fillForkingChannels(array &$onEventProps): \Generator
+//    {
+//        foreach (self::$subChannelsMap as $propsId => $subChannel) {
+//            yield from self::getForkingChannelKey($onEventProps[$propsId], $subChannel);
+//        }
+//    }
+
+
+    protected static function getForkingChannelKey(int &$eventProp, array $subChannelMap = self::FORKING_EVENTS): \Generator
+    {
+        $subChannelMap = $subChannelMap[$eventProp] ?? [$eventProp];
+        foreach ($subChannelMap as $subChannelKey) {
+            yield $subChannelKey;
         }
     }
 
-    public function attachArray(array $observables)
+
+
+    public function unsubscribe($subscriber, string $event, string $type = self::DEFAULT_TYPE)
     {
-        foreach ($observables as $observable) {
-            $this->attach($observable);
+        exit('todo');
+        if (isset($this->channels[$event][$key = $this->subscriberKey($subscriber)])) {
+            unset($this->channels[$event][$type][$key]);
         }
     }
 
-    public function attach($observable)
+
+    public static function subscriberKey($subscriber): string
     {
-        $observable::attachToEventChannel($this);
+        return is_string($subscriber)? $subscriber : get_class($subscriber);
     }
 
-    private function subscriberKey($subscriber): string
-    {
-        return get_class($subscriber);
-    }
 
 }

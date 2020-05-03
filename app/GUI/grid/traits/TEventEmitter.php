@@ -4,11 +4,13 @@
 namespace App\GUI\grid\traits;
 
 
+use Closure;
+
 trait TEventEmitter
 {
     protected array $eventHandlers = [];
 
-    public function on(string $event, \Closure $callback)
+    public function on(string $event, Closure $callback)
     {
         if (key_exists($event, $this->eventHandlers)) {
             $this->eventHandlers[$event] = [];

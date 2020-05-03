@@ -4,41 +4,33 @@
 namespace App\GUI\scheduler;
 
 
-use App\events\Event;
+use App\events\IEvent;
 use App\events\EventChannel;
 use App\events\IObservable;
 use App\events\TObservable;
+use Closure;
+use DateInterval;
 use React\EventLoop\LoopInterface;
 
-class Scheduler implements IObservable
+class Scheduler
 {
-    use TObservable;
 
-    private $loop;
-    private $alert;
-    private $channel;
+    private LoopInterface $loop;
 
-    public function __construct(LoopInterface $loop, EventChannel $channel)
+    public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
-        $this->channel = $channel;
-        $this->channel->attach($this);
     }
 
 
-    public function addTask(\DateInterval $time,\Closure $closure)
+    public function addTask(DateInterval $time, Closure $closure)
     {
         $this->loop->addTimer($this->roundTime($time), fn () => $closure()
         );
     }
 
-    public function alert(string $msg)
-    {
-        $this->notify(Event::ALERT, $msg);
-    }
 
-
-    public function asyncFutureTick(\Closure $closure)
+    public function asyncFutureTick(Closure $closure)
     {
         $this->loop->futureTick($closure);
     }

@@ -10,6 +10,7 @@ use App\GUI\grid\coordinate\GridPosition;
 use App\GUI\grid\style\BasicVisualStyle;
 use App\GUI\grid\style\Style;
 use App\GUI\grid\traits\TEventEmitter;
+use Closure;
 use function App\GUI\offset;
 use function App\GUI\size;
 
@@ -55,7 +56,7 @@ class Grid implements IOffset, ISize
     }
 
 
-    public function pushCreate(int $parentId, \Closure $createClosure, array $childSizes, string $direction): int
+    public function pushCreate(int $parentId, Closure $createClosure, array $childSizes, string $direction): int
     {
         $offsets = $this->computeChildOffsets($parentId, $direction);
         return $this->createCell($createClosure, $offsets, $childSizes);
@@ -72,7 +73,7 @@ class Grid implements IOffset, ISize
     }
 
 
-    protected function createCell(\Closure $createClosure, array $offsets, array $sizes): int
+    protected function createCell(Closure $createClosure, array $offsets, array $sizes): int
     {
         $this->_createCell($createClosure, $offsets);
         $this->grid[++$this->cellCounter] = [$offsets, $sizes];

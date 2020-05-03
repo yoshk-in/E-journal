@@ -6,5 +6,9 @@ namespace App\events;
 
 interface IEventChannel
 {
-    public function notify($object, string $event);
+    public function update(Event $event);
+
+    function subscribe(\stdClass $onEventProps);
+
+
 }

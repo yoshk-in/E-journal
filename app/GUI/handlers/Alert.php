@@ -5,39 +5,29 @@ namespace App\GUI\handlers;
 
 
 use App\events\Event;
-use App\events\EventChannel;
-use App\events\ISubscriber;
+use App\events\IGUIEvent;
 use Gui\Application;
 
-class Alert implements ISubscriber, Event
+class Alert implements IGUIEvent
 {
-    private $gui;
-    const EVENTS = [
-        Event::ALERT
-    ];
+    private Application $gui;
+    const ALERT = 'alert';
 
-    public function __construct(Application $gui, EventChannel $channel)
+    public function __construct(Application $gui)
     {
         $this->gui = $gui;
-        $channel->subscribe($this);
     }
-    public function alert(string $msg)
+
+    public function alert(Event $event)
     {
-        $this->gui->alert($msg);
+        $this->gui->alert($event->observable);
     }
 
     public function __invoke(string $msg)
     {
-        $this->alert($msg);
+        $this->gui->alert($msg);
     }
 
-    public function update($msg, string $event)
-    {
-        $this->alert($msg);
-    }
 
-    public function subscribeOn(): array
-    {
-        return self::EVENTS;
-    }
+
 }

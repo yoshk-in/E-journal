@@ -4,8 +4,8 @@
 namespace App\GUI;
 
 
-use App\domain\AbstractProcedure;
-use App\domain\Product;
+use App\domain\procedures\CasualProcedure;
+use App\domain\procedures\Product;
 use App\GUI\grid\style\Style;
 
 class ProductStateColorant
@@ -23,19 +23,19 @@ class ProductStateColorant
     ];
 
 
-    public function __invoke(AbstractProcedure $procedure): string
+    public function __invoke(CasualProcedure $procedure): string
     {
         return self::color($procedure);
     }
 
-    public static function style(Style $style, AbstractProcedure $procedure): Style
+    public static function style(Style $style, CasualProcedure $procedure): Style
     {
         return colorStyle($style, self::color($procedure));
     }
 
 
 
-    public static function color(AbstractProcedure $procedure): string
+    public static function color(CasualProcedure $procedure): string
     {
         return self::COLOR[$procedure->getState()];
     }

@@ -4,20 +4,21 @@ namespace App\controller;
 
 
 use App\base\CLIRequest;
+use App\base\exceptions\WrongInputException;
 use App\CLI\parser\CLIParser;
 use App\infoManager\CLIInfoManager;
 
 
-class CLIController implements IController
+class CLIController extends AbstractController
 {
-    use TChainOfResponsibility;
-    
-    private $consoleParser;   
-    private $request;
-    private $infoManager;
+
+    private CLIParser $consoleParser;
+    private CLIRequest $request;
+    private CLIInfoManager $infoManager;
 
 
-    public function __construct(CLIParser $consoleParser, CLIRequest $request, CLIInfoManager $manager) {
+    public function __construct(CLIParser $consoleParser, CLIRequest $request, CLIInfoManager $manager)
+    {
 
         $this->consoleParser = $consoleParser;
         $this->request = $request;
@@ -29,7 +30,8 @@ class CLIController implements IController
         $this->consoleParser->parse();
         $this->next->run();
         $this->infoManager->dispatch();
+
     }
 
-   
+
 }

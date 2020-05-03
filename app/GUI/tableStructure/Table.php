@@ -8,6 +8,7 @@ use App\GUI\components\computer\StyleComputer;
 use App\GUI\grid\style\RowStyle;
 use App\GUI\grid\style\Style;
 use App\GUI\helpers\TVisualAggregator;
+use Closure;
 
 class Table
 {
@@ -22,8 +23,8 @@ class Table
     protected Style $currentCellStyle;
     protected RowStyle $style;
     protected TableRow $rootRow;
-    public \Closure $createNewRowStyle;
-    public \Closure $createNestingRowStyle;
+    public Closure $createNewRowStyle;
+    public Closure $createNestingRowStyle;
     public TableRow $header;
 
     public function __construct(RowStyle $style)
@@ -115,18 +116,18 @@ class Table
         return $this->rows[$this->rowDepth][++$this->rowOrder] = $this->createCurrentRow($newRowStyle);
     }
 
-    public function nestInCellNewRow(\Closure $closure, ?TableRow $attachToRow = null): self
+    public function nestInCellNewRow(Closure $closure, ?TableRow $attachToRow = null): self
     {
         return $this->nestInCellRow(fn (RowStyle $style) => $this->createCurrentRow($style), $closure, $attachToRow);
     }
 
-    public function nestInCellNewDataRow(\Closure $closure, string $key, $data, ?TableRow $attachToRow = null): self
+    public function nestInCellNewDataRow(Closure $closure, string $key, $data, ?TableRow $attachToRow = null): self
     {
         $this->nestInCellRow(fn (RowStyle $style) => $this->createCurrentDataRow($style, $data), $closure, $attachToRow);
         return $this->setUserKeyToRowPosition($key);
     }
 
-    protected function nestInCellRow(\Closure $createRowClosure, \Closure $nestingAction, ?TableRow $attachNestingCellsToRow = null): self
+    protected function nestInCellRow(Closure $createRowClosure, Closure $nestingAction, ?TableRow $attachNestingCellsToRow = null): self
     {
         $newRowStyle = ($this->createNestingRowStyle)($this->currentCellStyle, $attachNestingCellsToRow);
         ++$this->rowDepth;

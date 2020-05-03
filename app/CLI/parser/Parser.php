@@ -15,8 +15,6 @@ abstract class Parser
 
     static int $argN = 0;
     const MAIN_ERROR = 'неверно заданы параметры запроса: ';
-    /** @var TChainOfResponsibility|Parser */
-    protected TChainOfResponsibility $next;
     protected CLIRequest $request;
     protected ParserBuffer $parserBuffer;
 
@@ -36,13 +34,13 @@ abstract class Parser
 
 
 
-    protected function getCurrentCLIArg(): ?int
+    protected function getCurrentCLIArg(): ?string
     {
-        return $this->request->getCLIArgs()[self::$argN];
+        return $this->request->getCLIArgs()[self::$argN] ?? null;
     }
 
 
-    protected function exception(string $msg): \Exception
+    protected function exception(string $msg): WrongInputException
     {
         throw new WrongInputException(self::MAIN_ERROR . $msg);
     }

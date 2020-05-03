@@ -6,12 +6,11 @@ namespace App\CLI\parser;
 
 use App\base\CLIRequest;
 use App\base\exceptions\WrongInputException;
-use App\domain\ProcedureMap;
+use App\domain\procedures\ProcedureMap;
 use App\CLI\parser\buffer\ParserBuffer;
 
 class ProductNameParser extends Parser
 {
-    const WRONG_NAME = 'наименование блока или не задано, или задано неверно';
 
     private ProcedureMap $procedureMap;
 
@@ -23,17 +22,14 @@ class ProductNameParser extends Parser
 
     protected function doParse()
     {
-        $product_name = mb_strtoupper($this->request->getCLIArgs()[self::$argN]);
-        if (!in_array($name ?? '', $this->procedureMap->getProducts())) {
-            throw new WrongInputException(self::WRONG_NAME);
-        }
-        $this->request->setProduct($product_name);
+        $product_name = $this->request->getCLIArgs()[self::$argN];
+        $this->request->prepareProductRequest($product_name);
         $this->setPartialsToCommandMap();
     }
 
     protected function setPartialsToCommandMap()
     {
-        foreach ($this->procedureMap->getAllDoublePartialNames($this->request->getProduct()) as [$short_name, $partial]) {
+        foreach ($this->procedureMap->getAllPartialNamesWithAliases() as [$short_name, $partial]) {
             $adds[$short_name] = CommandParseMap::PARTIAL_MOVE_BLOCK;
             $adds[$partial] = CommandParseMap::PARTIAL_MOVE_BLOCK;
             $partialAliases[$short_name] = $partial;

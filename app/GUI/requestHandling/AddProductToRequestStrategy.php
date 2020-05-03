@@ -5,7 +5,7 @@ namespace App\GUI\requestHandling;
 
 
 use App\base\GUIRequest;
-use App\domain\Product;
+use App\domain\AbstractProduct;
 use App\GUI\inputValidate\NumberValidator;
 
 abstract class AddProductToRequestStrategy
@@ -21,7 +21,7 @@ abstract class AddProductToRequestStrategy
 
     abstract public function addProductRequest(RequestManager $requestManager, $input);
 
-    abstract public function addProductToRequestBuffer(Product $product);
+    abstract public function addProductToRequestBuffer(AbstractProduct $product);
 
-    abstract public function removeProductFromRequestBuffer(Product $product);
+    abstract public function removeProductFromRequestBuffer(AbstractProduct $product);
 }

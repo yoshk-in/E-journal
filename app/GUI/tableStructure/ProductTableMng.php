@@ -4,8 +4,8 @@
 namespace App\GUI\tableStructure;
 
 
-use App\base\AppMsg;
-use App\domain\Product;
+use App\base\AppCmd;
+use App\domain\procedures\Product;
 use App\events\ISubscriber;
 use App\GUI\components\Pager;
 use App\GUI\grid\style\RowStyle;
@@ -35,7 +35,7 @@ class ProductTableMng implements ISubscriber
     private array                       $productTableComponents;
 
     const EVENTS = [
-        AppMsg::GUI_INFO,
+        AppCmd::PROCESSING_PRODUCT_AND_NOT_STARTED_INFO,
     ];
 
 
@@ -99,7 +99,7 @@ class ProductTableMng implements ISubscriber
         $row = $this->formatter->createProductRow($product, $this->currentTable);
         //activate cells and sync by proc state
         $this->tSync->activateRowCell($row, $product);
-        $this->store->add($product->getId(), $row);
+        $this->store->add($product->getProductId(), $row);
     }
 
 
@@ -123,7 +123,7 @@ class ProductTableMng implements ISubscriber
     }
 
 
-    public function update($product, string $event)
+    public function notify($product, string $event)
     {
         $this->updateTable($product);
     }

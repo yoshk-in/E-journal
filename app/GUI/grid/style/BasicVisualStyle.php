@@ -5,6 +5,8 @@ namespace App\GUI\grid\style;
 
 
 
+use Closure;
+
 /**
  * @property int $left
  * @property int top
@@ -76,7 +78,7 @@ class BasicVisualStyle
         return $this;
     }
 
-    public function defer(string $name, \Closure $value): self
+    public function defer(string $name, Closure $value): self
     {
         $this->deferComputingProps[$name] = $value;
         return $this;

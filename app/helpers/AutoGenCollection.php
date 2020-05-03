@@ -4,6 +4,7 @@
 namespace App\helpers;
 
 
+use Exception;
 use Psr\Container\ContainerInterface;
 
 
@@ -32,7 +33,7 @@ class AutoGenCollection
     public function gen($key, ?GeneratingProps $dynamicProps = null)
     {
         $this->dynamicProps = $dynamicProps ?? self::getBlank();
-        if (!$class = $dynamicProps->class ?? $this->staticProps->class) throw new \Exception(self::CLASS_REQUIRED_ERR);
+        if (!$class = $dynamicProps->class ?? $this->staticProps->class) throw new Exception(self::CLASS_REQUIRED_ERR);
 
         [$target, $afterGenCall] = isset($this->store[$class][$key]) ?
             [$this->store[$class][$key], $this->staticProps->get]

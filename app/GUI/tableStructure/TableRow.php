@@ -11,6 +11,7 @@ use App\GUI\grid\style\RowStyle;
 use App\GUI\grid\style\Style;
 use App\GUI\grid\traits\THierarchy;
 use App\GUI\helpers\TVisualAggregator;
+use Closure;
 use Gui\Components\VisualObjectInterface;
 
 class TableRow implements IOffset, ISize
@@ -133,7 +134,7 @@ class TableRow implements IOffset, ISize
     public function reduceTopOnOneHeight()
     {
         $this->style->top -= $this->style->height;
-        array_map(\Closure::fromCallable([$this, 'reduceElementTop']), $this->cells);
+        array_map(Closure::fromCallable([$this, 'reduceElementTop']), $this->cells);
     }
 
     private function reduceElementTop($el)

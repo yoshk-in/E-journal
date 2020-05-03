@@ -7,12 +7,12 @@ namespace App\controller;
 use App\base\GUIRequest;
 use App\GUI\GUIController as gui;
 
-class GUIController implements IController
+class GUIController extends AbstractController
 {
     use TChainOfResponsibility;
 
-    protected $request;
-    private $GUIManager;
+    protected GUIRequest $request;
+    private GUIController $GUIManager;
 
 
     public function __construct(
@@ -26,7 +26,7 @@ class GUIController implements IController
 
     public function run()
     {
-        $this->GUIManager->run($this->next);
+        $this->GUIManager->run();
     }
 
 }

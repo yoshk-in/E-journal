@@ -66,7 +66,7 @@ class DefaultClickHandler extends ClickHandler
         return !empty($this->store->getSelectedCells());
     }
 
-    public function removeSelectedCells()
+    public function resetSelectedCells()
     {
         foreach ($this->store->getSelectedCells() as $cell) {
             $cell->default();

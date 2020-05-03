@@ -6,41 +6,45 @@ namespace App\GUI\components;
 
 use App\domain\ProductMap;
 use App\events\Event;
-use App\events\EventChannel;
-use App\events\IObservable;
+use App\events\IEvent;
 use App\events\TObservable;
-use App\GUI\requestHandling\RequestManager;
 use Gui\Components\Option;
 
-class ProductSelectEmitter implements IObservable, Event
+class ProductSelectEmitter implements IEvent
 {
     use TObservable;
 
     private ProductMap $productMap;
     private array $options = [];
-    private string $event = Event::GUI_PRODUCT_CHANGED;
+    private array $optionValues = [];
+    private string $event = IEvent::GUI_PRODUCT_CHANGED;
+    private string $selected;
 
-    public function __construct(ProductMap $productMap, EventChannel $channel)
+    public function __construct(array $optionValues)
     {
-        $this::attachToEventChannel($channel);
-        $this->productMap = $productMap;
+        $this->optionValues = $optionValues;
     }
 
     public function getOptions(): array
     {
         $key = 0;
-        foreach ($this->productMap->getProducts() as $product => $props) {
+        foreach ($this->optionValues as $product => $props) {
             $options[] = new Option($product, $key);
             $this->options[$key++] = $product;
         }
-        return $options;
+        return $options ?? [];
+    }
+
+    public function getSelected()
+    {
+        return $this->selected;
     }
 
 
     public function emitChangeProductEvent(string $option)
     {
-        $newProduct = $this->options[$option];
-        $this->notify($this->event, $newProduct);
+        $this->selected = $this->options[$option];
+        $this->update(new Event($this->event, $this));
     }
 
 }

@@ -8,5 +8,5 @@ interface IController
 {
     public function run();
     
-    public function setNextHandler($controller);
+    public function setNext($controller);
 }

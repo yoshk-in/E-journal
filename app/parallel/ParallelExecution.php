@@ -3,14 +3,13 @@
 
 namespace App\parallel;
 
-use App\domain\PartialProcedure;
 use App\events\{ISubscriber};
 
 class ParallelExecution implements ISubscriber
 {
-    public function update($observable, string $event)
+    public function notify($observable, string $event)
     {
-        if ($observable instanceof PartialProcedure) {
+        if ($observable instanceof AutoEndingProcedure) {
             echo 'there is need to parallel execution' . PHP_EOL;
         }
 //        if ($observable instanceof PartialProcedure) {

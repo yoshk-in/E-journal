@@ -3,7 +3,7 @@
 namespace App\CLI\parser;
 
 use App\base\CLIRequest;
-use App\domain\ProcedureMap;
+use App\domain\procedures\ProcedureMap;
 
 class CLIParser
 {

@@ -4,7 +4,7 @@
 namespace App\GUI\tableStructure;
 
 
-use App\domain\Product;
+use App\domain\procedures\Product;
 use App\GUI\components\Cell;
 use App\GUI\components\computer\StyleComputer;
 use function App\GUI\text;

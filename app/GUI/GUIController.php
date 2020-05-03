@@ -4,11 +4,9 @@
 namespace App\GUI;
 
 
-use App\domain\ProductMap;
+use App\domain\procedures\ProductMap;
 use App\events\Event;
 use App\events\EventChannel;
-use App\events\ISubscriber;
-use App\events\TCasualSubscriber;
 use App\GUI\requestHandling\AddCasualProduct;
 use App\GUI\requestHandling\AddDoubleNumberProduct;
 use App\GUI\requestHandling\ProductTableSync;
@@ -21,9 +19,8 @@ use Psr\Container\ContainerInterface;
 use React\EventLoop\LoopInterface;
 
 
-class GUIController  implements ISubscriber
+class GUIController
 {
-    use TCasualSubscriber;
 
     private Application $gui;
     private ProductMap $productMap;
@@ -33,9 +30,8 @@ class GUIController  implements ISubscriber
     private RequestManager $requestMng;
     private EventChannel $channel;
 
-    const EVENTS = [
-        Event::GUI_PRODUCT_CHANGED
-    ];
+    /** @method callable changeTableMng */
+    const GUI_PRODUCT_CHANGED =  'changeTableMng';
 
 
     public function __construct(ProductMap $productMap, ContainerInterface $container, EventChannel $channel)
@@ -56,11 +52,12 @@ class GUIController  implements ISubscriber
 
 
 
-    public function update($productName, string $event = Event::GUI_PRODUCT_CHANGED)
+    public function changeTableMng(Event $event)
     {
+        $productName = $event->observable->getSelected();
         if ($productName == $this->requestMng->getProduct()) return;
         $this->requestMng->changeProduct($productName);
-        $this->render->createOrChangeTableComposer();
+        $this->render->createOrChangeTableMng();
     }
 
 

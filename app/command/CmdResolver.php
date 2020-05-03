@@ -3,31 +3,44 @@
 namespace App\command;
 
 use App\base\AbstractRequest;
-use App\base\AppMsg;
-use App\command\DBFindNumbers\MoveProductByRequest;
-use App\command\casual\{ClearJournal, Party};
+use App\base\AppCmd;
+use App\CLI\parser\ProcessingProductInfo;
+use App\helpers\Gen;
+use App\helpers\TContainerGet;
+use App\command\RepositoryLessCmd\{ClearJournal, SetPartNumber};
+use App\command\RepositoryCmd\foundHandler\{ChangeNumberHandler,
+    EndProcHandler,
+    ForwardHandler,
+    ReportProcInfoHandler,
+    ReportInfoHandler,
+    StartProcHandler};
+use App\command\RepositoryCmd\notFoundHandler\{CommonNotFoundHandler,RequestDependNotFoundHandler};
+use App\command\RepositoryCmd\repositoryRequest\{CreateRequest,
+    UnfinishedRequest,
+    GenerateRequest,
+    ByIdRequest};
+use App\command\RepositoryCmd\{PersistRepositoryCmd, RepositoryCmd};
 use Psr\Container\ContainerInterface;
-use App\command\DBFindNumbers\{RangeInfo, CurrentProcInfo};
 
 class CmdResolver
 {
-    private string $defaultCmd = Info::class;
+    use TContainerGet;
+
+    const DEFAULT_CMD = ProcessingProductInfo::class;
     private AbstractRequest $request;
-    private ContainerInterface $container;
 
     const CMD_MAP = [
-        AppMsg::RANGE_INFO => RangeInfo::class,
-        AppMsg::PRODUCT_INFO => Info::class,
-        AppMsg::MOVE_PRODUCT => MoveProductByRequest::class,
-        AppMsg::PARTY => Party::class,
-        AppMsg::CLEAR_JOURNAL => ClearJournal::class,
-        AppMsg::FORWARD => Forward::class,
-        AppMsg::GUI_INFO => GUIInfo::class,
-        AppMsg::CREATE_PRODUCTS => CreateProducts::class,
-        AppMsg::CURRENT_PROCEDURE_INFO => CurrentProcInfo::class,
-        AppMsg::CREATE_PRODUCT_OR_GENERATE => CreateProductOrGenerate::class,
-        AppMsg::STAT_INFO => StartedAndUnfinishedInfoProducts::class,
-        AppMsg::CHANGE_PRODUCT_MAIN_NUMBER => ChangeProductNumber::class,
+        AppCmd::CONCRETE_PRODUCT_INFO => [RepositoryCmd::class, [ByIdRequest::class, ReportInfoHandler::class, CommonNotFoundHandler::class]],
+        AppCmd::START_PROCEDURE => [PersistRepositoryCmd::class, [ByIdRequest::class, StartProcHandler::class, RequestDependNotFoundHandler::class]],
+        AppCmd::END_PROCEDURE => [PersistRepositoryCmd::class, [ByIdRequest::class, EndProcHandler::class, CommonNotFoundHandler::class]],
+        AppCmd::SET_PART_NUMBER => [SetPartNumber::class, []],
+        AppCmd::CLEAR_JOURNAL => [ClearJournal::class, []],
+        AppCmd::FORWARD => [PersistRepositoryCmd::class, [ByIdRequest::class, ForwardHandler::class, CommonNotFoundHandler::class]],
+        AppCmd::CREATE_PRODUCTS => [PersistRepositoryCmd::class, [CreateRequest::class]],
+        AppCmd::CURRENT_PROCEDURE_INFO => [RepositoryCmd::class, [ByIdRequest::class, ReportProcInfoHandler::class, CommonNotFoundHandler::class]],
+        AppCmd::FIND_UNFINISHED => [RepositoryCmd::class, [UnfinishedRequest::class, ReportInfoHandler::class, CommonNotFoundHandler::class]],
+        AppCmd::CREATE_PRODUCT_OR_GENERATE => [PersistRepositoryCmd::class, [GenerateRequest::class, ReportInfoHandler::class]],
+        AppCmd::CHANGE_PRODUCT_MAIN_NUMBER => [PersistRepositoryCmd::class, [UnfinishedRequest::class, ChangeNumberHandler::class]],
     ];
 
     public function __construct(ContainerInterface $container, AbstractRequest $request)
@@ -37,19 +50,31 @@ class CmdResolver
     }
 
 
-    public function getCommand(): array
+    public function getCommand(): iterable
     {
-        $result_cmd_array = [];
         $commands = $this->request->getCmd();
+        empty($commands) ? yield $this->containerGet(self::DEFAULT_CMD) : yield from $this->generateCmd($commands);
+    }
 
-        if (!empty($commands)) {
-            foreach ($commands as $command) {
-                $result_cmd_array[] = $this->container->get(self::CMD_MAP[$command]);
-            }
-            return $result_cmd_array;
-
-        } else {
-            return $this->container->get($this->defaultCmd);
+    /**
+     * @param Command[] | string[] $commands
+     * @return \Generator
+     */
+    protected function generateCmd(array $commands): \Generator
+    {
+        foreach ($commands as $command) {
+            $cmd_parts = self::CMD_MAP[$command];
+            yield $this->setCmdHandlers($cmd_parts[0], $cmd_parts[1]);
         }
     }
+
+
+    protected function setCmdHandlers(string $cmd, array $handlers): Command
+    {
+        $cmd = $this->containerGet($cmd);
+        Gen::settle($cmd->setHandlers(), $this->containerGets($handlers));
+        return $cmd;
+    }
+
+
 }

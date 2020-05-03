@@ -8,6 +8,7 @@ use App\GUI\components\WrapVisualObject;
 use App\GUI\factories\WrappingVisualObjectFactory;
 use App\GUI\grid\traits\THierarchy;
 use App\helpers\store\StoreInterface;
+use Closure;
 use Gui\Components\VisualObjectInterface;
 
 /**
@@ -26,8 +27,8 @@ class Style extends BasicVisualStyle
 {
     //creatingProps
     public string $guiComponentClass;
-    public \Closure $createCall;
-    public \Closure $afterCreateCall;
+    public Closure $createCall;
+    public Closure $afterCreateCall;
     public string $wrapComponentClass;
     public array $on = [];
     public array $traits = [];

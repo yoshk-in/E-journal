@@ -4,11 +4,9 @@
 namespace App\GUI\handlers;
 
 
-use App\base\AppMsg;
-use App\domain\AbstractProcedure;
-use App\domain\CasualProcedure;
-use App\domain\PartialProcedure;
-use App\domain\Product;
+use App\domain\procedures\CasualProcedure;
+use App\events\Event;
+use App\GUI\services\Alert;
 use App\GUI\ProductStateColorant;
 use App\GUI\tableStructure\TableRow;
 use App\GUI\scheduler\Scheduler;
@@ -20,23 +18,25 @@ class RowHandler
     private Block $block;
     private ProductStateColorant $colorant;
     private string $successFullMsg = 'Блок N%s процедура %s завершена';
-    private AbstractProcedure $proc;
+    private CasualProcedure $proc;
     private TableRow $row;
+    private Alert $output;
 
-    public function __construct(Scheduler $scheduler, ProductStateColorant $colorant, Block $blocker)
+    public function __construct(Scheduler $scheduler, ProductStateColorant $colorant, Block $blocker, Alert $output)
     {
         $this->scheduler = $scheduler;
         $this->block = $blocker;
         $this->colorant = $colorant;
+        $this->output = $output;
     }
 
-    public function byProduct(TableRow $row, Product $product)
+    public function byProduct(TableRow $row, CasualProcedure $proc)
     {
-        $this->proc = $proc = $product->getProcessingProc();
+        $this->proc = $proc->getProductCurrentProc();
         $this->row = $row;
         $this->activateCell();
-        if ($proc instanceof PartialProcedure) {
-            $proc->isStarted() ? $this->blockRowAndAddUpdateTask($proc) : $this->successFullProcAlert($product, $proc);
+        if ($proc instanceof IAutoEndingProcedure) {
+            $proc->isStarted() ? $this->blockRowAndAddUpdateTask($proc) : $this->successFullProcAlert($proc);
         }
     }
 
@@ -50,20 +50,20 @@ class RowHandler
         $this->row->activateCellById($this->proc->getOrderNumber(), ($this->colorant)($this->proc));
     }
 
-    private function blockRowAndAddUpdateTask(PartialProcedure $part)
+    private function blockRowAndAddUpdateTask(IAutoEndingProcedure $part)
     {
         $this->block->row($this->row);
         $this->scheduler->addTask(
             $part->beforeEnd(),
-            fn() => $this->proc->notify(AppMsg::CURRENT_PROCEDURE_INFO)
+            fn() => Event::report($this->proc)
         );
     }
 
 
-    private function successFullProcAlert(Product $prod, PartialProcedure $proc)
+    private function successFullProcAlert(CasualProcedure $proc)
     {
-        $this->scheduler->alert(
-            sprintf($this->successFullMsg, $prod->getNumber() ?? $prod->getAdvancedNumber(), $proc->getName())
+        $this->output->send(
+            sprintf($this->successFullMsg, $proc->getProductName() ?? $proc->getProductPreNumber(), $proc->getProductName())
         );
     }
 
